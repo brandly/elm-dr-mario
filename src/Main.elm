@@ -78,12 +78,28 @@ update action model =
                           else
                             { model
                               -- TODO: send into Fall
-                                | mode = Pill (Vertical Blue Red) ( 4, 1 )
+                                | mode = Sweep
                                 , bottle =
                                     addPill pill ( x, y ) model.bottle
                             }
                         , Cmd.none
                         )
+
+                Sweep ->
+                    ( { model
+                        | mode = Init
+                        , bottle =
+                            Grid.map
+                                (\({ x, y } as cell) ->
+                                    if isCleared ( x, y ) model.bottle then
+                                        { cell | state = Nothing }
+                                    else
+                                        cell
+                                )
+                                model.bottle
+                      }
+                    , Cmd.none
+                    )
 
                 -- TODO: fall
                 _ ->
@@ -91,7 +107,7 @@ update action model =
 
         KeyChange True code ->
             let
-                setIfAvailable pill pair =
+                moveIfAvailable pill pair =
                     if isAvailable pair pill model.bottle then
                         ( { model | mode = Pill pill pair }, Cmd.none )
                     else
@@ -110,16 +126,16 @@ update action model =
                                             Vertical a b ->
                                                 Horizontal b a
                                 in
-                                    setIfAvailable newPill ( x, y )
+                                    moveIfAvailable newPill ( x, y )
 
                             37 ->
-                                setIfAvailable pill ( x - 1, y )
+                                moveIfAvailable pill ( x - 1, y )
 
                             39 ->
-                                setIfAvailable pill ( x + 1, y )
+                                moveIfAvailable pill ( x + 1, y )
 
                             40 ->
-                                setIfAvailable pill ( x, y + 1 )
+                                moveIfAvailable pill ( x, y + 1 )
 
                             _ ->
                                 ( model, Cmd.none )
@@ -129,6 +145,53 @@ update action model =
 
         KeyChange False _ ->
             ( model, Cmd.none )
+
+
+isCleared : Grid.Pair -> Grid -> Bool
+isCleared ( x, y ) grid =
+    let
+        cell =
+            Grid.findCellAtPair ( x, y ) grid
+
+        horizontal : List (List Cell)
+        horizontal =
+            [ ( x - 3, y ), ( x - 2, y ), ( x - 1, y ), ( x, y ), ( x + 1, y ), ( x + 2, y ), ( x + 3, y ) ]
+                |> List.map
+                    (\pair -> Grid.findCellAtPair pair grid)
+                |> subLists 4
+
+        vertical : List (List Cell)
+        vertical =
+            [ ( x, y - 3 ), ( x, y - 2 ), ( x, y - 1 ), ( x, y ), ( x, y + 1 ), ( x, y + 2 ), ( x, y + 3 ) ]
+                |> List.map
+                    (\pair -> Grid.findCellAtPair pair grid)
+                |> subLists 4
+    in
+        case cell.state of
+            Nothing ->
+                False
+
+            Just ( color, _ ) ->
+                List.any
+                    (List.all
+                        (\cell ->
+                            case cell.state of
+                                Just ( c, _ ) ->
+                                    c == color
+
+                                Nothing ->
+                                    False
+                        )
+                    )
+                    (vertical ++ horizontal)
+
+
+subLists : Int -> List a -> List (List a)
+subLists len list =
+    if List.length list < len then
+        []
+    else
+        (List.take len list) :: subLists len (List.drop 1 list)
 
 
 isAvailable : Grid.Pair -> Pill -> Grid -> Bool

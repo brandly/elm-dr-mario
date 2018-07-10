@@ -130,6 +130,11 @@ findMatching default match list =
                 default
 
 
+map : (Cell -> Cell) -> Grid -> Grid
+map f grid =
+    List.map (List.map f) grid
+
+
 updateCellsAtPairs : (Cell -> Cell) -> List Pair -> Grid -> Grid
 updateCellsAtPairs update pairs grid =
     updateCells update (List.map (\p -> findCellAtPair p grid) pairs) grid
