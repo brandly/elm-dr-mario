@@ -6,6 +6,7 @@ import Random
 import Element exposing (Element, px, styled)
 import Grid exposing (Cell, Color(..), Type(..), Column, Grid)
 import Time exposing (Time, second)
+import Keyboard exposing (KeyCode)
 
 
 main : Program Never Model Msg
@@ -55,6 +56,7 @@ initialModel =
 
 type Msg
     = TickTock Time
+    | KeyChange Bool KeyCode
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -70,16 +72,8 @@ update action model =
                     let
                         newPair =
                             ( x, y + 1 )
-
-                        canDrop =
-                            case pill of
-                                Horizontal _ _ ->
-                                    Grid.isEmpty newPair model.bottle
-
-                                Vertical _ _ ->
-                                    Grid.isEmpty ( x, y + 2 ) model.bottle
                     in
-                        ( if canDrop then
+                        ( if isAvailable newPair pill model.bottle then
                             { model | mode = Pill pill newPair }
                           else
                             { model
@@ -95,10 +89,89 @@ update action model =
                 _ ->
                     ( model, Cmd.none )
 
+        KeyChange True code ->
+            let
+                setIfAvailable pill pair =
+                    if isAvailable pair pill model.bottle then
+                        ( { model | mode = Pill pill pair }, Cmd.none )
+                    else
+                        ( model, Cmd.none )
+            in
+                case model.mode of
+                    Pill pill ( x, y ) ->
+                        case code of
+                            38 ->
+                                let
+                                    newPill =
+                                        case pill of
+                                            Horizontal a b ->
+                                                Vertical a b
+
+                                            Vertical a b ->
+                                                Horizontal b a
+                                in
+                                    setIfAvailable newPill ( x, y )
+
+                            37 ->
+                                setIfAvailable pill ( x - 1, y )
+
+                            39 ->
+                                setIfAvailable pill ( x + 1, y )
+
+                            40 ->
+                                setIfAvailable pill ( x, y + 1 )
+
+                            _ ->
+                                ( model, Cmd.none )
+
+                    _ ->
+                        ( model, Cmd.none )
+
+        KeyChange False _ ->
+            ( model, Cmd.none )
+
+
+isAvailable : Grid.Pair -> Pill -> Grid -> Bool
+isAvailable ( x, y ) pill grid =
+    let
+        aboveBottom =
+            case pill of
+                Vertical _ _ ->
+                    y < Grid.height grid
+
+                Horizontal _ _ ->
+                    y <= Grid.height grid
+
+        inBottle =
+            (x >= 1)
+                && (x <= Grid.width grid)
+                && aboveBottom
+
+        noViruses =
+            case pill of
+                Horizontal _ _ ->
+                    Grid.isEmpty ( x, y ) grid
+                        && Grid.isEmpty ( x + 1, y ) grid
+
+                Vertical _ _ ->
+                    Grid.isEmpty ( x, y ) grid
+                        && Grid.isEmpty ( x, y + 1 ) grid
+    in
+        inBottle && noViruses
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Time.every Time.second TickTock
+    let
+        time =
+            Time.every Time.second TickTock
+
+        keys =
+            [ Keyboard.downs (KeyChange True)
+            , Keyboard.ups (KeyChange False)
+            ]
+    in
+        Sub.batch (time :: keys)
 
 
 colorPairs : Pill -> Grid.Pair -> List ( Color, Grid.Pair )
@@ -138,7 +211,8 @@ view { bottle, mode } =
     in
         div []
             [ h1 [] [ text "dr. mario" ]
-            , (div []
+            , (div
+                [ style [ ( "display", "inline-block" ) ] ]
                 (List.map
                     (\column ->
                         div

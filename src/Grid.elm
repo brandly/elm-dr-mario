@@ -43,6 +43,21 @@ fromDimensions ( width, height ) =
             |> List.map makeColumn
 
 
+width : Grid -> Int
+width grid =
+    List.length grid
+
+
+height : Grid -> Int
+height grid =
+    case grid of
+        [] ->
+            0
+
+        head :: _ ->
+            List.length head
+
+
 
 --withBombPairs : List Pair -> Grid -> Grid
 --withBombPairs pairs grid =
