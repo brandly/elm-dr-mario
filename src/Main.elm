@@ -34,7 +34,7 @@ type Model
     = Init
     | PrepareGame Int Grid
     | Play PlayState
-    | Over { won : Bool, bottle : Grid }
+    | Over { won : Bool, bottle : Grid, level : Int }
 
 
 type alias PlayState =
@@ -48,6 +48,11 @@ type Msg
     | Begin Int
     | NewVirus ( Color, Grid.Pair )
     | Reset
+
+
+emptyBottle : Grid
+emptyBottle =
+    Grid.fromDimensions ( 8, 16 )
 
 
 randomColor : Generator Color
@@ -117,15 +122,8 @@ virusesForLevel level =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
     case ( model, action ) of
-        ( Init, Begin level ) ->
-            let
-                bottle =
-                    (Grid.fromDimensions ( 8, 16 ))
-            in
-                ( PrepareGame level bottle, randomNewVirus bottle )
-
-        ( Init, _ ) ->
-            ( model, Cmd.none )
+        ( _, Begin level ) ->
+            ( PrepareGame level emptyBottle, randomNewVirus emptyBottle )
 
         ( PrepareGame level bottle, NewVirus ( color, pair ) ) ->
             let
@@ -157,7 +155,7 @@ update action model =
 
         ( Play state, _ ) ->
             if Grid.totalViruses state.bottle == 0 then
-                ( Over { won = True, bottle = state.bottle }, Cmd.none )
+                ( Over { won = True, bottle = state.bottle, level = state.level }, Cmd.none )
             else
                 let
                     lossed =
@@ -175,7 +173,7 @@ update action model =
                         updatePlayState action state
                 in
                     if lossed then
-                        ( Over { won = False, bottle = state.bottle }, Cmd.none )
+                        ( Over { won = False, bottle = state.bottle, level = state.level }, Cmd.none )
                     else
                         ( Play newPlayState, cmd )
 
@@ -210,7 +208,7 @@ updatePlayState action model =
                             model.bottle
                                 |> Grid.filter
                                     (\{ x, y } -> canFall ( x, y ) model.bottle)
-                                |> (List.length >> (<) 0)
+                                |> (List.isEmpty >> not)
                     in
                         if timeToFall then
                             ( { model
@@ -313,7 +311,7 @@ canSweep grid =
             (\({ x, y } as cell) ->
                 isCleared ( x, y ) grid
             )
-        |> (List.length >> (<) 0)
+        |> (List.isEmpty >> not)
 
 
 sweep : Grid -> Grid
@@ -562,6 +560,10 @@ view model =
                                 ":("
                             )
                         ]
+                    , if state.won then
+                        Html.button [ onClick (Begin (state.level + 1)) ] [ text "Next Level" ]
+                      else
+                        text ""
                     , Html.button [ onClick Reset ] [ text "Reset" ]
                     , viewBottle state.bottle
                     ]
