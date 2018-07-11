@@ -533,7 +533,7 @@ view model =
                 div [] [ text "💊💊💊" ]
 
             Play state ->
-                div []
+                div [ style [ ( "display", "flex" ) ] ]
                     [ viewBottle
                         (case state.mode of
                             Pill pill pair ->
@@ -542,14 +542,16 @@ view model =
                             _ ->
                                 state.bottle
                         )
-                    , h3 [] [ text "level" ]
-                    , p [] [ (toString >> text) state.level ]
-                    , h3 [] [ text "virus" ]
-                    , p [] [ text <| toString (Grid.totalViruses state.bottle) ]
-                    , h3 [] [ text "next" ]
-                    , div []
-                        [ (Tuple.first >> viewVirus) state.next
-                        , (Tuple.second >> viewVirus) state.next
+                    , div [ style [ ( "margin", "16px" ) ] ]
+                        [ h3 [] [ text "next" ]
+                        , div [ style [ ( "display", "flex" ) ] ]
+                            [ (Tuple.first >> viewPill) state.next
+                            , (Tuple.second >> viewPill) state.next
+                            ]
+                        , h3 [] [ text "level" ]
+                        , p [] [ (toString >> text) state.level ]
+                        , h3 [] [ text "virus" ]
+                        , p [] [ text <| toString (Grid.totalViruses state.bottle) ]
                         ]
                     ]
 
@@ -596,7 +598,7 @@ viewBottle bottle =
                                         div [ style cellStyle ] []
 
                                     Just ( color, Grid.Pill ) ->
-                                        viewColor color []
+                                        viewPill color
 
                                     Just ( color, Grid.Virus ) ->
                                         viewVirus color
@@ -607,6 +609,11 @@ viewBottle bottle =
                 bottle
             )
         ]
+
+
+viewPill : Color -> Html msg
+viewPill color =
+    viewColor color []
 
 
 viewVirus : Color -> Html msg
