@@ -105,15 +105,28 @@ update action model =
             ( model, Cmd.none )
 
         ( _, Play state ) ->
-            -- TODO: check if pill overlaps something in bottle (lose)
             if Grid.totalViruses state.bottle == 0 then
                 ( Over { won = True, bottle = state.bottle }, Cmd.none )
             else
                 let
+                    lossed =
+                        case state.mode of
+                            Pill (Horizontal _ _) ( x, y ) ->
+                                not (Grid.isEmpty ( x, y ) state.bottle && Grid.isEmpty ( x + 1, y ) state.bottle)
+
+                            Pill (Vertical _ _) ( x, y ) ->
+                                not (Grid.isEmpty ( x, y ) state.bottle && Grid.isEmpty ( x, y + 1 ) state.bottle)
+
+                            _ ->
+                                False
+
                     ( newPlayState, cmd ) =
                         updatePlayState action state
                 in
-                    ( Play newPlayState, cmd )
+                    if lossed then
+                        ( Over { won = False, bottle = state.bottle }, Cmd.none )
+                    else
+                        ( Play newPlayState, cmd )
 
         ( Reset, Over _ ) ->
             ( Init, Cmd.none )
