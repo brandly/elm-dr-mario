@@ -3,7 +3,6 @@ module Main exposing (..)
 import Html exposing (Html, h1, h3, text, div, p)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
-import Random
 import Element exposing (Element, px, styled)
 import Grid exposing (Cell, Color(..), Type(..), Column, Grid)
 import Time exposing (Time, second)
@@ -33,6 +32,7 @@ type PlayMode
 
 type Model
     = Init
+    | AddViruses Grid
     | Play PlayState
     | Over { won : Bool, bottle : Grid }
 
@@ -63,12 +63,34 @@ type Msg
     | KeyChange Bool KeyCode
     | RandomPill ( Color, Color )
     | Begin
+    | NewVirus ( Color, Grid.Pair )
     | Reset
 
 
 randomColor : Generator Color
 randomColor =
     selectWithDefault Blue [ Red, Yellow, Blue ]
+
+
+randomNewVirus : Grid -> Cmd Msg
+randomNewVirus bottle =
+    Random.generate NewVirus <|
+        Random.pair randomColor (randomEmptyPair bottle)
+
+
+randomEmptyPair : Grid -> Generator Grid.Pair
+randomEmptyPair grid =
+    let
+        emptyPairs : List ( Int, Int )
+        emptyPairs =
+            Grid.filter
+                (\{ x, y } ->
+                    y >= 5 && (Grid.isEmpty ( x, y ) grid)
+                )
+                grid
+                |> List.map (\{ x, y } -> ( x, y ))
+    in
+        selectWithDefault ( -1, -1 ) emptyPairs
 
 
 selectWithDefault : a -> List a -> Generator a
@@ -98,7 +120,27 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
     case ( action, model ) of
         ( Begin, Init ) ->
-            ( Play initialPlayState, Cmd.none )
+            let
+                bottle =
+                    (Grid.fromDimensions ( 8, 16 ))
+            in
+                ( AddViruses bottle, randomNewVirus bottle )
+
+        ( NewVirus ( color, pair ), AddViruses bottle ) ->
+            let
+                desiredCount =
+                    16
+
+                newBottle =
+                    Grid.updateCellsAtPairs
+                        (\c -> { c | state = Just ( color, Virus ) })
+                        [ pair ]
+                        bottle
+            in
+                if Grid.totalViruses newBottle >= desiredCount then
+                    ( Play { bottle = newBottle, mode = Fall }, Cmd.none )
+                else
+                    ( AddViruses newBottle, randomNewVirus newBottle )
 
         ( _, Init ) ->
             ( model, Cmd.none )
@@ -220,10 +262,14 @@ updatePlayState action model =
         KeyChange False _ ->
             ( model, Cmd.none )
 
+        -- TODO: types should be better so we don't list these here
         Begin ->
             ( model, Cmd.none )
 
         Reset ->
+            ( model, Cmd.none )
+
+        NewVirus _ ->
             ( model, Cmd.none )
 
 
@@ -409,7 +455,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     let
         time =
-            Time.every Time.second TickTock
+            Time.every (700 * Time.millisecond) TickTock
 
         keys =
             [ Keyboard.downs (KeyChange True)
@@ -454,6 +500,9 @@ view model =
         , case model of
             Init ->
                 Html.button [ onClick Begin ] [ text "Begin" ]
+
+            AddViruses _ ->
+                div [] [ text "💊💊💊" ]
 
             Play state ->
                 viewBottle
