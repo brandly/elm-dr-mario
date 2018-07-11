@@ -173,7 +173,17 @@ isNeighbor a b =
 
 totalViruses : Grid -> Int
 totalViruses grid =
-    List.length <| filter (\c -> c.state /= Nothing) grid
+    List.length <|
+        filter
+            (\c ->
+                case c.state of
+                    Just ( _, Virus ) ->
+                        True
+
+                    _ ->
+                        False
+            )
+            grid
 
 
 below : Pair -> Grid -> List Cell

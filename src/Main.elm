@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Html exposing (Html, h1, h3, text, div)
+import Html exposing (Html, h1, h3, text, div, p)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import Random
@@ -105,13 +105,15 @@ update action model =
             ( model, Cmd.none )
 
         ( _, Play state ) ->
-            -- TODO: check if 0 viruses (win)
             -- TODO: check if pill overlaps something in bottle (lose)
-            let
-                ( newPlayState, cmd ) =
-                    updatePlayState action state
-            in
-                ( Play newPlayState, cmd )
+            if Grid.totalViruses state.bottle == 0 then
+                ( Over { won = True, bottle = state.bottle }, Cmd.none )
+            else
+                let
+                    ( newPlayState, cmd ) =
+                        updatePlayState action state
+                in
+                    ( Play newPlayState, cmd )
 
         ( Reset, Over _ ) ->
             ( Init, Cmd.none )
@@ -440,11 +442,11 @@ view model =
 
             Over state ->
                 div []
-                    [ h1 [] [ text "game Over" ]
+                    [ h1 [] [ text "Game Over" ]
                     , h3 []
                         [ text
                             (if state.won then
-                                "you won"
+                                "you won!"
                              else
                                 ":("
                             )
@@ -457,29 +459,39 @@ view model =
 
 viewBottle : Grid -> Html Msg
 viewBottle bottle =
-    div
-        [ style [ ( "display", "inline-block" ), ( "border", "3px solid #CCC" ), ( "border-radius", "3px" ) ] ]
-        (List.map
-            (\column ->
-                div
-                    [ style [ ( "display", "inline-block" ), ( "vertical-align", "top" ) ] ]
-                    (List.map
-                        (\cell ->
-                            case cell.state of
-                                Nothing ->
-                                    div [ style cellStyle ] []
+    div []
+        [ div
+            [ style
+                [ ( "display", "inline-block" )
+                , ( "border", "3px solid #CCC" )
+                , ( "border-radius", "3px" )
+                , ( "background", "#000" )
+                ]
+            ]
+            (List.map
+                (\column ->
+                    div
+                        [ style [ ( "display", "inline-block" ), ( "vertical-align", "top" ) ] ]
+                        (List.map
+                            (\cell ->
+                                case cell.state of
+                                    Nothing ->
+                                        div [ style cellStyle ] []
 
-                                Just ( color, Grid.Pill ) ->
-                                    viewColor color []
+                                    Just ( color, Grid.Pill ) ->
+                                        viewColor color []
 
-                                Just ( color, Grid.Virus ) ->
-                                    viewColor color [ text "◔̯◔" ]
+                                    Just ( color, Grid.Virus ) ->
+                                        viewColor color [ text "◔̯◔" ]
+                            )
+                            column
                         )
-                        column
-                    )
+                )
+                bottle
             )
-            bottle
-        )
+        , h3 [] [ text "virus" ]
+        , p [] [ text <| toString (Grid.totalViruses bottle) ]
+        ]
 
 
 viewColor : Color -> List (Html msg) -> Html msg
@@ -488,13 +500,13 @@ viewColor color =
         bg =
             case color of
                 Red ->
-                    "#f44336"
+                    "#e8005a"
 
                 Blue ->
-                    "#0383f4"
+                    "#39bdff"
 
                 Yellow ->
-                    "#ffed5e"
+                    "#ffbd03"
     in
         div [ style (( "background-color", bg ) :: cellStyle) ]
 
