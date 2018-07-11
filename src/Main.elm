@@ -7,6 +7,7 @@ import Element exposing (Element, px, styled)
 import Grid exposing (Cell, Color(..), Type(..), Column, Grid)
 import Time exposing (Time, second)
 import Keyboard exposing (KeyCode)
+import Random exposing (Generator)
 
 
 main : Program Never Model Msg
@@ -49,13 +50,43 @@ initialModel =
             |> Grid.updateCellsAtPairs
                 (\cell -> { cell | state = Just ( Yellow, Virus ) })
                 [ ( 1, 7 ), ( 1, 11 ), ( 6, 16 ) ]
-    , mode = Init
+    , mode = Fall
     }
 
 
 type Msg
     = TickTock Time
     | KeyChange Bool KeyCode
+    | RandomPill ( Color, Color )
+
+
+randomColor : Generator Color
+randomColor =
+    selectWithDefault Blue [ Red, Yellow, Blue ]
+
+
+selectWithDefault : a -> List a -> Generator a
+selectWithDefault defaultValue list =
+    Random.map (Maybe.withDefault defaultValue) (randomSelect list)
+
+
+randomSelect : List a -> Generator (Maybe a)
+randomSelect list =
+    Random.map (\index -> randomGet index list)
+        (Random.int 0 (List.length list - 1))
+
+
+randomGet : Int -> List a -> Maybe a
+randomGet index list =
+    if index < 0 then
+        Nothing
+    else
+        case List.drop index list of
+            [] ->
+                Nothing
+
+            x :: xs ->
+                Just x
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -64,8 +95,7 @@ update action model =
         TickTock _ ->
             case model.mode of
                 Init ->
-                    -- TODO: random pill
-                    ( { model | mode = Pill (Vertical Blue Red) ( 4, 1 ) }, Cmd.none )
+                    ( model, Cmd.none )
 
                 Pill pill ( x, y ) ->
                     let
@@ -85,71 +115,27 @@ update action model =
                         timeToFall =
                             model.bottle
                                 |> Grid.filter
-                                    (\{ x, y } -> canFall ( x, y ))
+                                    (\{ x, y } -> canFall ( x, y ) model.bottle)
                                 |> (List.length >> (<) 0)
-
-                        canFall : Grid.Pair -> Bool
-                        canFall pair =
-                            let
-                                cell =
-                                    Grid.findCellAtPair pair model.bottle
-
-                                hasRoom : List Cell -> Bool
-                                hasRoom cells =
-                                    case cells of
-                                        [] ->
-                                            False
-
-                                        head :: tail ->
-                                            case head.state of
-                                                Nothing ->
-                                                    True
-
-                                                Just ( _, Grid.Pill ) ->
-                                                    hasRoom tail
-
-                                                Just ( _, Virus ) ->
-                                                    False
-                            in
-                                case cell.state of
-                                    Just ( _, Grid.Pill ) ->
-                                        (Grid.below pair model.bottle |> hasRoom)
-
-                                    _ ->
-                                        False
                     in
                         if timeToFall then
                             ( { model
                                 | mode = Fall
                                 , bottle =
-                                    Grid.map
-                                        (\({ x, y, state } as cell) ->
-                                            if canFall ( x, y ) then
-                                                -- look above
-                                                if canFall ( x, y - 1 ) then
-                                                    { cell
-                                                        | state =
-                                                            .state <| Grid.findCellAtPair ( x, y - 1 ) model.bottle
-                                                    }
-                                                else
-                                                    { cell | state = Nothing }
-                                            else if state == Nothing && canFall ( x, y - 1 ) then
-                                                { cell
-                                                    | state =
-                                                        .state <|
-                                                            Grid.findCellAtPair ( x, y - 1 ) model.bottle
-                                                }
-                                            else
-                                                cell
-                                        )
-                                        model.bottle
+                                    fall model.bottle
                               }
                             , Cmd.none
                             )
                         else if canSweep model.bottle then
                             ( { model | bottle = sweep model.bottle }, Cmd.none )
                         else
-                            ( { model | mode = Init }, Cmd.none )
+                            ( { model | mode = Init }
+                            , Random.generate RandomPill <|
+                                Random.map2 (,) randomColor randomColor
+                            )
+
+        RandomPill ( a, b ) ->
+            ( { model | mode = Pill (Horizontal a b) ( 4, 1 ) }, Cmd.none )
 
         KeyChange True code ->
             let
@@ -181,15 +167,7 @@ update action model =
                                 moveIfAvailable pill ( x + 1, y )
 
                             40 ->
-                                if isAvailable ( x, y + 1 ) pill model.bottle then
-                                    moveIfAvailable pill ( x, y + 1 )
-                                else
-                                    case model.mode of
-                                        Pill pill pair ->
-                                            ( afterPill pill pair model, Cmd.none )
-
-                                        _ ->
-                                            ( model, Cmd.none )
+                                moveIfAvailable pill ( x, y + 1 )
 
                             _ ->
                                 ( model, Cmd.none )
@@ -203,10 +181,18 @@ update action model =
 
 afterPill : Pill -> Grid.Pair -> Model -> Model
 afterPill pill pair model =
-    { model
-        | mode = Fall
-        , bottle = sweep (addPill pill pair model.bottle)
-    }
+    let
+        newBottle =
+            addPill pill pair model.bottle
+    in
+        { model
+            | mode = Fall
+            , bottle =
+                if canSweep newBottle then
+                    sweep newBottle
+                else
+                    fall newBottle
+        }
 
 
 canSweep : Grid -> Bool
@@ -225,6 +211,62 @@ sweep bottle =
         (\({ x, y } as cell) ->
             if isCleared ( x, y ) bottle then
                 { cell | state = Nothing }
+            else
+                cell
+        )
+        bottle
+
+
+canFall : Grid.Pair -> Grid -> Bool
+canFall pair bottle =
+    let
+        cell =
+            Grid.findCellAtPair pair bottle
+
+        hasRoom : List Cell -> Bool
+        hasRoom cells =
+            case cells of
+                [] ->
+                    False
+
+                head :: tail ->
+                    case head.state of
+                        Nothing ->
+                            True
+
+                        Just ( _, Grid.Pill ) ->
+                            hasRoom tail
+
+                        Just ( _, Virus ) ->
+                            False
+    in
+        case cell.state of
+            Just ( _, Grid.Pill ) ->
+                (Grid.below pair bottle |> hasRoom)
+
+            _ ->
+                False
+
+
+fall : Grid -> Grid
+fall bottle =
+    Grid.map
+        (\({ x, y, state } as cell) ->
+            if canFall ( x, y ) bottle then
+                -- look above
+                if canFall ( x, y - 1 ) bottle then
+                    { cell
+                        | state =
+                            .state <| Grid.findCellAtPair ( x, y - 1 ) bottle
+                    }
+                else
+                    { cell | state = Nothing }
+            else if state == Nothing && canFall ( x, y - 1 ) bottle then
+                { cell
+                    | state =
+                        .state <|
+                            Grid.findCellAtPair ( x, y - 1 ) bottle
+                }
             else
                 cell
         )
@@ -357,7 +399,7 @@ view { bottle, mode } =
                     bottle
     in
         div []
-            [ h1 [] [ text "dr. mario" ]
+            [ h1 [] [ text "dr. mario 💊" ]
             , (div
                 [ style [ ( "display", "inline-block" ) ] ]
                 (List.map
