@@ -61,7 +61,7 @@ initialPlayState =
 type Msg
     = TickTock Time
     | KeyChange Bool KeyCode
-    | RandomPill ( Color, Color )
+    | NewPill ( Color, Color )
     | Begin
     | NewVirus ( Color, Grid.Pair )
     | Reset
@@ -116,6 +116,15 @@ selectWithDefault defaultValue list =
         Random.map (Maybe.withDefault defaultValue) (select list)
 
 
+virusesForLevel : Int -> Int
+virusesForLevel level =
+    -- TODO: better types?
+    if level <= 20 then
+        4 * level + 4
+    else
+        84
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
     case ( action, model ) of
@@ -129,7 +138,7 @@ update action model =
         ( NewVirus ( color, pair ), AddViruses bottle ) ->
             let
                 desiredCount =
-                    16
+                    virusesForLevel 15
 
                 newBottle =
                     Grid.updateCellsAtPairs
@@ -214,11 +223,11 @@ updatePlayState action model =
                             ( { model | bottle = sweep model.bottle }, Cmd.none )
                         else
                             ( model
-                            , Random.generate RandomPill <|
+                            , Random.generate NewPill <|
                                 Random.pair randomColor randomColor
                             )
 
-        RandomPill ( a, b ) ->
+        NewPill ( a, b ) ->
             ( { model | mode = Pill (Horizontal a b) ( 4, 1 ) }, Cmd.none )
 
         KeyChange True code ->
