@@ -1,7 +1,8 @@
 module Main exposing (..)
 
-import Html exposing (Html, h1, text, div)
+import Html exposing (Html, h1, h3, text, div)
 import Html.Attributes exposing (style)
+import Html.Events exposing (onClick)
 import Random
 import Element exposing (Element, px, styled)
 import Grid exposing (Cell, Color(..), Type(..), Column, Grid)
@@ -13,7 +14,7 @@ import Random exposing (Generator)
 main : Program Never Model Msg
 main =
     Html.program
-        { init = ( initialModel, Cmd.none )
+        { init = ( Init, Cmd.none )
         , update = update
         , view = view
         , subscriptions = subscriptions
@@ -25,20 +26,23 @@ type Pill
     | Vertical Color Color
 
 
-type Mode
-    = Init
-    | Pill Pill Grid.Pair
+type PlayMode
+    = Pill Pill Grid.Pair
     | Fall
 
 
-type alias Model =
-    { bottle : Grid
-    , mode : Mode
-    }
+type Model
+    = Init
+    | Play PlayState
+    | Over { won : Bool, bottle : Grid }
 
 
-initialModel : Model
-initialModel =
+type alias PlayState =
+    { bottle : Grid, mode : PlayMode }
+
+
+initialPlayState : PlayState
+initialPlayState =
     { bottle =
         Grid.fromDimensions ( 8, 16 )
             |> Grid.updateCellsAtPairs
@@ -58,6 +62,8 @@ type Msg
     = TickTock Time
     | KeyChange Bool KeyCode
     | RandomPill ( Color, Color )
+    | Begin
+    | Reset
 
 
 randomColor : Generator Color
@@ -91,12 +97,34 @@ randomGet index list =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
+    case ( action, model ) of
+        ( Begin, Init ) ->
+            ( Play initialPlayState, Cmd.none )
+
+        ( _, Init ) ->
+            ( model, Cmd.none )
+
+        ( _, Play state ) ->
+            -- TODO: check if 0 viruses (win)
+            -- TODO: check if pill overlaps something in bottle (lose)
+            let
+                ( newPlayState, cmd ) =
+                    updatePlayState action state
+            in
+                ( Play newPlayState, cmd )
+
+        ( Reset, Over _ ) ->
+            ( Init, Cmd.none )
+
+        ( _, _ ) ->
+            ( model, Cmd.none )
+
+
+updatePlayState : Msg -> PlayState -> ( PlayState, Cmd Msg )
+updatePlayState action model =
     case action of
         TickTock _ ->
             case model.mode of
-                Init ->
-                    ( model, Cmd.none )
-
                 Pill pill ( x, y ) ->
                     let
                         newPair =
@@ -129,7 +157,7 @@ update action model =
                         else if canSweep model.bottle then
                             ( { model | bottle = sweep model.bottle }, Cmd.none )
                         else
-                            ( { model | mode = Init }
+                            ( model
                             , Random.generate RandomPill <|
                                 Random.map2 (,) randomColor randomColor
                             )
@@ -178,8 +206,14 @@ update action model =
         KeyChange False _ ->
             ( model, Cmd.none )
 
+        Begin ->
+            ( model, Cmd.none )
 
-afterPill : Pill -> Grid.Pair -> Model -> Model
+        Reset ->
+            ( model, Cmd.none )
+
+
+afterPill : Pill -> Grid.Pair -> PlayState -> PlayState
 afterPill pill pair model =
     let
         newBottle =
@@ -387,44 +421,65 @@ addPill pill pair bottle =
 
 
 view : Model -> Html Msg
-view { bottle, mode } =
-    let
-        withPill : Grid
-        withPill =
-            case mode of
-                Pill pill pair ->
-                    addPill pill pair bottle
+view model =
+    div [ style [ ( "display", "flex" ), ( "flex-direction", "column" ), ( "align-items", "center" ) ] ]
+        [ h1 [] [ text "dr. mario 💊" ]
+        , case model of
+            Init ->
+                Html.button [ onClick Begin ] [ text "Begin" ]
 
-                _ ->
-                    bottle
-    in
-        div []
-            [ h1 [] [ text "dr. mario 💊" ]
-            , (div
-                [ style [ ( "display", "inline-block" ) ] ]
-                (List.map
-                    (\column ->
-                        div
-                            [ style [ ( "display", "inline-block" ), ( "vertical-align", "top" ) ] ]
-                            (List.map
-                                (\cell ->
-                                    case cell.state of
-                                        Nothing ->
-                                            div [ style cellStyle ] []
+            Play state ->
+                viewBottle
+                    (case state.mode of
+                        Pill pill pair ->
+                            addPill pill pair state.bottle
 
-                                        Just ( color, Grid.Pill ) ->
-                                            viewColor color []
-
-                                        Just ( color, Grid.Virus ) ->
-                                            viewColor color [ text "◔̯◔" ]
-                                )
-                                column
-                            )
+                        _ ->
+                            state.bottle
                     )
-                    withPill
-                )
-              )
-            ]
+
+            Over state ->
+                div []
+                    [ h1 [] [ text "game Over" ]
+                    , h3 []
+                        [ text
+                            (if state.won then
+                                "you won"
+                             else
+                                ":("
+                            )
+                        ]
+                    , Html.button [ onClick Reset ] [ text "Reset" ]
+                    , viewBottle state.bottle
+                    ]
+        ]
+
+
+viewBottle : Grid -> Html Msg
+viewBottle bottle =
+    div
+        [ style [ ( "display", "inline-block" ), ( "border", "3px solid #CCC" ), ( "border-radius", "3px" ) ] ]
+        (List.map
+            (\column ->
+                div
+                    [ style [ ( "display", "inline-block" ), ( "vertical-align", "top" ) ] ]
+                    (List.map
+                        (\cell ->
+                            case cell.state of
+                                Nothing ->
+                                    div [ style cellStyle ] []
+
+                                Just ( color, Grid.Pill ) ->
+                                    viewColor color []
+
+                                Just ( color, Grid.Virus ) ->
+                                    viewColor color [ text "◔̯◔" ]
+                        )
+                        column
+                    )
+            )
+            bottle
+        )
 
 
 viewColor : Color -> List (Html msg) -> Html msg
@@ -448,8 +503,6 @@ cellStyle : List ( String, String )
 cellStyle =
     [ ( "width", px cellSize )
     , ( "height", px cellSize )
-    , ( "border-right", "1px solid #DDD" )
-    , ( "border-bottom", "1px solid #DDD" )
     ]
 
 
