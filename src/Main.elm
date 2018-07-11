@@ -116,16 +116,18 @@ virusesForLevel level =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
-    -- TODO: reverse this order
-    case ( action, model ) of
-        ( Begin, Init ) ->
+    case ( model, action ) of
+        ( Init, Begin ) ->
             let
                 bottle =
                     (Grid.fromDimensions ( 8, 16 ))
             in
                 ( AddViruses bottle, randomNewVirus bottle )
 
-        ( NewVirus ( color, pair ), AddViruses bottle ) ->
+        ( Init, _ ) ->
+            ( model, Cmd.none )
+
+        ( AddViruses bottle, NewVirus ( color, pair ) ) ->
             let
                 desiredCount =
                     virusesForLevel 15
@@ -143,13 +145,10 @@ update action model =
                 else
                     ( AddViruses newBottle, randomNewVirus newBottle )
 
-        ( NewPill colors, AddViruses bottle ) ->
+        ( AddViruses bottle, NewPill colors ) ->
             ( Play { bottle = bottle, mode = Fall, next = colors }, Cmd.none )
 
-        ( _, Init ) ->
-            ( model, Cmd.none )
-
-        ( _, Play state ) ->
+        ( Play state, _ ) ->
             if Grid.totalViruses state.bottle == 0 then
                 ( Over { won = True, bottle = state.bottle }, Cmd.none )
             else
@@ -173,7 +172,7 @@ update action model =
                     else
                         ( Play newPlayState, cmd )
 
-        ( Reset, Over _ ) ->
+        ( Over _, Reset ) ->
             ( Init, Cmd.none )
 
         ( _, _ ) ->
