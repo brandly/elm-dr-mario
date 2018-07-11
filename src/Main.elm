@@ -32,20 +32,20 @@ type PlayMode
 
 type Model
     = Init
-    | AddViruses Grid
+    | PrepareGame Int Grid
     | Play PlayState
     | Over { won : Bool, bottle : Grid }
 
 
 type alias PlayState =
-    { bottle : Grid, mode : PlayMode, next : ( Color, Color ) }
+    { bottle : Grid, mode : PlayMode, next : ( Color, Color ), level : Int }
 
 
 type Msg
     = TickTock Time
     | KeyChange Bool KeyCode
     | NewPill ( Color, Color )
-    | Begin
+    | Begin Int
     | NewVirus ( Color, Grid.Pair )
     | Reset
 
@@ -117,20 +117,20 @@ virusesForLevel level =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
     case ( model, action ) of
-        ( Init, Begin ) ->
+        ( Init, Begin level ) ->
             let
                 bottle =
                     (Grid.fromDimensions ( 8, 16 ))
             in
-                ( AddViruses bottle, randomNewVirus bottle )
+                ( PrepareGame level bottle, randomNewVirus bottle )
 
         ( Init, _ ) ->
             ( model, Cmd.none )
 
-        ( AddViruses bottle, NewVirus ( color, pair ) ) ->
+        ( PrepareGame level bottle, NewVirus ( color, pair ) ) ->
             let
                 desiredCount =
-                    virusesForLevel 15
+                    virusesForLevel level
 
                 newBottle =
                     -- TODO: decide if virus is allowed there
@@ -141,12 +141,19 @@ update action model =
                         bottle
             in
                 if Grid.totalViruses newBottle >= desiredCount then
-                    ( AddViruses newBottle, randomNewPill )
+                    ( PrepareGame level newBottle, randomNewPill )
                 else
-                    ( AddViruses newBottle, randomNewVirus newBottle )
+                    ( PrepareGame level newBottle, randomNewVirus newBottle )
 
-        ( AddViruses bottle, NewPill colors ) ->
-            ( Play { bottle = bottle, mode = Fall, next = colors }, Cmd.none )
+        ( PrepareGame level bottle, NewPill colors ) ->
+            ( Play
+                { bottle = bottle
+                , mode = Fall
+                , next = colors
+                , level = level
+                }
+            , Cmd.none
+            )
 
         ( Play state, _ ) ->
             if Grid.totalViruses state.bottle == 0 then
@@ -273,7 +280,7 @@ updatePlayState action model =
             ( model, Cmd.none )
 
         -- TODO: types should be better so we don't list these here
-        Begin ->
+        Begin _ ->
             ( model, Cmd.none )
 
         Reset ->
@@ -509,9 +516,18 @@ view model =
         [ h1 [] [ text "dr. mario 💊" ]
         , case model of
             Init ->
-                Html.button [ onClick Begin ] [ text "Begin" ]
+                (h3 [] [ text "starting level" ])
+                    :: ((List.range 1 20)
+                            |> List.map
+                                (\level ->
+                                    Html.button
+                                        [ onClick (Begin level) ]
+                                        [ (toString >> text) level ]
+                                )
+                       )
+                    |> div []
 
-            AddViruses _ ->
+            PrepareGame _ _ ->
                 div [] [ text "💊💊💊" ]
 
             Play state ->
@@ -524,6 +540,8 @@ view model =
                             _ ->
                                 state.bottle
                         )
+                    , h3 [] [ text "level" ]
+                    , p [] [ (toString >> text) state.level ]
                     , h3 [] [ text "virus" ]
                     , p [] [ text <| toString (Grid.totalViruses state.bottle) ]
                     , h3 [] [ text "next" ]
