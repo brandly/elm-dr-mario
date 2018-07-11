@@ -73,26 +73,25 @@ randomColor =
 
 selectWithDefault : a -> List a -> Generator a
 selectWithDefault defaultValue list =
-    Random.map (Maybe.withDefault defaultValue) (randomSelect list)
-
-
-randomSelect : List a -> Generator (Maybe a)
-randomSelect list =
-    Random.map (\index -> randomGet index list)
-        (Random.int 0 (List.length list - 1))
-
-
-randomGet : Int -> List a -> Maybe a
-randomGet index list =
-    if index < 0 then
-        Nothing
-    else
-        case List.drop index list of
-            [] ->
+    let
+        get : Int -> List a -> Maybe a
+        get index list =
+            if index < 0 then
                 Nothing
+            else
+                case List.drop index list of
+                    [] ->
+                        Nothing
 
-            x :: xs ->
-                Just x
+                    x :: xs ->
+                        Just x
+
+        select : List a -> Generator (Maybe a)
+        select list =
+            Random.map (\index -> get index list)
+                (Random.int 0 (List.length list - 1))
+    in
+        Random.map (Maybe.withDefault defaultValue) (select list)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -174,7 +173,7 @@ updatePlayState action model =
                         else
                             ( model
                             , Random.generate RandomPill <|
-                                Random.map2 (,) randomColor randomColor
+                                Random.pair randomColor randomColor
                             )
 
         RandomPill ( a, b ) ->
