@@ -38,24 +38,7 @@ type Model
 
 
 type alias PlayState =
-    { bottle : Grid, mode : PlayMode }
-
-
-initialPlayState : PlayState
-initialPlayState =
-    { bottle =
-        Grid.fromDimensions ( 8, 16 )
-            |> Grid.updateCellsAtPairs
-                (\cell -> { cell | state = Just ( Blue, Virus ) })
-                [ ( 1, 8 ), ( 1, 12 ), ( 5, 12 ) ]
-            |> Grid.updateCellsAtPairs
-                (\cell -> { cell | state = Just ( Red, Virus ) })
-                [ ( 1, 9 ), ( 2, 8 ), ( 4, 13 ), ( 4, 14 ) ]
-            |> Grid.updateCellsAtPairs
-                (\cell -> { cell | state = Just ( Yellow, Virus ) })
-                [ ( 1, 7 ), ( 1, 11 ), ( 6, 16 ) ]
-    , mode = Fall
-    }
+    { bottle : Grid, mode : PlayMode, next : ( Color, Color ) }
 
 
 type Msg
@@ -76,6 +59,12 @@ randomNewVirus : Grid -> Cmd Msg
 randomNewVirus bottle =
     Random.generate NewVirus <|
         Random.pair randomColor (randomEmptyPair bottle)
+
+
+randomNewPill : Cmd Msg
+randomNewPill =
+    Random.generate NewPill <|
+        Random.pair randomColor randomColor
 
 
 randomEmptyPair : Grid -> Generator Grid.Pair
@@ -127,6 +116,7 @@ virusesForLevel level =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
+    -- TODO: reverse this order
     case ( action, model ) of
         ( Begin, Init ) ->
             let
@@ -141,15 +131,20 @@ update action model =
                     virusesForLevel 15
 
                 newBottle =
+                    -- TODO: decide if virus is allowed there
+                    -- can't create 4-in-a-rows, generalize "isCleared" logic and leverage
                     Grid.updateCellsAtPairs
                         (\c -> { c | state = Just ( color, Virus ) })
                         [ pair ]
                         bottle
             in
                 if Grid.totalViruses newBottle >= desiredCount then
-                    ( Play { bottle = newBottle, mode = Fall }, Cmd.none )
+                    ( AddViruses newBottle, randomNewPill )
                 else
                     ( AddViruses newBottle, randomNewVirus newBottle )
+
+        ( NewPill colors, AddViruses bottle ) ->
+            ( Play { bottle = bottle, mode = Fall, next = colors }, Cmd.none )
 
         ( _, Init ) ->
             ( model, Cmd.none )
@@ -222,16 +217,23 @@ updatePlayState action model =
                         else if canSweep model.bottle then
                             ( { model | bottle = sweep model.bottle }, Cmd.none )
                         else
-                            ( model
-                            , Random.generate NewPill <|
-                                Random.pair randomColor randomColor
-                            )
+                            ( model, randomNewPill )
 
-        NewPill ( a, b ) ->
-            ( { model | mode = Pill (Horizontal a b) ( 4, 1 ) }, Cmd.none )
+        NewPill next ->
+            let
+                ( a, b ) =
+                    model.next
+            in
+                ( { model
+                    | mode = Pill (Horizontal a b) ( 4, 1 )
+                    , next = next
+                  }
+                , Cmd.none
+                )
 
         KeyChange True code ->
             let
+                moveIfAvailable : Pill -> Grid.Pair -> ( PlayState, Cmd Msg )
                 moveIfAvailable pill pair =
                     if isAvailable pair pill model.bottle then
                         ( { model | mode = Pill pill pair }, Cmd.none )
@@ -514,14 +516,23 @@ view model =
                 div [] [ text "💊💊💊" ]
 
             Play state ->
-                viewBottle
-                    (case state.mode of
-                        Pill pill pair ->
-                            addPill pill pair state.bottle
+                div []
+                    [ viewBottle
+                        (case state.mode of
+                            Pill pill pair ->
+                                addPill pill pair state.bottle
 
-                        _ ->
-                            state.bottle
-                    )
+                            _ ->
+                                state.bottle
+                        )
+                    , h3 [] [ text "virus" ]
+                    , p [] [ text <| toString (Grid.totalViruses state.bottle) ]
+                    , h3 [] [ text "next" ]
+                    , div []
+                        [ (Tuple.first >> viewVirus) state.next
+                        , (Tuple.second >> viewVirus) state.next
+                        ]
+                    ]
 
             Over state ->
                 div []
@@ -565,16 +576,19 @@ viewBottle bottle =
                                         viewColor color []
 
                                     Just ( color, Grid.Virus ) ->
-                                        viewColor color [ text "◔̯◔" ]
+                                        viewVirus color
                             )
                             column
                         )
                 )
                 bottle
             )
-        , h3 [] [ text "virus" ]
-        , p [] [ text <| toString (Grid.totalViruses bottle) ]
         ]
+
+
+viewVirus : Color -> Html msg
+viewVirus color =
+    viewColor color [ text "◔̯◔" ]
 
 
 viewColor : Color -> List (Html msg) -> Html msg
