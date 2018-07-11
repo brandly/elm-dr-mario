@@ -58,35 +58,6 @@ height grid =
             List.length head
 
 
-
---withBombPairs : List Pair -> Grid -> Grid
---withBombPairs pairs grid =
---    let
---        head =
---            case List.head pairs of
---                Just head ->
---                    head
---                Nothing ->
---                    ( -1, -1 )
---        tail =
---            case List.tail pairs of
---                Just tail ->
---                    tail
---                Nothing ->
---                    []
---        addBomb : Grid -> Grid
---        addBomb =
---            findCellAtPair head grid
---                |> updateCell (\cell -> { cell | bomb = True })
---    in
---        if List.length pairs > 0 then
---            withBombPairs
---                tail
---                (addBomb grid)
---        else
---            grid
-
-
 gridToCells : Grid -> List Cell
 gridToCells grid =
     List.concat grid
