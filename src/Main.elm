@@ -338,7 +338,7 @@ pointsForClearedViruses speed cleared =
 
 applyNtimes : Int -> (a -> a) -> a -> a
 applyNtimes n f x =
-    if n == 0 then
+    if n <= 0 then
         x
     else if n == 1 then
         f x
@@ -627,20 +627,19 @@ view model =
 
             Over state ->
                 div []
-                    [ h1 [] [ text "Game Over" ]
-                    , h3 []
+                    [ h1 []
                         [ text
                             (if state.won then
                                 "you won!"
                              else
-                                ":("
+                                "Game Over"
                             )
                         ]
                     , if state.won then
                         Html.button [ onClick (Begin (state.level + 1)) ] [ text "Next Level" ]
                       else
                         text ""
-                    , Html.button [ onClick Reset ] [ text "Reset" ]
+                    , Html.button [ onClick Reset ] [ text "Main Menu" ]
                     , viewBottle state.bottle
                     ]
         ]
