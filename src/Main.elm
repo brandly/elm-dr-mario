@@ -30,6 +30,12 @@ type PlayMode
     | Fall
 
 
+type Speed
+    = Low
+    | Med
+    | High
+
+
 type Model
     = Init
     | PrepareGame Int Grid
@@ -38,7 +44,12 @@ type Model
 
 
 type alias PlayState =
-    { bottle : Grid, mode : PlayMode, next : ( Color, Color ), level : Int }
+    { bottle : Grid
+    , mode : PlayMode
+    , next : ( Color, Color )
+    , level : Int
+    , score : Int
+    }
 
 
 type Msg
@@ -150,6 +161,7 @@ update action model =
                 , mode = Fall
                 , next = colors
                 , level = level
+                , score = 0
                 }
             , Cmd.none
             )
@@ -220,7 +232,7 @@ updatePlayState action model =
                             , Cmd.none
                             )
                         else if canSweep model.bottle then
-                            ( { model | bottle = sweep model.bottle }, Cmd.none )
+                            ( sweep model, Cmd.none )
                         else
                             ( model, randomNewPill )
 
@@ -294,37 +306,93 @@ afterPill pill pair model =
     let
         newBottle =
             addPill pill pair model.bottle
+
+        modify =
+            if canSweep newBottle then
+                sweep
+            else
+                (\m -> { m | bottle = fall newBottle })
     in
-        { model
-            | mode = Fall
-            , bottle =
-                if canSweep newBottle then
-                    sweep newBottle
-                else
-                    fall newBottle
-        }
+        modify
+            { model
+                | mode = Fall
+                , bottle = newBottle
+            }
+
+
+pointsForClearedViruses : Speed -> Int -> Int
+pointsForClearedViruses speed cleared =
+    applyNtimes (cleared - 1)
+        ((*) 2)
+        (case speed of
+            Low ->
+                100
+
+            Med ->
+                200
+
+            High ->
+                300
+        )
+
+
+applyNtimes : Int -> (a -> a) -> a -> a
+applyNtimes n f x =
+    if n == 0 then
+        x
+    else if n == 1 then
+        f x
+    else
+        f (applyNtimes (n - 1) f x)
 
 
 canSweep : Grid -> Bool
 canSweep grid =
+    sweepableCount grid > 0
+
+
+sweepableCount : Grid -> Int
+sweepableCount grid =
     grid
         |> Grid.filter
             (\({ x, y } as cell) ->
                 isCleared ( x, y ) grid
             )
-        |> (List.isEmpty >> not)
+        |> (List.length)
 
 
-sweep : Grid -> Grid
-sweep bottle =
-    Grid.map
-        (\({ x, y } as cell) ->
-            if isCleared ( x, y ) bottle then
-                { cell | state = Nothing }
-            else
-                cell
-        )
-        bottle
+sweepableVirusCount : Grid -> Int
+sweepableVirusCount grid =
+    grid
+        |> Grid.filter
+            (\({ x, y, state } as cell) ->
+                case state of
+                    Just ( _, Virus ) ->
+                        isCleared ( x, y ) grid
+
+                    _ ->
+                        False
+            )
+        |> (List.length)
+
+
+sweep : PlayState -> PlayState
+sweep ({ bottle, score } as model) =
+    let
+        sweptBottle =
+            Grid.map
+                (\({ x, y } as cell) ->
+                    if isCleared ( x, y ) bottle then
+                        { cell | state = Nothing }
+                    else
+                        cell
+                )
+                bottle
+
+        additionalPoints =
+            (sweepableVirusCount >> (pointsForClearedViruses Med)) bottle
+    in
+        { model | bottle = sweptBottle, score = score + additionalPoints }
 
 
 canFall : Grid.Pair -> Grid -> Bool
@@ -519,7 +587,7 @@ view model =
         , case model of
             Init ->
                 (h3 [] [ text "starting level" ])
-                    :: ((List.range 1 20)
+                    :: ((List.range 0 20)
                             |> List.map
                                 (\level ->
                                     Html.button
@@ -552,6 +620,8 @@ view model =
                         , p [] [ (toString >> text) state.level ]
                         , h3 [] [ text "virus" ]
                         , p [] [ text <| toString (Grid.totalViruses state.bottle) ]
+                        , h3 [] [ text "score" ]
+                        , p [] [ (toString >> text) state.score ]
                         ]
                     ]
 
@@ -635,7 +705,7 @@ viewColor color =
                 Yellow ->
                     "#ffbd03"
     in
-        div [ style (( "background-color", bg ) :: cellStyle) ]
+        div [ style ([ ( "background-color", bg ), ( "border-radius", "3px" ) ] ++ cellStyle) ]
 
 
 cellStyle : List ( String, String )
