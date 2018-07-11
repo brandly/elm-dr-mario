@@ -161,16 +161,6 @@ updateCell update cell grid =
         grid |> List.map replaceCell
 
 
-getNeighbors : Cell -> Grid -> List Cell
-getNeighbors cell grid =
-    grid |> filter (isNeighbor cell)
-
-
-isNeighbor : Cell -> Cell -> Bool
-isNeighbor a b =
-    abs (a.x - b.x) <= 1 && abs (a.y - b.y) <= 1
-
-
 totalViruses : Grid -> Int
 totalViruses grid =
     List.length <|
