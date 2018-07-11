@@ -407,7 +407,7 @@ isAvailable ( x, y ) pill grid =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
+subscriptions model =
     let
         time =
             Time.every Time.second TickTock
@@ -417,7 +417,12 @@ subscriptions _ =
             , Keyboard.ups (KeyChange False)
             ]
     in
-        Sub.batch (time :: keys)
+        case model of
+            Play _ ->
+                Sub.batch (time :: keys)
+
+            _ ->
+                Sub.none
 
 
 colorPairs : Pill -> Grid.Pair -> List ( Color, Grid.Pair )
