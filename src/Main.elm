@@ -131,14 +131,15 @@ update action model =
                     virusesForLevel level
 
                 newBottle =
-                    -- TODO: decide if virus is allowed there
-                    -- can't create 4-in-a-rows, generalize "isCleared" logic and leverage
                     Grid.updateCellsAtPairs
                         (\c -> { c | state = Just ( color, Virus ) })
                         [ pair ]
                         bottle
             in
-                if Grid.totalViruses newBottle >= desiredCount then
+                if isCleared pair newBottle then
+                    -- would create a 4-in-a-row, so let's try a new virus
+                    ( PrepareGame level bottle, randomNewVirus bottle )
+                else if Grid.totalViruses newBottle >= desiredCount then
                     ( PrepareGame level newBottle, randomNewPill )
                 else
                     ( PrepareGame level newBottle, randomNewVirus newBottle )
@@ -388,19 +389,22 @@ isCleared ( x, y ) grid =
         cell =
             Grid.findCellAtPair ( x, y ) grid
 
+        len =
+            4
+
         horizontal : List (List Cell)
         horizontal =
-            [ ( x - 3, y ), ( x - 2, y ), ( x - 1, y ), ( x, y ), ( x + 1, y ), ( x + 2, y ), ( x + 3, y ) ]
-                |> List.map
-                    (\pair -> Grid.findCellAtPair pair grid)
-                |> subLists 4
+            neighbors (\offset -> ( x + offset, y ))
 
         vertical : List (List Cell)
         vertical =
-            [ ( x, y - 3 ), ( x, y - 2 ), ( x, y - 1 ), ( x, y ), ( x, y + 1 ), ( x, y + 2 ), ( x, y + 3 ) ]
-                |> List.map
-                    (\pair -> Grid.findCellAtPair pair grid)
-                |> subLists 4
+            neighbors (\offset -> ( x, y + offset ))
+
+        neighbors f =
+            List.range (len * -1 + 1) (len - 1)
+                |> List.map f
+                |> List.map (\pair -> Grid.findCellAtPair pair grid)
+                |> subLists len
     in
         case cell.state of
             Nothing ->
