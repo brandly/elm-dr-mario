@@ -405,15 +405,18 @@ view { bottle, mode } =
                 (List.map
                     (\column ->
                         div
-                            [ style [ ( "display", "inline-block" ) ] ]
+                            [ style [ ( "display", "inline-block" ), ( "vertical-align", "top" ) ] ]
                             (List.map
                                 (\cell ->
                                     case cell.state of
                                         Nothing ->
                                             div [ style cellStyle ] []
 
-                                        Just ( color, _ ) ->
-                                            viewColor color
+                                        Just ( color, Grid.Pill ) ->
+                                            viewColor color []
+
+                                        Just ( color, Grid.Virus ) ->
+                                            viewColor color [ text "◔̯◔" ]
                                 )
                                 column
                             )
@@ -424,7 +427,7 @@ view { bottle, mode } =
             ]
 
 
-viewColor : Color -> Html msg
+viewColor : Color -> List (Html msg) -> Html msg
 viewColor color =
     let
         bg =
@@ -438,7 +441,7 @@ viewColor color =
                 Yellow ->
                     "#ffed5e"
     in
-        div [ style (( "background-color", bg ) :: cellStyle) ] []
+        div [ style (( "background-color", bg ) :: cellStyle) ]
 
 
 cellStyle : List ( String, String )
@@ -452,4 +455,4 @@ cellStyle =
 
 cellSize : Int
 cellSize =
-    16
+    24
