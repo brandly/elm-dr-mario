@@ -27,7 +27,6 @@ type Pill
 type Mode
     = Init
     | Pill Pill Grid.Pair
-    | Sweep
     | Fall
 
 
@@ -76,34 +75,81 @@ update action model =
                         ( if isAvailable newPair pill model.bottle then
                             { model | mode = Pill pill newPair }
                           else
-                            { model
-                              -- TODO: send into Fall
-                                | mode = Sweep
-                                , bottle =
-                                    addPill pill ( x, y ) model.bottle
-                            }
+                            afterPill pill ( x, y ) model
                         , Cmd.none
                         )
 
-                Sweep ->
-                    ( { model
-                        | mode = Init
-                        , bottle =
-                            Grid.map
-                                (\({ x, y } as cell) ->
-                                    if isCleared ( x, y ) model.bottle then
-                                        { cell | state = Nothing }
-                                    else
-                                        cell
-                                )
-                                model.bottle
-                      }
-                    , Cmd.none
-                    )
+                Fall ->
+                    let
+                        timeToFall : Bool
+                        timeToFall =
+                            model.bottle
+                                |> Grid.filter
+                                    (\{ x, y } -> canFall ( x, y ))
+                                |> (List.length >> (<) 0)
 
-                -- TODO: fall
-                _ ->
-                    ( model, Cmd.none )
+                        canFall : Grid.Pair -> Bool
+                        canFall pair =
+                            let
+                                cell =
+                                    Grid.findCellAtPair pair model.bottle
+
+                                hasRoom : List Cell -> Bool
+                                hasRoom cells =
+                                    case cells of
+                                        [] ->
+                                            False
+
+                                        head :: tail ->
+                                            case head.state of
+                                                Nothing ->
+                                                    True
+
+                                                Just ( _, Grid.Pill ) ->
+                                                    hasRoom tail
+
+                                                Just ( _, Virus ) ->
+                                                    False
+                            in
+                                case cell.state of
+                                    Just ( _, Grid.Pill ) ->
+                                        (Grid.below pair model.bottle |> hasRoom)
+
+                                    _ ->
+                                        False
+                    in
+                        if timeToFall then
+                            ( { model
+                                | mode = Fall
+                                , bottle =
+                                    Grid.map
+                                        (\({ x, y, state } as cell) ->
+                                            if canFall ( x, y ) then
+                                                -- look above
+                                                if canFall ( x, y - 1 ) then
+                                                    { cell
+                                                        | state =
+                                                            .state <| Grid.findCellAtPair ( x, y - 1 ) model.bottle
+                                                    }
+                                                else
+                                                    { cell | state = Nothing }
+                                            else if state == Nothing && canFall ( x, y - 1 ) then
+                                                { cell
+                                                    | state =
+                                                        .state <|
+                                                            Grid.findCellAtPair ( x, y - 1 ) model.bottle
+                                                }
+                                            else
+                                                cell
+                                        )
+                                        model.bottle
+                              }
+                            , Cmd.none
+                            )
+                        else if canSweep model.bottle then
+                            ( { model | bottle = sweep model.bottle }, Cmd.none )
+                        else
+                            ( { model | mode = Init }, Cmd.none )
 
         KeyChange True code ->
             let
@@ -135,7 +181,15 @@ update action model =
                                 moveIfAvailable pill ( x + 1, y )
 
                             40 ->
-                                moveIfAvailable pill ( x, y + 1 )
+                                if isAvailable ( x, y + 1 ) pill model.bottle then
+                                    moveIfAvailable pill ( x, y + 1 )
+                                else
+                                    case model.mode of
+                                        Pill pill pair ->
+                                            ( afterPill pill pair model, Cmd.none )
+
+                                        _ ->
+                                            ( model, Cmd.none )
 
                             _ ->
                                 ( model, Cmd.none )
@@ -145,6 +199,36 @@ update action model =
 
         KeyChange False _ ->
             ( model, Cmd.none )
+
+
+afterPill : Pill -> Grid.Pair -> Model -> Model
+afterPill pill pair model =
+    { model
+        | mode = Fall
+        , bottle = sweep (addPill pill pair model.bottle)
+    }
+
+
+canSweep : Grid -> Bool
+canSweep grid =
+    grid
+        |> Grid.filter
+            (\({ x, y } as cell) ->
+                isCleared ( x, y ) grid
+            )
+        |> (List.length >> (<) 0)
+
+
+sweep : Grid -> Grid
+sweep bottle =
+    Grid.map
+        (\({ x, y } as cell) ->
+            if isCleared ( x, y ) bottle then
+                { cell | state = Nothing }
+            else
+                cell
+        )
+        bottle
 
 
 isCleared : Grid.Pair -> Grid -> Bool

@@ -174,3 +174,13 @@ isNeighbor a b =
 totalViruses : Grid -> Int
 totalViruses grid =
     List.length <| filter (\c -> c.state /= Nothing) grid
+
+
+below : Pair -> Grid -> List Cell
+below ( x, y ) grid =
+    case List.head <| List.drop (x - 1) grid of
+        Nothing ->
+            []
+
+        Just column ->
+            List.drop y column
