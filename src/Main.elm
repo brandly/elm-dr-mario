@@ -380,9 +380,17 @@ isAvailable ( x, y ) pill grid =
                 Horizontal _ _ ->
                     y <= Grid.height grid
 
+        withinRight =
+            case pill of
+                Vertical _ _ ->
+                    x <= Grid.width grid
+
+                Horizontal _ _ ->
+                    x < Grid.width grid
+
         inBottle =
             (x >= 1)
-                && (x <= Grid.width grid)
+                && withinRight
                 && aboveBottom
 
         noViruses =
