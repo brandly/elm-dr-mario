@@ -38,9 +38,18 @@ type Speed
 
 type Model
     = Init
-    | PrepareGame Int Grid
+    | PrepareGame
+        { level : Int
+        , score : Int
+        , bottle : Grid
+        }
     | Play PlayState
-    | Over { won : Bool, bottle : Grid, level : Int }
+    | Over
+        { won : Bool
+        , bottle : Grid
+        , level : Int
+        , score : Int
+        }
 
 
 type alias PlayState =
@@ -56,7 +65,7 @@ type Msg
     = TickTock Time
     | KeyChange Bool KeyCode
     | NewPill ( Color, Color )
-    | Begin Int
+    | Begin { level : Int, score : Int }
     | NewVirus ( Color, Grid.Pair )
     | Reset
 
@@ -143,10 +152,16 @@ virusesForLevel level =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
     case ( model, action ) of
-        ( _, Begin level ) ->
-            ( PrepareGame level emptyBottle, randomNewVirus emptyBottle )
+        ( _, Begin { level, score } ) ->
+            ( PrepareGame
+                { level = level
+                , score = score
+                , bottle = emptyBottle
+                }
+            , randomNewVirus emptyBottle
+            )
 
-        ( PrepareGame level bottle, NewVirus ( color, pair ) ) ->
+        ( PrepareGame ({ level, score, bottle } as state), NewVirus ( color, pair ) ) ->
             let
                 desiredCount =
                     virusesForLevel level
@@ -159,26 +174,37 @@ update action model =
             in
                 if isCleared pair newBottle then
                     -- would create a 4-in-a-row, so let's try a new virus
-                    ( PrepareGame level bottle, randomNewVirus bottle )
+                    ( PrepareGame state, randomNewVirus bottle )
                 else if Grid.totalViruses newBottle >= desiredCount then
-                    ( PrepareGame level newBottle, randomNewPill )
+                    ( PrepareGame { state | bottle = newBottle }
+                    , randomNewPill
+                    )
                 else
-                    ( PrepareGame level newBottle, randomNewVirus newBottle )
+                    ( PrepareGame { state | bottle = newBottle }
+                    , randomNewVirus newBottle
+                    )
 
-        ( PrepareGame level bottle, NewPill colors ) ->
+        ( PrepareGame { level, bottle, score }, NewPill colors ) ->
             ( Play
                 { bottle = bottle
                 , mode = Fall
                 , next = colors
                 , level = level
-                , score = 0
+                , score = score
                 }
             , Cmd.none
             )
 
         ( Play state, _ ) ->
             if Grid.totalViruses state.bottle == 0 then
-                ( Over { won = True, bottle = state.bottle, level = state.level }, Cmd.none )
+                ( Over
+                    { won = True
+                    , bottle = state.bottle
+                    , level = state.level
+                    , score = state.score
+                    }
+                , Cmd.none
+                )
             else
                 let
                     lossed =
@@ -195,7 +221,14 @@ update action model =
                         updatePlayState action state
                 in
                     if lossed then
-                        ( Over { won = False, bottle = state.bottle, level = state.level }, Cmd.none )
+                        ( Over
+                            { won = False
+                            , bottle = state.bottle
+                            , level = state.level
+                            , score = state.score
+                            }
+                        , Cmd.none
+                        )
                     else
                         ( Play newPlayState, cmd )
 
@@ -599,13 +632,13 @@ view model =
                             |> List.map
                                 (\level ->
                                     Html.button
-                                        [ onClick (Begin level) ]
+                                        [ onClick (Begin { level = level, score = 0 }) ]
                                         [ (toString >> text) level ]
                                 )
                        )
                     |> div []
 
-            PrepareGame _ _ ->
+            PrepareGame _ ->
                 div [] [ text "💊💊💊" ]
 
             Play state ->
@@ -644,7 +677,15 @@ view model =
                             )
                         ]
                     , if state.won then
-                        Html.button [ onClick (Begin (state.level + 1)) ] [ text "Next Level" ]
+                        Html.button
+                            [ onClick
+                                (Begin
+                                    { level = (state.level + 1)
+                                    , score = state.score
+                                    }
+                                )
+                            ]
+                            [ text "Next Level" ]
                       else
                         text ""
                     , Html.button [ onClick Reset ] [ text "Main Menu" ]
