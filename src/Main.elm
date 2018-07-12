@@ -62,15 +62,20 @@ type alias PlayState =
     }
 
 
-type Msg
+type PlayMsg
     = TickTock Time
     | KeyChange Bool KeyCode
     | NewPill ( Color, Color )
-    | Begin { level : Int, score : Int }
+
+
+type Msg
+    = Begin { level : Int, score : Int }
     | NewVirus ( Color, Grid.Pair )
-    | Reset
+    | InitPill ( Color, Color )
+    | PlayMsg PlayMsg
     | Pause
     | Resume
+    | Reset
 
 
 emptyBottle : Grid
@@ -99,10 +104,9 @@ randomNewVirus bottle =
         Random.pair randomColor (randomEmptyPair bottle)
 
 
-randomNewPill : Cmd Msg
+randomNewPill : Generator ( Color, Color )
 randomNewPill =
-    Random.generate NewPill <|
-        Random.pair randomColor randomColor
+    Random.pair randomColor randomColor
 
 
 randomEmptyPair : Grid -> Generator Grid.Pair
@@ -180,14 +184,15 @@ update action model =
                     ( PrepareGame state, randomNewVirus bottle )
                 else if Grid.totalViruses newBottle >= desiredCount then
                     ( PrepareGame { state | bottle = newBottle }
-                    , randomNewPill
+                    , Random.generate InitPill <|
+                        randomNewPill
                     )
                 else
                     ( PrepareGame { state | bottle = newBottle }
                     , randomNewVirus newBottle
                     )
 
-        ( PrepareGame { level, bottle, score }, NewPill colors ) ->
+        ( PrepareGame { level, bottle, score }, InitPill colors ) ->
             ( Play
                 { bottle = bottle
                 , mode = Fall
@@ -204,7 +209,7 @@ update action model =
         ( Paused state, Resume ) ->
             ( Play state, Cmd.none )
 
-        ( Play state, _ ) ->
+        ( Play state, PlayMsg msg ) ->
             if Grid.totalViruses state.bottle == 0 then
                 ( Over
                     { won = True
@@ -227,7 +232,7 @@ update action model =
                                 False
 
                     ( newPlayState, cmd ) =
-                        updatePlayState action state
+                        updatePlayState msg state
                 in
                     if lost then
                         ( Over
@@ -239,7 +244,7 @@ update action model =
                         , Cmd.none
                         )
                     else
-                        ( Play newPlayState, cmd )
+                        ( Play newPlayState, Cmd.map PlayMsg cmd )
 
         ( Over _, Reset ) ->
             ( Init, Cmd.none )
@@ -248,7 +253,7 @@ update action model =
             ( model, Cmd.none )
 
 
-updatePlayState : Msg -> PlayState -> ( PlayState, Cmd Msg )
+updatePlayState : PlayMsg -> PlayState -> ( PlayState, Cmd PlayMsg )
 updatePlayState action model =
     case action of
         TickTock _ ->
@@ -285,7 +290,10 @@ updatePlayState action model =
                         else if canSweep model.bottle then
                             ( sweep model, Cmd.none )
                         else
-                            ( model, randomNewPill )
+                            ( model
+                            , Random.generate NewPill <|
+                                randomNewPill
+                            )
 
         NewPill next ->
             let
@@ -301,7 +309,7 @@ updatePlayState action model =
 
         KeyChange True code ->
             let
-                moveIfAvailable : Pill -> Grid.Pair -> ( PlayState, Cmd Msg )
+                moveIfAvailable : Pill -> Grid.Pair -> ( PlayState, Cmd PlayMsg )
                 moveIfAvailable pill pair =
                     if isAvailable pair pill model.bottle then
                         ( { model | mode = Pill pill pair }, Cmd.none )
@@ -339,22 +347,6 @@ updatePlayState action model =
                         ( model, Cmd.none )
 
         KeyChange False _ ->
-            ( model, Cmd.none )
-
-        -- TODO: types should be better so we don't list these here
-        Begin _ ->
-            ( model, Cmd.none )
-
-        Reset ->
-            ( model, Cmd.none )
-
-        NewVirus _ ->
-            ( model, Cmd.none )
-
-        Pause ->
-            ( model, Cmd.none )
-
-        Resume ->
             ( model, Cmd.none )
 
 
@@ -598,7 +590,7 @@ subscriptions model =
     in
         case model of
             Play _ ->
-                Sub.batch (time :: keys)
+                Sub.map PlayMsg <| Sub.batch (time :: keys)
 
             _ ->
                 Sub.none
