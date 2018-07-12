@@ -66,6 +66,16 @@ emptyBottle =
     Grid.fromDimensions ( 8, 16 )
 
 
+pairsForPill : Pill -> Grid.Pair -> List Grid.Pair
+pairsForPill pill ( x, y ) =
+    case pill of
+        Horizontal _ _ ->
+            [ ( x, y + 1 ), ( x + 1, y + 1 ) ]
+
+        Vertical _ _ ->
+            [ ( x, y ), ( x, y + 1 ) ]
+
+
 randomColor : Generator Color
 randomColor =
     selectWithDefault Blue [ Red, Yellow, Blue ]
@@ -173,11 +183,10 @@ update action model =
                 let
                     lossed =
                         case state.mode of
-                            Pill (Horizontal _ _) ( x, y ) ->
-                                not (Grid.isEmpty ( x, y ) state.bottle && Grid.isEmpty ( x + 1, y ) state.bottle)
-
-                            Pill (Vertical _ _) ( x, y ) ->
-                                not (Grid.isEmpty ( x, y ) state.bottle && Grid.isEmpty ( x, y + 1 ) state.bottle)
+                            Pill pill pair ->
+                                pairsForPill pill pair
+                                    |> List.map (\p -> Grid.isEmpty p state.bottle)
+                                    |> (List.all Basics.identity >> not)
 
                             _ ->
                                 False
@@ -242,7 +251,7 @@ updatePlayState action model =
                     model.next
             in
                 ( { model
-                    | mode = Pill (Horizontal a b) ( 4, 1 )
+                    | mode = Pill (Horizontal a b) ( 4, 0 )
                     , next = next
                   }
                 , Cmd.none
@@ -502,15 +511,10 @@ subLists len list =
 
 
 isAvailable : Grid.Pair -> Pill -> Grid -> Bool
-isAvailable ( x, y ) pill grid =
+isAvailable (( x, y ) as pair) pill grid =
     let
         aboveBottom =
-            case pill of
-                Vertical _ _ ->
-                    y < Grid.height grid
-
-                Horizontal _ _ ->
-                    y <= Grid.height grid
+            y < Grid.height grid
 
         withinRight =
             case pill of
@@ -525,17 +529,12 @@ isAvailable ( x, y ) pill grid =
                 && withinRight
                 && aboveBottom
 
-        noViruses =
-            case pill of
-                Horizontal _ _ ->
-                    Grid.isEmpty ( x, y ) grid
-                        && Grid.isEmpty ( x + 1, y ) grid
-
-                Vertical _ _ ->
-                    Grid.isEmpty ( x, y ) grid
-                        && Grid.isEmpty ( x, y + 1 ) grid
+        noOccupant =
+            pairsForPill pill pair
+                |> List.map (\p -> Grid.isEmpty p grid)
+                |> List.all Basics.identity
     in
-        inBottle && noViruses
+        inBottle && noOccupant
 
 
 subscriptions : Model -> Sub Msg
@@ -559,12 +558,21 @@ subscriptions model =
 
 colorPairs : Pill -> Grid.Pair -> List ( Color, Grid.Pair )
 colorPairs pill pair =
-    case ( pill, pair ) of
-        ( Horizontal a b, ( x, y ) ) ->
-            [ ( a, ( x, y ) ), ( b, ( x + 1, y ) ) ]
+    let
+        ( a, b ) =
+            case pill of
+                Horizontal a b ->
+                    ( a, b )
 
-        ( Vertical a b, ( x, y ) ) ->
-            [ ( a, ( x, y ) ), ( b, ( x, y + 1 ) ) ]
+                Vertical a b ->
+                    ( a, b )
+    in
+        case pairsForPill pill pair of
+            first :: second :: [] ->
+                [ ( a, first ), ( b, second ) ]
+
+            _ ->
+                []
 
 
 addPill : Pill -> Grid.Pair -> Grid -> Grid
@@ -704,13 +712,21 @@ viewColor color =
                 Yellow ->
                     "#ffbd03"
     in
-        div [ style ([ ( "background-color", bg ), ( "border-radius", "3px" ) ] ++ cellStyle) ]
+        div
+            [ style
+                ([ ( "background-color", bg )
+                 , ( "border-radius", "3px" )
+                 ]
+                    ++ cellStyle
+                )
+            ]
 
 
 cellStyle : List ( String, String )
 cellStyle =
     [ ( "width", px cellSize )
     , ( "height", px cellSize )
+    , ( "border", "1px solid black" )
     ]
 
 
