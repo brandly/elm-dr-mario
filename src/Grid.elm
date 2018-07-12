@@ -1,10 +1,6 @@
 module Grid exposing (..)
 
-
-type Color
-    = Red
-    | Blue
-    | Yellow
+import Virus exposing (Color(..))
 
 
 type Type
