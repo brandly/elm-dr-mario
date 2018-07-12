@@ -647,36 +647,38 @@ view model =
 
             Paused state ->
                 div []
-                    [ h3 []
-                        [ text "Paused" ]
-                    , Html.button
-                        [ onClick Resume ]
-                        [ text "resume" ]
+                    [ viewMessage "Paused"
+                        (Html.button
+                            [ onClick Resume ]
+                            [ text "resume" ]
+                        )
                     ]
 
             Over state ->
                 div []
-                    [ h1 []
-                        [ text
-                            (if state.won then
-                                "you won!"
-                             else
-                                "Game Over"
-                            )
-                        ]
-                    , if state.won then
-                        Html.button
-                            [ onClick
-                                (Begin
-                                    { level = (state.play.level + 1)
-                                    , score = state.play.score
-                                    }
-                                )
+                    [ viewMessage
+                        (if state.won then
+                            "you won!"
+                         else
+                            "Game Over"
+                        )
+                        (div []
+                            [ (if state.won then
+                                Html.button
+                                    [ onClick
+                                        (Begin
+                                            { level = (state.play.level + 1)
+                                            , score = state.play.score
+                                            }
+                                        )
+                                    ]
+                                    [ text "Next Level" ]
+                               else
+                                text ""
+                              )
+                            , Html.button [ onClick Reset ] [ text "Main Menu" ]
                             ]
-                            [ text "Next Level" ]
-                      else
-                        text ""
-                    , Html.button [ onClick Reset ] [ text "Main Menu" ]
+                        )
                     , viewPlayState state.play
                     ]
         ]
@@ -707,6 +709,14 @@ viewPlayState state =
             , p [] [ (toString >> text) state.score ]
             , Html.button [ onClick Pause ] [ text "pause" ]
             ]
+        ]
+
+
+viewMessage : String -> Html msg -> Html msg
+viewMessage message below =
+    div [ style [ ( "text-align", "center" ), ( "margin", "16px 0" ) ] ]
+        [ h3 [] [ text message ]
+        , below
         ]
 
 
