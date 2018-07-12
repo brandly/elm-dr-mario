@@ -658,7 +658,7 @@ view model =
                 div []
                     [ viewMessage
                         (if state.won then
-                            "you won!"
+                            "You Win!"
                          else
                             "Game Over"
                         )
@@ -757,16 +757,16 @@ viewBottle bottle =
 
 viewPill : Color -> Html msg
 viewPill color =
-    viewColor color []
+    viewColor color 8 []
 
 
 viewVirus : Color -> Html msg
 viewVirus color =
-    viewColor color [ text "◔̯◔" ]
+    viewColor color 3 [ text "◔̯◔" ]
 
 
-viewColor : Color -> List (Html msg) -> Html msg
-viewColor color =
+viewColor : Color -> Int -> List (Html msg) -> Html msg
+viewColor color radius =
     let
         bg =
             case color of
@@ -782,7 +782,7 @@ viewColor color =
         div
             [ style
                 ([ ( "background-color", bg )
-                 , ( "border-radius", "3px" )
+                 , ( "border-radius", px radius )
                  ]
                     ++ cellStyle
                 )
