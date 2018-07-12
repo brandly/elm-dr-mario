@@ -44,6 +44,7 @@ type Model
         , bottle : Grid
         }
     | Play PlayState
+    | Paused PlayState
     | Over
         { won : Bool
         , bottle : Grid
@@ -68,6 +69,8 @@ type Msg
     | Begin { level : Int, score : Int }
     | NewVirus ( Color, Grid.Pair )
     | Reset
+    | Pause
+    | Resume
 
 
 emptyBottle : Grid
@@ -195,6 +198,12 @@ update action model =
             , Cmd.none
             )
 
+        ( Play state, Pause ) ->
+            ( Paused state, Cmd.none )
+
+        ( Paused state, Resume ) ->
+            ( Play state, Cmd.none )
+
         ( Play state, _ ) ->
             if Grid.totalViruses state.bottle == 0 then
                 ( Over
@@ -207,7 +216,7 @@ update action model =
                 )
             else
                 let
-                    lossed =
+                    lost =
                         case state.mode of
                             Pill pill pair ->
                                 pairsForPill pill pair
@@ -220,7 +229,7 @@ update action model =
                     ( newPlayState, cmd ) =
                         updatePlayState action state
                 in
-                    if lossed then
+                    if lost then
                         ( Over
                             { won = False
                             , bottle = state.bottle
@@ -340,6 +349,12 @@ updatePlayState action model =
             ( model, Cmd.none )
 
         NewVirus _ ->
+            ( model, Cmd.none )
+
+        Pause ->
+            ( model, Cmd.none )
+
+        Resume ->
             ( model, Cmd.none )
 
 
@@ -663,8 +678,12 @@ view model =
                         , p [] [ text <| toString (Grid.totalViruses state.bottle) ]
                         , h3 [] [ text "score" ]
                         , p [] [ (toString >> text) state.score ]
+                        , Html.button [ onClick Pause ] [ text "pause" ]
                         ]
                     ]
+
+            Paused state ->
+                Html.button [ onClick Resume ] [ text "resume" ]
 
             Over state ->
                 div []
