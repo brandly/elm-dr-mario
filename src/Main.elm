@@ -47,9 +47,7 @@ type Model
     | Paused PlayState
     | Over
         { won : Bool
-        , bottle : Grid
-        , level : Int
-        , score : Int
+        , play : PlayState
         }
 
 
@@ -213,9 +211,7 @@ update action model =
             if Grid.totalViruses state.bottle == 0 then
                 ( Over
                     { won = True
-                    , bottle = state.bottle
-                    , level = state.level
-                    , score = state.score
+                    , play = state
                     }
                 , Cmd.none
                 )
@@ -237,9 +233,7 @@ update action model =
                     if lost then
                         ( Over
                             { won = False
-                            , bottle = state.bottle
-                            , level = state.level
-                            , score = state.score
+                            , play = state
                             }
                         , Cmd.none
                         )
@@ -649,33 +643,16 @@ view model =
                 div [] [ text "💊💊💊" ]
 
             Play state ->
-                div [ style [ ( "display", "flex" ) ] ]
-                    [ viewBottle
-                        (case state.mode of
-                            Pill pill pair ->
-                                addPill pill pair state.bottle
-
-                            _ ->
-                                state.bottle
-                        )
-                    , div [ style [ ( "margin", "16px" ) ] ]
-                        [ h3 [] [ text "next" ]
-                        , div [ style [ ( "display", "flex" ) ] ]
-                            [ (Tuple.first >> viewPill) state.next
-                            , (Tuple.second >> viewPill) state.next
-                            ]
-                        , h3 [] [ text "level" ]
-                        , p [] [ (toString >> text) state.level ]
-                        , h3 [] [ text "virus" ]
-                        , p [] [ text <| toString (Grid.totalViruses state.bottle) ]
-                        , h3 [] [ text "score" ]
-                        , p [] [ (toString >> text) state.score ]
-                        , Html.button [ onClick Pause ] [ text "pause" ]
-                        ]
-                    ]
+                viewPlayState state
 
             Paused state ->
-                Html.button [ onClick Resume ] [ text "resume" ]
+                div []
+                    [ h3 []
+                        [ text "Paused" ]
+                    , Html.button
+                        [ onClick Resume ]
+                        [ text "resume" ]
+                    ]
 
             Over state ->
                 div []
@@ -691,8 +668,8 @@ view model =
                         Html.button
                             [ onClick
                                 (Begin
-                                    { level = (state.level + 1)
-                                    , score = state.score
+                                    { level = (state.play.level + 1)
+                                    , score = state.play.score
                                     }
                                 )
                             ]
@@ -700,8 +677,36 @@ view model =
                       else
                         text ""
                     , Html.button [ onClick Reset ] [ text "Main Menu" ]
-                    , viewBottle state.bottle
+                    , viewPlayState state.play
                     ]
+        ]
+
+
+viewPlayState : PlayState -> Html Msg
+viewPlayState state =
+    div [ style [ ( "display", "flex" ) ] ]
+        [ viewBottle
+            (case state.mode of
+                Pill pill pair ->
+                    addPill pill pair state.bottle
+
+                _ ->
+                    state.bottle
+            )
+        , div [ style [ ( "margin", "16px" ) ] ]
+            [ h3 [] [ text "next" ]
+            , div [ style [ ( "display", "flex" ) ] ]
+                [ (Tuple.first >> viewPill) state.next
+                , (Tuple.second >> viewPill) state.next
+                ]
+            , h3 [] [ text "level" ]
+            , p [] [ (toString >> text) state.level ]
+            , h3 [] [ text "virus" ]
+            , p [] [ text <| toString (Grid.totalViruses state.bottle) ]
+            , h3 [] [ text "score" ]
+            , p [] [ (toString >> text) state.score ]
+            , Html.button [ onClick Pause ] [ text "pause" ]
+            ]
         ]
 
 
