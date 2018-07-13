@@ -1,12 +1,13 @@
 module Main exposing (..)
 
-import Html exposing (Html, h1, h3, text, div, p)
-import Html.Attributes exposing (style)
-import Html.Events exposing (onClick)
+import Html exposing (Html, h1, h3, text, div, p, input)
+import Html.Attributes exposing (style, type_)
+import Html.Events exposing (onClick, onSubmit)
 import Grid exposing (Cell, Type(..), Column, Grid)
 import Time exposing (Time, second)
 import Random exposing (Generator)
-import Game
+import Menu
+import Game exposing (Speed(..))
 import Virus exposing (Color(..))
 import RandomExtra
 
@@ -14,7 +15,7 @@ import RandomExtra
 main : Program Never Model Msg
 main =
     Html.program
-        { init = ( Init, Cmd.none )
+        { init = ( Init Menu.init, Cmd.none )
         , update = update
         , view = view
         , subscriptions = subscriptions
@@ -22,11 +23,12 @@ main =
 
 
 type Model
-    = Init
+    = Init Menu.State
     | PrepareGame
         { level : Int
         , score : Int
         , bottle : Grid
+        , speed : Speed
         }
     | Playing Game.State
     | Paused Game.State
@@ -37,9 +39,10 @@ type Model
 
 
 type Msg
-    = Begin { level : Int, score : Int }
+    = Begin { level : Int, score : Int, speed : Speed }
     | NewVirus ( Color, Grid.Pair )
     | InitPill ( Color, Color )
+    | MenuMsg Menu.Msg
     | PlayMsg Game.Msg
     | Pause
     | Resume
@@ -67,32 +70,21 @@ randomEmptyPair grid =
         RandomExtra.selectWithDefault ( -1, -1 ) emptyPairs
 
 
-virusesForLevel : Int -> Int
-virusesForLevel level =
-    -- TODO: better types?
-    if level <= 20 then
-        4 * level + 4
-    else
-        84
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
     case ( model, action ) of
-        ( _, Begin { level, score } ) ->
+        ( _, Begin { level, score, speed } ) ->
             ( PrepareGame
                 { level = level
                 , score = score
                 , bottle = Game.emptyBottle
+                , speed = speed
                 }
             , randomNewVirus Game.emptyBottle
             )
 
         ( PrepareGame ({ level, score, bottle } as state), NewVirus ( color, pair ) ) ->
             let
-                desiredCount =
-                    virusesForLevel level
-
                 newBottle =
                     Grid.updateCellsAtPairs
                         (\c -> { c | state = Just ( color, Virus ) })
@@ -102,7 +94,7 @@ update action model =
                 if Game.isCleared pair newBottle then
                     -- would create a 4-in-a-row, so let's try a new virus
                     ( PrepareGame state, randomNewVirus bottle )
-                else if Grid.totalViruses newBottle >= desiredCount then
+                else if Grid.totalViruses newBottle >= Game.virusesForLevel level then
                     ( PrepareGame { state | bottle = newBottle }
                     , Random.generate InitPill <|
                         Game.randomNewPill
@@ -112,12 +104,13 @@ update action model =
                     , randomNewVirus newBottle
                     )
 
-        ( PrepareGame { level, bottle, score }, InitPill colors ) ->
+        ( PrepareGame { level, bottle, score, speed }, InitPill colors ) ->
             ( (Game.init >> Playing)
                 { level = level
                 , bottle = bottle
                 , score = score
                 , colors = colors
+                , speed = speed
                 }
             , Cmd.none
             )
@@ -128,6 +121,9 @@ update action model =
         ( Paused state, Resume ) ->
             ( Playing state, Cmd.none )
 
+        ( Init state, MenuMsg msg ) ->
+            ( Init (Menu.update msg state), Cmd.none )
+
         ( Playing state, PlayMsg msg ) ->
             if Grid.totalViruses state.bottle == 0 then
                 ( Over
@@ -136,23 +132,20 @@ update action model =
                     }
                 , Cmd.none
                 )
+            else if Game.isOver state then
+                ( Over
+                    { won = False
+                    , game = state
+                    }
+                , Cmd.none
+                )
             else
-                let
-                    ( newPlayState, cmd ) =
-                        Game.update msg state
-                in
-                    if Game.isOver state then
-                        ( Over
-                            { won = False
-                            , game = state
-                            }
-                        , Cmd.none
-                        )
-                    else
-                        ( Playing newPlayState, Cmd.map PlayMsg cmd )
+                Game.update msg state
+                    |> Tuple.mapFirst Playing
+                    |> Tuple.mapSecond (Cmd.map PlayMsg)
 
         ( Over _, Reset ) ->
-            ( Init, Cmd.none )
+            ( Init Menu.init, Cmd.none )
 
         ( _, _ ) ->
             ( model, Cmd.none )
@@ -161,8 +154,8 @@ update action model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     case model of
-        Playing _ ->
-            Sub.map PlayMsg <| Game.subscriptions
+        Playing state ->
+            Sub.map PlayMsg <| Game.subscriptions state
 
         _ ->
             Sub.none
@@ -173,17 +166,23 @@ view model =
     div [ style [ ( "display", "flex" ), ( "flex-direction", "column" ), ( "align-items", "center" ) ] ]
         [ h1 [] [ text "dr. mario 💊" ]
         , case model of
-            Init ->
-                (h3 [] [ text "starting level" ])
-                    :: ((List.range 0 20)
-                            |> List.map
-                                (\level ->
-                                    Html.button
-                                        [ onClick (Begin { level = level, score = 0 }) ]
-                                        [ (toString >> text) level ]
-                                )
+            Init state ->
+                state
+                    |> (Menu.view >> List.map (Html.map MenuMsg))
+                    |> (\fields ->
+                            fields
+                                ++ [ input [ style [ ( "margin", "16px 0" ) ], type_ "submit" ] []
+                                   ]
                        )
-                    |> div []
+                    |> Html.form
+                        [ onSubmit
+                            (Begin
+                                { level = state.level
+                                , speed = state.speed
+                                , score = 0
+                                }
+                            )
+                        ]
 
             PrepareGame _ ->
                 div [] [ text "💊💊💊" ]
@@ -213,7 +212,8 @@ view model =
                                 Html.button
                                     [ onClick
                                         (Begin
-                                            { level = (state.game.level + 1)
+                                            { speed = state.game.speed
+                                            , level = (state.game.level + 1)
                                             , score = state.game.score
                                             }
                                         )

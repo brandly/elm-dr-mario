@@ -33,6 +33,7 @@ type alias State =
     , next : ( Color, Color )
     , level : Int
     , score : Int
+    , speed : Speed
     }
 
 
@@ -52,15 +53,26 @@ init :
     , bottle : Grid
     , score : Int
     , colors : ( Color, Color )
+    , speed : Speed
     }
     -> State
-init { level, bottle, score, colors } =
+init { level, bottle, score, colors, speed } =
     { bottle = bottle
     , mode = Fall
     , next = colors
     , level = level
     , score = score
+    , speed = speed
     }
+
+
+virusesForLevel : Int -> Int
+virusesForLevel level =
+    -- TODO: better types?
+    if level <= 20 then
+        4 * level + 4
+    else
+        84
 
 
 isOver : State -> Bool
@@ -75,11 +87,11 @@ isOver state =
             False
 
 
-subscriptions : Sub Msg
-subscriptions =
+subscriptions : State -> Sub Msg
+subscriptions { speed } =
     let
         time =
-            Time.every (700 * Time.millisecond) TickTock
+            Time.every (tickForSpeed speed) TickTock
 
         keys =
             [ Keyboard.downs (KeyChange True)
@@ -87,6 +99,19 @@ subscriptions =
             ]
     in
         Sub.batch (time :: keys)
+
+
+tickForSpeed : Speed -> Time
+tickForSpeed speed =
+    case speed of
+        High ->
+            300 * Time.millisecond
+
+        Med ->
+            700 * Time.millisecond
+
+        Low ->
+            Time.second
 
 
 randomNewPill : Generator ( Color, Color )
@@ -336,7 +361,7 @@ sweepableVirusCount grid =
 
 
 sweep : State -> State
-sweep ({ bottle, score } as model) =
+sweep ({ bottle, score, speed } as model) =
     let
         sweptBottle =
             Grid.map
@@ -349,7 +374,7 @@ sweep ({ bottle, score } as model) =
                 bottle
 
         additionalPoints =
-            (sweepableVirusCount >> (pointsForClearedViruses Med)) bottle
+            (sweepableVirusCount >> (pointsForClearedViruses speed)) bottle
     in
         { model | bottle = sweptBottle, score = score + additionalPoints }
 
@@ -475,7 +500,7 @@ view pauseMsg state =
                 _ ->
                     state.bottle
             )
-        , div [ style [ ( "margin", "16px" ) ] ]
+        , div [ style [ ( "margin", "0 16px" ) ] ]
             [ h3 [] [ text "next" ]
             , div [ style [ ( "display", "flex" ) ] ]
                 [ (Tuple.first >> viewPill) state.next
@@ -483,6 +508,8 @@ view pauseMsg state =
                 ]
             , h3 [] [ text "level" ]
             , p [] [ (toString >> text) state.level ]
+            , h3 [] [ text "speed" ]
+            , p [] [ (toString >> text) state.speed ]
             , h3 [] [ text "virus" ]
             , p [] [ text <| toString (Grid.totalViruses state.bottle) ]
             , h3 [] [ text "score" ]
