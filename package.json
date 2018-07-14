@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "start": "elm reactor"
+  },
+  "devDependencies": {
+    "elm": "0.18.0"
+  }
+}
