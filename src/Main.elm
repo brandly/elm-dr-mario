@@ -154,6 +154,9 @@ update action model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     case model of
+        Init state ->
+            Sub.map MenuMsg <| Menu.subscriptions state
+
         Playing state ->
             Sub.map PlayMsg <| Game.subscriptions state
 
