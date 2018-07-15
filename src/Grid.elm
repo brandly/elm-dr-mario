@@ -8,10 +8,14 @@ type Type
     | Pill
 
 
+type alias CellState =
+    Maybe ( Color, Type )
+
+
 type alias Cell =
     { x : Int
     , y : Int
-    , state : Maybe ( Color, Type )
+    , state : CellState
     }
 
 
@@ -102,9 +106,17 @@ map f grid =
     List.map (List.map f) grid
 
 
-updateCellsAtPairs : (Cell -> Cell) -> List Pair -> Grid -> Grid
-updateCellsAtPairs update pairs grid =
-    updateCells update (List.map (\p -> findCellAtPair p grid) pairs) grid
+setPairState : CellState -> Pair -> Grid -> Grid
+setPairState state pair grid =
+    updateCellAtPair
+        (\c -> { c | state = state })
+        pair
+        grid
+
+
+updateCellAtPair : (Cell -> Cell) -> Pair -> Grid -> Grid
+updateCellAtPair update pair grid =
+    updateCell update (findCellAtPair pair grid) grid
 
 
 updateCells : (Cell -> Cell) -> List Cell -> Grid -> Grid

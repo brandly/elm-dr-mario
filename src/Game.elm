@@ -68,11 +68,7 @@ init { level, bottle, score, colors, speed } =
 
 virusesForLevel : Int -> Int
 virusesForLevel level =
-    -- TODO: better types?
-    if level <= 20 then
-        4 * level + 4
-    else
-        84
+    min 84 (4 * level + 4)
 
 
 isOver : State -> Bool
@@ -81,7 +77,7 @@ isOver state =
         Pill pill pair ->
             pairsForPill pill pair
                 |> List.map (\p -> Grid.isEmpty p state.bottle)
-                |> (List.all Basics.identity >> not)
+                |> (List.all not)
 
         _ ->
             False
@@ -134,10 +130,7 @@ addPill pill pair bottle =
     colorPairs pill pair
         |> List.foldl
             (\( color, pair ) grid ->
-                Grid.updateCellsAtPairs
-                    (\c -> { c | state = Just ( color, Grid.Pill ) })
-                    [ pair ]
-                    grid
+                Grid.setPairState (Just ( color, Grid.Pill )) pair grid
             )
             bottle
 

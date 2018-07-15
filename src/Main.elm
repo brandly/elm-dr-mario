@@ -60,11 +60,11 @@ randomEmptyPair grid =
     let
         emptyPairs : List ( Int, Int )
         emptyPairs =
-            Grid.filter
-                (\{ x, y } ->
-                    y >= 5 && (Grid.isEmpty ( x, y ) grid)
-                )
-                grid
+            grid
+                |> Grid.filter
+                    (\{ x, y } ->
+                        y >= 5 && (Grid.isEmpty ( x, y ) grid)
+                    )
                 |> List.map (\{ x, y } -> ( x, y ))
     in
         RandomExtra.selectWithDefault ( -1, -1 ) emptyPairs
@@ -86,10 +86,7 @@ update action model =
         ( PrepareGame ({ level, score, bottle } as state), NewVirus ( color, pair ) ) ->
             let
                 newBottle =
-                    Grid.updateCellsAtPairs
-                        (\c -> { c | state = Just ( color, Virus ) })
-                        [ pair ]
-                        bottle
+                    Grid.setPairState (Just ( color, Virus )) pair bottle
             in
                 if Game.isCleared pair newBottle then
                     -- would create a 4-in-a-row, so let's try a new virus
