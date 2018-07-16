@@ -40,7 +40,7 @@ type Model
 
 type Msg
     = Begin { level : Int, score : Int, speed : Speed }
-    | NewVirus ( Color, Grid.Pair )
+    | NewVirus ( Color, Grid.Coords )
     | InitPill ( Color, Color )
     | MenuMsg Menu.Msg
     | PlayMsg Game.Msg
@@ -52,14 +52,14 @@ type Msg
 randomNewVirus : Game.Bottle -> Cmd Msg
 randomNewVirus bottle =
     Random.generate NewVirus <|
-        Random.pair Virus.generateColor (randomEmptyPair bottle)
+        Random.pair Virus.generateColor (randomEmptyCoords bottle)
 
 
-randomEmptyPair : Game.Bottle -> Generator Grid.Pair
-randomEmptyPair grid =
+randomEmptyCoords : Game.Bottle -> Generator Grid.Coords
+randomEmptyCoords grid =
     let
-        emptyPairs : List ( Int, Int )
-        emptyPairs =
+        emptyCoords : List ( Int, Int )
+        emptyCoords =
             grid
                 |> Grid.filter
                     (\{ x, y } ->
@@ -67,7 +67,7 @@ randomEmptyPair grid =
                     )
                 |> List.map (\{ x, y } -> ( x, y ))
     in
-        RandomExtra.selectWithDefault ( -1, -1 ) emptyPairs
+        RandomExtra.selectWithDefault ( -1, -1 ) emptyCoords
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -83,12 +83,12 @@ update action model =
             , randomNewVirus Game.emptyBottle
             )
 
-        ( PrepareGame ({ level, score, bottle } as state), NewVirus ( color, pair ) ) ->
+        ( PrepareGame ({ level, score, bottle } as state), NewVirus ( color, coords ) ) ->
             let
                 newBottle =
-                    Grid.setPairState (( color, Virus )) pair bottle
+                    Grid.setState (( color, Virus )) coords bottle
             in
-                if Game.isCleared pair newBottle then
+                if Game.isCleared coords newBottle then
                     -- would create a 4-in-a-row, so let's try a new virus
                     ( PrepareGame state, randomNewVirus bottle )
                 else if Game.totalViruses newBottle >= Game.virusesForLevel level then

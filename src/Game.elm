@@ -12,7 +12,7 @@ import Virus exposing (Color(..))
 
 
 type Mode
-    = PlacingPill Pill Grid.Pair
+    = PlacingPill Pill Grid.Coords
     | Falling
 
 
@@ -87,8 +87,8 @@ virusesForLevel level =
 isOver : State -> Bool
 isOver state =
     case state.mode of
-        PlacingPill pill pair ->
-            pairsForPill pill pair
+        PlacingPill pill coords ->
+            pillCoordsPair pill coords
                 |> List.map (\p -> Grid.isEmpty p state.bottle)
                 |> (List.all not)
 
@@ -128,8 +128,8 @@ randomNewPill =
     Random.pair Virus.generateColor Virus.generateColor
 
 
-pairsForPill : Pill -> Grid.Pair -> List Grid.Pair
-pairsForPill pill ( x, y ) =
+pillCoordsPair : Pill -> Grid.Coords -> List Grid.Coords
+pillCoordsPair pill ( x, y ) =
     case pill of
         Horizontal _ _ ->
             [ ( x, y + 1 ), ( x + 1, y + 1 ) ]
@@ -138,18 +138,18 @@ pairsForPill pill ( x, y ) =
             [ ( x, y ), ( x, y + 1 ) ]
 
 
-addPill : Pill -> Grid.Pair -> Bottle -> Bottle
-addPill pill pair bottle =
-    colorPairs pill pair
+addPill : Pill -> Grid.Coords -> Bottle -> Bottle
+addPill pill coords bottle =
+    colorCoords pill coords
         |> List.foldl
-            (\( color, pair ) grid ->
-                Grid.setPairState (( color, Pill )) pair grid
+            (\( color, coords ) grid ->
+                Grid.setState (( color, Pill )) coords grid
             )
             bottle
 
 
-colorPairs : Pill -> Grid.Pair -> List ( Color, Grid.Pair )
-colorPairs pill pair =
+colorCoords : Pill -> Grid.Coords -> List ( Color, Grid.Coords )
+colorCoords pill coords =
     let
         ( a, b ) =
             case pill of
@@ -159,7 +159,7 @@ colorPairs pill pair =
                 Vertical a b ->
                     ( a, b )
     in
-        case pairsForPill pill pair of
+        case pillCoordsPair pill coords of
             first :: second :: [] ->
                 [ ( a, first ), ( b, second ) ]
 
@@ -174,11 +174,11 @@ update action model =
             case model.mode of
                 PlacingPill pill ( x, y ) ->
                     let
-                        newPair =
+                        newCoords =
                             ( x, y + 1 )
                     in
-                        ( if isAvailable newPair pill model.bottle then
-                            { model | mode = PlacingPill pill newPair }
+                        ( if isAvailable newCoords pill model.bottle then
+                            { model | mode = PlacingPill pill newCoords }
                           else
                             afterPill pill ( x, y ) model
                         , Cmd.none
@@ -223,10 +223,10 @@ update action model =
 
         KeyChange True code ->
             let
-                moveIfAvailable : Pill -> Grid.Pair -> ( State, Cmd Msg )
-                moveIfAvailable pill pair =
-                    if isAvailable pair pill model.bottle then
-                        ( { model | mode = PlacingPill pill pair }, Cmd.none )
+                moveIfAvailable : Pill -> Grid.Coords -> ( State, Cmd Msg )
+                moveIfAvailable pill coords =
+                    if isAvailable coords pill model.bottle then
+                        ( { model | mode = PlacingPill pill coords }, Cmd.none )
                     else
                         ( model, Cmd.none )
             in
@@ -264,8 +264,8 @@ update action model =
             ( model, Cmd.none )
 
 
-isAvailable : Grid.Pair -> Pill -> Bottle -> Bool
-isAvailable (( x, y ) as pair) pill grid =
+isAvailable : Grid.Coords -> Pill -> Bottle -> Bool
+isAvailable (( x, y ) as coords) pill grid =
     let
         aboveBottom =
             y < Grid.height grid
@@ -284,18 +284,18 @@ isAvailable (( x, y ) as pair) pill grid =
                 && aboveBottom
 
         noOccupant =
-            pairsForPill pill pair
+            pillCoordsPair pill coords
                 |> List.map (\p -> Grid.isEmpty p grid)
-                |> List.all Basics.identity
+                |> List.all identity
     in
         inBottle && noOccupant
 
 
-afterPill : Pill -> Grid.Pair -> State -> State
-afterPill pill pair model =
+afterPill : Pill -> Grid.Coords -> State -> State
+afterPill pill coords model =
     let
         newBottle =
-            addPill pill pair model.bottle
+            addPill pill coords model.bottle
 
         modify =
             if canSweep newBottle then
@@ -385,11 +385,11 @@ sweep ({ bottle, score, speed } as model) =
         { model | bottle = sweptBottle, score = score + additionalPoints }
 
 
-canFall : Grid.Pair -> Bottle -> Bool
-canFall pair bottle =
+canFall : Grid.Coords -> Bottle -> Bool
+canFall coords bottle =
     let
         cell =
-            Grid.findCellAtPair pair bottle
+            Grid.findCellAtCoords coords bottle
 
         hasRoom : List (Cell Contents) -> Bool
         hasRoom cells =
@@ -410,7 +410,7 @@ canFall pair bottle =
     in
         case cell.state of
             Just ( _, Pill ) ->
-                (Grid.below pair bottle |> hasRoom)
+                (Grid.below coords bottle |> hasRoom)
 
             _ ->
                 False
@@ -425,7 +425,7 @@ fall bottle =
                 if canFall ( x, y - 1 ) bottle then
                     { cell
                         | state =
-                            .state <| Grid.findCellAtPair ( x, y - 1 ) bottle
+                            .state <| Grid.findCellAtCoords ( x, y - 1 ) bottle
                     }
                 else
                     { cell | state = Nothing }
@@ -433,7 +433,7 @@ fall bottle =
                 { cell
                     | state =
                         .state <|
-                            Grid.findCellAtPair ( x, y - 1 ) bottle
+                            Grid.findCellAtCoords ( x, y - 1 ) bottle
                 }
             else
                 cell
@@ -441,11 +441,11 @@ fall bottle =
         bottle
 
 
-isCleared : Grid.Pair -> Bottle -> Bool
+isCleared : Grid.Coords -> Bottle -> Bool
 isCleared ( x, y ) grid =
     let
         cell =
-            Grid.findCellAtPair ( x, y ) grid
+            Grid.findCellAtCoords ( x, y ) grid
 
         len =
             4
@@ -461,7 +461,7 @@ isCleared ( x, y ) grid =
         neighbors f =
             List.range (len * -1 + 1) (len - 1)
                 |> List.map f
-                |> List.map (\pair -> Grid.findCellAtPair pair grid)
+                |> List.map (\coords -> Grid.findCellAtCoords coords grid)
                 |> subLists len
     in
         case cell.state of
@@ -515,8 +515,8 @@ view pauseMsg state =
     div [ style [ ( "display", "flex" ) ] ]
         [ viewBottle
             (case state.mode of
-                PlacingPill pill pair ->
-                    addPill pill pair state.bottle
+                PlacingPill pill coords ->
+                    addPill pill coords state.bottle
 
                 _ ->
                     state.bottle

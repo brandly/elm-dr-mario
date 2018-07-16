@@ -1,4 +1,19 @@
-module Grid exposing (..)
+module Grid
+    exposing
+        ( Cell
+        , Column
+        , Grid
+        , Coords
+        , fromDimensions
+        , isEmpty
+        , setState
+        , map
+        , filter
+        , height
+        , width
+        , findCellAtCoords
+        , below
+        )
 
 
 type alias Cell val =
@@ -16,7 +31,7 @@ type alias Grid val =
     List (Column val)
 
 
-type alias Pair =
+type alias Coords =
     ( Int, Int )
 
 
@@ -66,14 +81,14 @@ findCell match grid =
         toList grid |> findMatching defaultCell match
 
 
-findCellAtPair : Pair -> Grid val -> Cell val
-findCellAtPair ( x, y ) grid =
+findCellAtCoords : Coords -> Grid val -> Cell val
+findCellAtCoords ( x, y ) grid =
     grid |> findCell (\cell -> cell.x == x && cell.y == y)
 
 
-isEmpty : Pair -> Grid val -> Bool
-isEmpty pair grid =
-    findCellAtPair pair grid |> (.state >> (==) Nothing)
+isEmpty : Coords -> Grid val -> Bool
+isEmpty coords grid =
+    findCellAtCoords coords grid |> (.state >> (==) Nothing)
 
 
 findMatching : Cell a -> (Cell a -> Bool) -> List (Cell a) -> Cell a
@@ -95,16 +110,16 @@ map f grid =
     List.map (List.map f) grid
 
 
-setPairState : val -> Pair -> Grid val -> Grid val
-setPairState state pair grid =
-    updateCellAtPair
+setState : val -> Coords -> Grid val -> Grid val
+setState state coords grid =
+    updateCellAtCoords
         (\c -> { c | state = Just state })
-        pair
+        coords
         grid
 
 
-updateCellAtPair : (Cell val -> Cell val) -> Pair -> Grid val -> Grid val
-updateCellAtPair update ( x, y ) grid =
+updateCellAtCoords : (Cell val -> Cell val) -> Coords -> Grid val -> Grid val
+updateCellAtCoords update ( x, y ) grid =
     let
         replaceCell : Column val -> Column val
         replaceCell =
@@ -119,7 +134,7 @@ updateCellAtPair update ( x, y ) grid =
         grid |> List.map replaceCell
 
 
-below : Pair -> Grid val -> List (Cell val)
+below : Coords -> Grid val -> List (Cell val)
 below ( x, y ) grid =
     case List.head <| List.drop (x - 1) grid of
         Nothing ->
