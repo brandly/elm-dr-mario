@@ -17,8 +17,7 @@ module Grid
 
 
 type alias Cell val =
-    { x : Int
-    , y : Int
+    { coords : Coords
     , state : Maybe val
     }
 
@@ -41,7 +40,7 @@ fromDimensions width height =
         makeColumn : Int -> Column val
         makeColumn x =
             List.range 1 height
-                |> List.map (\y -> Cell x y Nothing)
+                |> List.map (\y -> Cell ( x, y ) Nothing)
     in
         List.range 1 width
             |> List.map makeColumn
@@ -76,14 +75,14 @@ findCell : (Cell val -> Bool) -> Grid val -> Cell val
 findCell match grid =
     let
         defaultCell =
-            Cell -1 -1 Nothing
+            Cell ( -1, -1 ) Nothing
     in
         toList grid |> findMatching defaultCell match
 
 
 findCellAtCoords : Coords -> Grid val -> Cell val
-findCellAtCoords ( x, y ) grid =
-    grid |> findCell (\cell -> cell.x == x && cell.y == y)
+findCellAtCoords coords grid =
+    grid |> findCell (\cell -> cell.coords == coords)
 
 
 isEmpty : Coords -> Grid val -> Bool
@@ -119,13 +118,13 @@ setState state coords grid =
 
 
 updateCellAtCoords : (Cell val -> Cell val) -> Coords -> Grid val -> Grid val
-updateCellAtCoords update ( x, y ) grid =
+updateCellAtCoords update coords grid =
     let
         replaceCell : Column val -> Column val
         replaceCell =
             List.map
                 (\cell ->
-                    if cell.x == x && cell.y == y then
+                    if cell.coords == coords then
                         update cell
                     else
                         cell

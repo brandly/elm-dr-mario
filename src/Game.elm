@@ -177,7 +177,7 @@ update action model =
                         timeToFall =
                             model.bottle
                                 |> Grid.filter
-                                    (\{ x, y } -> canFall ( x, y ) model.bottle)
+                                    (\{ coords } -> canFall coords model.bottle)
                                 |> (List.isEmpty >> not)
                     in
                         if timeToFall then
@@ -287,10 +287,10 @@ sweep ({ bottle, score, speed } as model) =
         sweepableVirusCount grid =
             grid
                 |> Grid.filter
-                    (\({ x, y, state } as cell) ->
+                    (\({ coords, state } as cell) ->
                         case state of
                             Just ( _, Virus ) ->
-                                isCleared ( x, y ) grid
+                                isCleared coords grid
 
                             _ ->
                                 False
@@ -299,8 +299,8 @@ sweep ({ bottle, score, speed } as model) =
 
         sweptBottle =
             Grid.map
-                (\({ x, y } as cell) ->
-                    if isCleared ( x, y ) bottle then
+                (\({ coords } as cell) ->
+                    if isCleared coords bottle then
                         { cell | state = Nothing }
                     else
                         cell
@@ -316,24 +316,28 @@ sweep ({ bottle, score, speed } as model) =
 fall : Bottle -> Bottle
 fall bottle =
     Grid.map
-        (\({ x, y, state } as cell) ->
-            if canFall ( x, y ) bottle then
-                -- look above
-                if canFall ( x, y - 1 ) bottle then
+        (\({ coords, state } as cell) ->
+            let
+                ( x, y ) =
+                    coords
+            in
+                if canFall ( x, y ) bottle then
+                    -- look above
+                    if canFall ( x, y - 1 ) bottle then
+                        { cell
+                            | state =
+                                .state <| Grid.findCellAtCoords ( x, y - 1 ) bottle
+                        }
+                    else
+                        { cell | state = Nothing }
+                else if state == Nothing && canFall ( x, y - 1 ) bottle then
                     { cell
                         | state =
-                            .state <| Grid.findCellAtCoords ( x, y - 1 ) bottle
+                            .state <|
+                                Grid.findCellAtCoords ( x, y - 1 ) bottle
                     }
                 else
-                    { cell | state = Nothing }
-            else if state == Nothing && canFall ( x, y - 1 ) bottle then
-                { cell
-                    | state =
-                        .state <|
-                            Grid.findCellAtCoords ( x, y - 1 ) bottle
-                }
-            else
-                cell
+                    cell
         )
         bottle
 
@@ -383,8 +387,8 @@ canSweep : Bottle -> Bool
 canSweep grid =
     grid
         |> Grid.filter
-            (\({ x, y } as cell) ->
-                isCleared ( x, y ) grid
+            (\cell ->
+                isCleared cell.coords grid
             )
         |> (List.length >> (/=) 0)
 
@@ -510,10 +514,10 @@ generateEmptyCoords grid =
         emptyCoords =
             grid
                 |> Grid.filter
-                    (\{ x, y } ->
-                        y >= 5 && (Grid.isEmpty ( x, y ) grid)
+                    (\{ coords } ->
+                        Tuple.second coords >= 5 && (Grid.isEmpty coords grid)
                     )
-                |> List.map (\{ x, y } -> ( x, y ))
+                |> List.map .coords
     in
         selectWithDefault ( -1, -1 ) emptyCoords
 
