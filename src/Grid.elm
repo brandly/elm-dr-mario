@@ -71,37 +71,21 @@ filter filter grid =
     toList grid |> List.filter filter
 
 
-findCell : (Cell val -> Bool) -> Grid val -> Cell val
-findCell match grid =
-    let
-        defaultCell =
-            Cell ( -1, -1 ) Nothing
-    in
-        toList grid |> findMatching defaultCell match
-
-
 findCellAtCoords : Coords -> Grid val -> Cell val
 findCellAtCoords coords grid =
-    grid |> findCell (\cell -> cell.coords == coords)
+    toList grid
+        |> find (\cell -> cell.coords == coords)
+        |> Maybe.withDefault (Cell ( -1, -1 ) Nothing)
+
+
+find : (a -> Bool) -> List a -> Maybe a
+find test list =
+    list |> List.filter test |> List.head
 
 
 isEmpty : Coords -> Grid val -> Bool
 isEmpty coords grid =
     findCellAtCoords coords grid |> (.state >> (==) Nothing)
-
-
-findMatching : Cell a -> (Cell a -> Bool) -> List (Cell a) -> Cell a
-findMatching default match list =
-    let
-        matches =
-            list |> List.filter match
-    in
-        case List.head matches of
-            Just empty ->
-                empty
-
-            Nothing ->
-                default
 
 
 map : (Cell val -> Cell val) -> Grid val -> Grid val
