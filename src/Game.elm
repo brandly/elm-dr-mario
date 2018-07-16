@@ -1,6 +1,6 @@
 module Game exposing (..)
 
-import Grid exposing (Cell, Type(..), Column, Grid)
+import Grid exposing (Cell, Column, Grid)
 import Html exposing (Html, h1, h3, text, div, p)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
@@ -12,8 +12,8 @@ import Virus exposing (Color(..))
 
 
 type Mode
-    = Pill Pill Grid.Pair
-    | Fall
+    = PlacingPill Pill Grid.Pair
+    | Falling
 
 
 type Pill
@@ -27,8 +27,21 @@ type Speed
     | High
 
 
+type Type
+    = Virus
+    | Pill
+
+
+type alias Contents =
+    ( Color, Type )
+
+
+type alias Bottle =
+    Grid Contents
+
+
 type alias State =
-    { bottle : Grid
+    { bottle : Bottle
     , mode : Mode
     , next : ( Color, Color )
     , level : Int
@@ -43,14 +56,14 @@ type Msg
     | NewPill ( Color, Color )
 
 
-emptyBottle : Grid
+emptyBottle : Grid val
 emptyBottle =
-    Grid.fromDimensions ( 8, 16 )
+    Grid.fromDimensions 8 16
 
 
 init :
     { level : Int
-    , bottle : Grid
+    , bottle : Bottle
     , score : Int
     , colors : ( Color, Color )
     , speed : Speed
@@ -58,7 +71,7 @@ init :
     -> State
 init { level, bottle, score, colors, speed } =
     { bottle = bottle
-    , mode = Fall
+    , mode = Falling
     , next = colors
     , level = level
     , score = score
@@ -74,7 +87,7 @@ virusesForLevel level =
 isOver : State -> Bool
 isOver state =
     case state.mode of
-        Pill pill pair ->
+        PlacingPill pill pair ->
             pairsForPill pill pair
                 |> List.map (\p -> Grid.isEmpty p state.bottle)
                 |> (List.all not)
@@ -125,12 +138,12 @@ pairsForPill pill ( x, y ) =
             [ ( x, y ), ( x, y + 1 ) ]
 
 
-addPill : Pill -> Grid.Pair -> Grid -> Grid
+addPill : Pill -> Grid.Pair -> Bottle -> Bottle
 addPill pill pair bottle =
     colorPairs pill pair
         |> List.foldl
             (\( color, pair ) grid ->
-                Grid.setPairState (Just ( color, Grid.Pill )) pair grid
+                Grid.setPairState (( color, Pill )) pair grid
             )
             bottle
 
@@ -159,19 +172,19 @@ update action model =
     case action of
         TickTock _ ->
             case model.mode of
-                Pill pill ( x, y ) ->
+                PlacingPill pill ( x, y ) ->
                     let
                         newPair =
                             ( x, y + 1 )
                     in
                         ( if isAvailable newPair pill model.bottle then
-                            { model | mode = Pill pill newPair }
+                            { model | mode = PlacingPill pill newPair }
                           else
                             afterPill pill ( x, y ) model
                         , Cmd.none
                         )
 
-                Fall ->
+                Falling ->
                     let
                         timeToFall : Bool
                         timeToFall =
@@ -182,7 +195,7 @@ update action model =
                     in
                         if timeToFall then
                             ( { model
-                                | mode = Fall
+                                | mode = Falling
                                 , bottle =
                                     fall model.bottle
                               }
@@ -202,7 +215,7 @@ update action model =
                     model.next
             in
                 ( { model
-                    | mode = Pill (Horizontal a b) ( 4, 0 )
+                    | mode = PlacingPill (Horizontal a b) ( 4, 0 )
                     , next = next
                   }
                 , Cmd.none
@@ -213,12 +226,12 @@ update action model =
                 moveIfAvailable : Pill -> Grid.Pair -> ( State, Cmd Msg )
                 moveIfAvailable pill pair =
                     if isAvailable pair pill model.bottle then
-                        ( { model | mode = Pill pill pair }, Cmd.none )
+                        ( { model | mode = PlacingPill pill pair }, Cmd.none )
                     else
                         ( model, Cmd.none )
             in
                 case model.mode of
-                    Pill pill ( x, y ) ->
+                    PlacingPill pill ( x, y ) ->
                         case code of
                             38 ->
                                 let
@@ -251,7 +264,7 @@ update action model =
             ( model, Cmd.none )
 
 
-isAvailable : Grid.Pair -> Pill -> Grid -> Bool
+isAvailable : Grid.Pair -> Pill -> Bottle -> Bool
 isAvailable (( x, y ) as pair) pill grid =
     let
         aboveBottom =
@@ -292,7 +305,7 @@ afterPill pill pair model =
     in
         modify
             { model
-                | mode = Fall
+                | mode = Falling
                 , bottle = newBottle
             }
 
@@ -323,12 +336,12 @@ applyNtimes n f x =
         f (applyNtimes (n - 1) f x)
 
 
-canSweep : Grid -> Bool
+canSweep : Bottle -> Bool
 canSweep grid =
     sweepableCount grid > 0
 
 
-sweepableCount : Grid -> Int
+sweepableCount : Bottle -> Int
 sweepableCount grid =
     grid
         |> Grid.filter
@@ -338,7 +351,7 @@ sweepableCount grid =
         |> (List.length)
 
 
-sweepableVirusCount : Grid -> Int
+sweepableVirusCount : Bottle -> Int
 sweepableVirusCount grid =
     grid
         |> Grid.filter
@@ -372,13 +385,13 @@ sweep ({ bottle, score, speed } as model) =
         { model | bottle = sweptBottle, score = score + additionalPoints }
 
 
-canFall : Grid.Pair -> Grid -> Bool
+canFall : Grid.Pair -> Bottle -> Bool
 canFall pair bottle =
     let
         cell =
             Grid.findCellAtPair pair bottle
 
-        hasRoom : List Cell -> Bool
+        hasRoom : List (Cell Contents) -> Bool
         hasRoom cells =
             case cells of
                 [] ->
@@ -389,21 +402,21 @@ canFall pair bottle =
                         Nothing ->
                             True
 
-                        Just ( _, Grid.Pill ) ->
+                        Just ( _, Pill ) ->
                             hasRoom tail
 
                         Just ( _, Virus ) ->
                             False
     in
         case cell.state of
-            Just ( _, Grid.Pill ) ->
+            Just ( _, Pill ) ->
                 (Grid.below pair bottle |> hasRoom)
 
             _ ->
                 False
 
 
-fall : Grid -> Grid
+fall : Bottle -> Bottle
 fall bottle =
     Grid.map
         (\({ x, y, state } as cell) ->
@@ -428,7 +441,7 @@ fall bottle =
         bottle
 
 
-isCleared : Grid.Pair -> Grid -> Bool
+isCleared : Grid.Pair -> Bottle -> Bool
 isCleared ( x, y ) grid =
     let
         cell =
@@ -437,11 +450,11 @@ isCleared ( x, y ) grid =
         len =
             4
 
-        horizontal : List (List Cell)
+        horizontal : List (List (Cell Contents))
         horizontal =
             neighbors (\offset -> ( x + offset, y ))
 
-        vertical : List (List Cell)
+        vertical : List (List (Cell Contents))
         vertical =
             neighbors (\offset -> ( x, y + offset ))
 
@@ -478,6 +491,21 @@ subLists len list =
         (List.take len list) :: subLists len (List.drop 1 list)
 
 
+totalViruses : Bottle -> Int
+totalViruses grid =
+    List.length <|
+        Grid.filter
+            (\c ->
+                case c.state of
+                    Just ( _, Virus ) ->
+                        True
+
+                    _ ->
+                        False
+            )
+            grid
+
+
 
 -- VIEW --
 
@@ -487,7 +515,7 @@ view pauseMsg state =
     div [ style [ ( "display", "flex" ) ] ]
         [ viewBottle
             (case state.mode of
-                Pill pill pair ->
+                PlacingPill pill pair ->
                     addPill pill pair state.bottle
 
                 _ ->
@@ -504,7 +532,7 @@ view pauseMsg state =
             , h3 [] [ text "speed" ]
             , p [] [ (toString >> text) state.speed ]
             , h3 [] [ text "virus" ]
-            , p [] [ text <| toString (Grid.totalViruses state.bottle) ]
+            , p [] [ text <| toString (totalViruses state.bottle) ]
             , h3 [] [ text "score" ]
             , p [] [ (toString >> text) state.score ]
             , case pauseMsg of
@@ -517,7 +545,7 @@ view pauseMsg state =
         ]
 
 
-viewBottle : Grid -> Html msg
+viewBottle : Bottle -> Html msg
 viewBottle bottle =
     div []
         [ div
@@ -538,10 +566,10 @@ viewBottle bottle =
                                     Nothing ->
                                         div [ style cellStyle ] []
 
-                                    Just ( color, Grid.Pill ) ->
+                                    Just ( color, Pill ) ->
                                         viewPill color
 
-                                    Just ( color, Grid.Virus ) ->
+                                    Just ( color, Virus ) ->
                                         viewVirus color
                             )
                             column

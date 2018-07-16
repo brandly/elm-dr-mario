@@ -3,11 +3,11 @@ module Main exposing (..)
 import Html exposing (Html, h1, h3, text, div, p, input)
 import Html.Attributes exposing (style, type_)
 import Html.Events exposing (onClick, onSubmit)
-import Grid exposing (Cell, Type(..), Column, Grid)
+import Grid
 import Time exposing (Time, second)
 import Random exposing (Generator)
 import Menu
-import Game exposing (Speed(..))
+import Game exposing (Speed(..), Type(..))
 import Virus exposing (Color(..))
 import RandomExtra
 
@@ -27,7 +27,7 @@ type Model
     | PrepareGame
         { level : Int
         , score : Int
-        , bottle : Grid
+        , bottle : Game.Bottle
         , speed : Speed
         }
     | Playing Game.State
@@ -49,13 +49,13 @@ type Msg
     | Reset
 
 
-randomNewVirus : Grid -> Cmd Msg
+randomNewVirus : Game.Bottle -> Cmd Msg
 randomNewVirus bottle =
     Random.generate NewVirus <|
         Random.pair Virus.generateColor (randomEmptyPair bottle)
 
 
-randomEmptyPair : Grid -> Generator Grid.Pair
+randomEmptyPair : Game.Bottle -> Generator Grid.Pair
 randomEmptyPair grid =
     let
         emptyPairs : List ( Int, Int )
@@ -86,12 +86,12 @@ update action model =
         ( PrepareGame ({ level, score, bottle } as state), NewVirus ( color, pair ) ) ->
             let
                 newBottle =
-                    Grid.setPairState (Just ( color, Virus )) pair bottle
+                    Grid.setPairState (( color, Virus )) pair bottle
             in
                 if Game.isCleared pair newBottle then
                     -- would create a 4-in-a-row, so let's try a new virus
                     ( PrepareGame state, randomNewVirus bottle )
-                else if Grid.totalViruses newBottle >= Game.virusesForLevel level then
+                else if Game.totalViruses newBottle >= Game.virusesForLevel level then
                     ( PrepareGame { state | bottle = newBottle }
                     , Random.generate InitPill <|
                         Game.randomNewPill
@@ -122,7 +122,7 @@ update action model =
             ( Init (Menu.update msg state), Cmd.none )
 
         ( Playing state, PlayMsg msg ) ->
-            if Grid.totalViruses state.bottle == 0 then
+            if Game.totalViruses state.bottle == 0 then
                 ( Over
                     { won = True
                     , game = state

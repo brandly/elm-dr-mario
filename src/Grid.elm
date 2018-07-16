@@ -1,40 +1,29 @@
 module Grid exposing (..)
 
-import Virus exposing (Color(..))
 
-
-type Type
-    = Virus
-    | Pill
-
-
-type alias CellState =
-    Maybe ( Color, Type )
-
-
-type alias Cell =
+type alias Cell val =
     { x : Int
     , y : Int
-    , state : CellState
+    , state : Maybe val
     }
 
 
-type alias Column =
-    List Cell
+type alias Column val =
+    List (Cell val)
 
 
-type alias Grid =
-    List Column
+type alias Grid val =
+    List (Column val)
 
 
 type alias Pair =
     ( Int, Int )
 
 
-fromDimensions : Pair -> Grid
-fromDimensions ( width, height ) =
+fromDimensions : Int -> Int -> Grid val
+fromDimensions width height =
     let
-        makeColumn : Int -> Column
+        makeColumn : Int -> Column val
         makeColumn x =
             List.range 1 height
                 |> List.map (\y -> Cell x y Nothing)
@@ -43,12 +32,12 @@ fromDimensions ( width, height ) =
             |> List.map makeColumn
 
 
-width : Grid -> Int
+width : Grid val -> Int
 width grid =
     List.length grid
 
 
-height : Grid -> Int
+height : Grid val -> Int
 height grid =
     case grid of
         [] ->
@@ -58,36 +47,36 @@ height grid =
             List.length head
 
 
-gridToCells : Grid -> List Cell
-gridToCells grid =
+toList : Grid val -> List (Cell val)
+toList grid =
     List.concat grid
 
 
-filter : (Cell -> Bool) -> Grid -> List Cell
+filter : (Cell val -> Bool) -> Grid val -> List (Cell val)
 filter filter grid =
-    gridToCells grid |> List.filter filter
+    toList grid |> List.filter filter
 
 
-findCell : (Cell -> Bool) -> Grid -> Cell
+findCell : (Cell val -> Bool) -> Grid val -> Cell val
 findCell match grid =
     let
         defaultCell =
             Cell -1 -1 Nothing
     in
-        gridToCells grid |> findMatching defaultCell match
+        toList grid |> findMatching defaultCell match
 
 
-findCellAtPair : Pair -> Grid -> Cell
+findCellAtPair : Pair -> Grid val -> Cell val
 findCellAtPair ( x, y ) grid =
     grid |> findCell (\cell -> cell.x == x && cell.y == y)
 
 
-isEmpty : Pair -> Grid -> Bool
+isEmpty : Pair -> Grid val -> Bool
 isEmpty pair grid =
     findCellAtPair pair grid |> (.state >> (==) Nothing)
 
 
-findMatching : a -> (a -> Bool) -> List a -> a
+findMatching : Cell a -> (Cell a -> Bool) -> List (Cell a) -> Cell a
 findMatching default match list =
     let
         matches =
@@ -101,61 +90,36 @@ findMatching default match list =
                 default
 
 
-map : (Cell -> Cell) -> Grid -> Grid
+map : (Cell val -> Cell val) -> Grid val -> Grid val
 map f grid =
     List.map (List.map f) grid
 
 
-setPairState : CellState -> Pair -> Grid -> Grid
+setPairState : val -> Pair -> Grid val -> Grid val
 setPairState state pair grid =
     updateCellAtPair
-        (\c -> { c | state = state })
+        (\c -> { c | state = Just state })
         pair
         grid
 
 
-updateCellAtPair : (Cell -> Cell) -> Pair -> Grid -> Grid
-updateCellAtPair update pair grid =
-    updateCell update (findCellAtPair pair grid) grid
-
-
-updateCells : (Cell -> Cell) -> List Cell -> Grid -> Grid
-updateCells update cells grid =
-    List.foldl (updateCell update) grid cells
-
-
-updateCell : (Cell -> Cell) -> Cell -> Grid -> Grid
-updateCell update cell grid =
+updateCellAtPair : (Cell val -> Cell val) -> Pair -> Grid val -> Grid val
+updateCellAtPair update ( x, y ) grid =
     let
-        replaceCell : Column -> Column
+        replaceCell : Column val -> Column val
         replaceCell =
             List.map
-                (\og ->
-                    if og.x == cell.x && og.y == cell.y then
+                (\cell ->
+                    if cell.x == x && cell.y == y then
                         update cell
                     else
-                        og
+                        cell
                 )
     in
         grid |> List.map replaceCell
 
 
-totalViruses : Grid -> Int
-totalViruses grid =
-    List.length <|
-        filter
-            (\c ->
-                case c.state of
-                    Just ( _, Virus ) ->
-                        True
-
-                    _ ->
-                        False
-            )
-            grid
-
-
-below : Pair -> Grid -> List Cell
+below : Pair -> Grid val -> List (Cell val)
 below ( x, y ) grid =
     case List.head <| List.drop (x - 1) grid of
         Nothing ->
