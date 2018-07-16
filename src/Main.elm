@@ -7,9 +7,7 @@ import Grid
 import Time exposing (Time, second)
 import Random exposing (Generator)
 import Menu
-import Game exposing (Speed(..), Type(..))
-import Virus exposing (Color(..))
-import RandomExtra
+import Game exposing (Color(..))
 
 
 main : Program Never Model Msg
@@ -28,7 +26,7 @@ type Model
         { level : Int
         , score : Int
         , bottle : Game.Bottle
-        , speed : Speed
+        , speed : Game.Speed
         }
     | Playing Game.State
     | Paused Game.State
@@ -39,7 +37,11 @@ type Model
 
 
 type Msg
-    = Begin { level : Int, score : Int, speed : Speed }
+    = Begin
+        { level : Int
+        , score : Int
+        , speed : Game.Speed
+        }
     | NewVirus ( Color, Grid.Coords )
     | InitPill ( Color, Color )
     | MenuMsg Menu.Msg
@@ -52,22 +54,7 @@ type Msg
 randomNewVirus : Game.Bottle -> Cmd Msg
 randomNewVirus bottle =
     Random.generate NewVirus <|
-        Random.pair Virus.generateColor (randomEmptyCoords bottle)
-
-
-randomEmptyCoords : Game.Bottle -> Generator Grid.Coords
-randomEmptyCoords grid =
-    let
-        emptyCoords : List ( Int, Int )
-        emptyCoords =
-            grid
-                |> Grid.filter
-                    (\{ x, y } ->
-                        y >= 5 && (Grid.isEmpty ( x, y ) grid)
-                    )
-                |> List.map (\{ x, y } -> ( x, y ))
-    in
-        RandomExtra.selectWithDefault ( -1, -1 ) emptyCoords
+        Random.pair Game.generateColor (Game.generateEmptyCoords bottle)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -86,7 +73,7 @@ update action model =
         ( PrepareGame ({ level, score, bottle } as state), NewVirus ( color, coords ) ) ->
             let
                 newBottle =
-                    Grid.setState (( color, Virus )) coords bottle
+                    Grid.setState (( color, Game.Virus )) coords bottle
             in
                 if Game.isCleared coords newBottle then
                     -- would create a 4-in-a-row, so let's try a new virus
@@ -94,7 +81,7 @@ update action model =
                 else if Game.totalViruses newBottle >= Game.virusesForLevel level then
                     ( PrepareGame { state | bottle = newBottle }
                     , Random.generate InitPill <|
-                        Game.randomNewPill
+                        Game.generatePill
                     )
                 else
                     ( PrepareGame { state | bottle = newBottle }

@@ -6,9 +6,9 @@ import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import Keyboard exposing (KeyCode)
 import Random exposing (Generator(..))
+import RandomExtra exposing (selectWithDefault)
 import Time exposing (Time)
 import Element exposing (Element, px, styled)
-import Virus exposing (Color(..))
 
 
 type Mode
@@ -30,6 +30,12 @@ type Speed
 type Type
     = Virus
     | Pill
+
+
+type Color
+    = Red
+    | Blue
+    | Yellow
 
 
 type alias Contents =
@@ -123,9 +129,29 @@ tickForSpeed speed =
             Time.second
 
 
-randomNewPill : Generator ( Color, Color )
-randomNewPill =
-    Random.pair Virus.generateColor Virus.generateColor
+generatePill : Generator ( Color, Color )
+generatePill =
+    Random.pair generateColor generateColor
+
+
+generateColor : Generator Color
+generateColor =
+    selectWithDefault Blue [ Red, Yellow, Blue ]
+
+
+generateEmptyCoords : Bottle -> Generator Grid.Coords
+generateEmptyCoords grid =
+    let
+        emptyCoords : List ( Int, Int )
+        emptyCoords =
+            grid
+                |> Grid.filter
+                    (\{ x, y } ->
+                        y >= 5 && (Grid.isEmpty ( x, y ) grid)
+                    )
+                |> List.map (\{ x, y } -> ( x, y ))
+    in
+        selectWithDefault ( -1, -1 ) emptyCoords
 
 
 pillCoordsPair : Pill -> Grid.Coords -> List Grid.Coords
@@ -206,7 +232,7 @@ update action model =
                         else
                             ( model
                             , Random.generate NewPill <|
-                                randomNewPill
+                                generatePill
                             )
 
         NewPill next ->
