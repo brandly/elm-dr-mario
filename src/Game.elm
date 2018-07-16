@@ -62,11 +62,6 @@ type Msg
     | NewPill ( Color, Color )
 
 
-emptyBottle : Grid val
-emptyBottle =
-    Grid.fromDimensions 8 16
-
-
 init :
     { level : Int
     , bottle : Bottle
@@ -85,35 +80,27 @@ init { level, bottle, score, colors, speed } =
     }
 
 
-virusesForLevel : Int -> Int
-virusesForLevel level =
-    min 84 (4 * level + 4)
-
-
-isOver : State -> Bool
-isOver state =
-    case state.mode of
-        PlacingPill pill coords ->
-            pillCoordsPair pill coords
-                |> List.map (\p -> Grid.isEmpty p state.bottle)
-                |> (List.all not)
-
-        _ ->
-            False
+emptyBottle : Grid val
+emptyBottle =
+    Grid.fromDimensions 8 16
 
 
 subscriptions : State -> Sub Msg
 subscriptions { speed } =
-    let
-        time =
-            Time.every (tickForSpeed speed) TickTock
+    Sub.batch
+        [ Time.every (tickForSpeed speed) TickTock
+        , Keyboard.downs (KeyChange True)
+        , Keyboard.ups (KeyChange False)
+        ]
 
-        keys =
-            [ Keyboard.downs (KeyChange True)
-            , Keyboard.ups (KeyChange False)
-            ]
-    in
-        Sub.batch (time :: keys)
+
+
+-- SETTINGS --
+
+
+virusesForLevel : Int -> Int
+virusesForLevel level =
+    min 84 (4 * level + 4)
 
 
 tickForSpeed : Speed -> Time
@@ -129,68 +116,24 @@ tickForSpeed speed =
             Time.second
 
 
-generatePill : Generator ( Color, Color )
-generatePill =
-    Random.pair generateColor generateColor
+pointsForClearedViruses : Speed -> Int -> Int
+pointsForClearedViruses speed cleared =
+    applyNtimes (cleared - 1)
+        ((*) 2)
+        (case speed of
+            Low ->
+                100
+
+            Med ->
+                200
+
+            High ->
+                300
+        )
 
 
-generateColor : Generator Color
-generateColor =
-    selectWithDefault Blue [ Red, Yellow, Blue ]
 
-
-generateEmptyCoords : Bottle -> Generator Grid.Coords
-generateEmptyCoords grid =
-    let
-        emptyCoords : List ( Int, Int )
-        emptyCoords =
-            grid
-                |> Grid.filter
-                    (\{ x, y } ->
-                        y >= 5 && (Grid.isEmpty ( x, y ) grid)
-                    )
-                |> List.map (\{ x, y } -> ( x, y ))
-    in
-        selectWithDefault ( -1, -1 ) emptyCoords
-
-
-pillCoordsPair : Pill -> Grid.Coords -> List Grid.Coords
-pillCoordsPair pill ( x, y ) =
-    case pill of
-        Horizontal _ _ ->
-            [ ( x, y + 1 ), ( x + 1, y + 1 ) ]
-
-        Vertical _ _ ->
-            [ ( x, y ), ( x, y + 1 ) ]
-
-
-addPill : Pill -> Grid.Coords -> Bottle -> Bottle
-addPill pill coords bottle =
-    colorCoords pill coords
-        |> List.foldl
-            (\( color, coords ) grid ->
-                Grid.setState (( color, Pill )) coords grid
-            )
-            bottle
-
-
-colorCoords : Pill -> Grid.Coords -> List ( Color, Grid.Coords )
-colorCoords pill coords =
-    let
-        ( a, b ) =
-            case pill of
-                Horizontal a b ->
-                    ( a, b )
-
-                Vertical a b ->
-                    ( a, b )
-    in
-        case pillCoordsPair pill coords of
-            first :: second :: [] ->
-                [ ( a, first ), ( b, second ) ]
-
-            _ ->
-                []
+-- UPDATE --
 
 
 update : Msg -> State -> ( State, Cmd Msg )
@@ -202,6 +145,24 @@ update action model =
                     let
                         newCoords =
                             ( x, y + 1 )
+
+                        afterPill : Pill -> Grid.Coords -> State -> State
+                        afterPill pill coords model =
+                            let
+                                newBottle =
+                                    addPill pill coords model.bottle
+
+                                modify =
+                                    if canSweep newBottle then
+                                        sweep
+                                    else
+                                        (\m -> { m | bottle = fall newBottle })
+                            in
+                                modify
+                                    { model
+                                        | mode = Falling
+                                        , bottle = newBottle
+                                    }
                     in
                         ( if isAvailable newCoords pill model.bottle then
                             { model | mode = PlacingPill pill newCoords }
@@ -290,6 +251,107 @@ update action model =
             ( model, Cmd.none )
 
 
+addPill : Pill -> Grid.Coords -> Bottle -> Bottle
+addPill pill coords bottle =
+    colorCoords pill coords
+        |> List.foldl
+            (\( color, coords ) grid ->
+                Grid.setState (( color, Pill )) coords grid
+            )
+            bottle
+
+
+colorCoords : Pill -> Grid.Coords -> List ( Color, Grid.Coords )
+colorCoords pill coords =
+    let
+        ( a, b ) =
+            case pill of
+                Horizontal a b ->
+                    ( a, b )
+
+                Vertical a b ->
+                    ( a, b )
+    in
+        case pillCoordsPair pill coords of
+            first :: second :: [] ->
+                [ ( a, first ), ( b, second ) ]
+
+            _ ->
+                []
+
+
+sweep : State -> State
+sweep ({ bottle, score, speed } as model) =
+    let
+        sweepableVirusCount : Bottle -> Int
+        sweepableVirusCount grid =
+            grid
+                |> Grid.filter
+                    (\({ x, y, state } as cell) ->
+                        case state of
+                            Just ( _, Virus ) ->
+                                isCleared ( x, y ) grid
+
+                            _ ->
+                                False
+                    )
+                |> (List.length)
+
+        sweptBottle =
+            Grid.map
+                (\({ x, y } as cell) ->
+                    if isCleared ( x, y ) bottle then
+                        { cell | state = Nothing }
+                    else
+                        cell
+                )
+                bottle
+
+        additionalPoints =
+            (sweepableVirusCount >> (pointsForClearedViruses speed)) bottle
+    in
+        { model | bottle = sweptBottle, score = score + additionalPoints }
+
+
+fall : Bottle -> Bottle
+fall bottle =
+    Grid.map
+        (\({ x, y, state } as cell) ->
+            if canFall ( x, y ) bottle then
+                -- look above
+                if canFall ( x, y - 1 ) bottle then
+                    { cell
+                        | state =
+                            .state <| Grid.findCellAtCoords ( x, y - 1 ) bottle
+                    }
+                else
+                    { cell | state = Nothing }
+            else if state == Nothing && canFall ( x, y - 1 ) bottle then
+                { cell
+                    | state =
+                        .state <|
+                            Grid.findCellAtCoords ( x, y - 1 ) bottle
+                }
+            else
+                cell
+        )
+        bottle
+
+
+
+-- QUERIES
+
+
+pillCoordsPair : Pill -> Grid.Coords -> List Grid.Coords
+pillCoordsPair pill ( x, y ) =
+    case pill of
+        Horizontal _ _ ->
+            [ ( x, y + 1 ), ( x + 1, y + 1 ) ]
+
+        Vertical _ _ ->
+            [ ( x, y ), ( x, y + 1 ) ]
+
+
 isAvailable : Grid.Coords -> Pill -> Bottle -> Bool
 isAvailable (( x, y ) as coords) pill grid =
     let
@@ -317,98 +379,14 @@ isAvailable (( x, y ) as coords) pill grid =
         inBottle && noOccupant
 
 
-afterPill : Pill -> Grid.Coords -> State -> State
-afterPill pill coords model =
-    let
-        newBottle =
-            addPill pill coords model.bottle
-
-        modify =
-            if canSweep newBottle then
-                sweep
-            else
-                (\m -> { m | bottle = fall newBottle })
-    in
-        modify
-            { model
-                | mode = Falling
-                , bottle = newBottle
-            }
-
-
-pointsForClearedViruses : Speed -> Int -> Int
-pointsForClearedViruses speed cleared =
-    applyNtimes (cleared - 1)
-        ((*) 2)
-        (case speed of
-            Low ->
-                100
-
-            Med ->
-                200
-
-            High ->
-                300
-        )
-
-
-applyNtimes : Int -> (a -> a) -> a -> a
-applyNtimes n f x =
-    if n <= 0 then
-        x
-    else if n == 1 then
-        f x
-    else
-        f (applyNtimes (n - 1) f x)
-
-
 canSweep : Bottle -> Bool
 canSweep grid =
-    sweepableCount grid > 0
-
-
-sweepableCount : Bottle -> Int
-sweepableCount grid =
     grid
         |> Grid.filter
             (\({ x, y } as cell) ->
                 isCleared ( x, y ) grid
             )
-        |> (List.length)
-
-
-sweepableVirusCount : Bottle -> Int
-sweepableVirusCount grid =
-    grid
-        |> Grid.filter
-            (\({ x, y, state } as cell) ->
-                case state of
-                    Just ( _, Virus ) ->
-                        isCleared ( x, y ) grid
-
-                    _ ->
-                        False
-            )
-        |> (List.length)
-
-
-sweep : State -> State
-sweep ({ bottle, score, speed } as model) =
-    let
-        sweptBottle =
-            Grid.map
-                (\({ x, y } as cell) ->
-                    if isCleared ( x, y ) bottle then
-                        { cell | state = Nothing }
-                    else
-                        cell
-                )
-                bottle
-
-        additionalPoints =
-            (sweepableVirusCount >> (pointsForClearedViruses speed)) bottle
-    in
-        { model | bottle = sweptBottle, score = score + additionalPoints }
+        |> (List.length >> (/=) 0)
 
 
 canFall : Grid.Coords -> Bottle -> Bool
@@ -440,31 +418,6 @@ canFall coords bottle =
 
             _ ->
                 False
-
-
-fall : Bottle -> Bottle
-fall bottle =
-    Grid.map
-        (\({ x, y, state } as cell) ->
-            if canFall ( x, y ) bottle then
-                -- look above
-                if canFall ( x, y - 1 ) bottle then
-                    { cell
-                        | state =
-                            .state <| Grid.findCellAtCoords ( x, y - 1 ) bottle
-                    }
-                else
-                    { cell | state = Nothing }
-            else if state == Nothing && canFall ( x, y - 1 ) bottle then
-                { cell
-                    | state =
-                        .state <|
-                            Grid.findCellAtCoords ( x, y - 1 ) bottle
-                }
-            else
-                cell
-        )
-        bottle
 
 
 isCleared : Grid.Coords -> Bottle -> Bool
@@ -509,14 +462,6 @@ isCleared ( x, y ) grid =
                     (vertical ++ horizontal)
 
 
-subLists : Int -> List a -> List (List a)
-subLists len list =
-    if List.length list < len then
-        []
-    else
-        (List.take len list) :: subLists len (List.drop 1 list)
-
-
 totalViruses : Bottle -> Int
 totalViruses grid =
     List.length <|
@@ -530,6 +475,47 @@ totalViruses grid =
                         False
             )
             grid
+
+
+isOver : State -> Bool
+isOver state =
+    case state.mode of
+        PlacingPill pill coords ->
+            pillCoordsPair pill coords
+                |> List.map (\p -> Grid.isEmpty p state.bottle)
+                |> (List.all not)
+
+        _ ->
+            False
+
+
+
+-- GENERATORS --
+
+
+generatePill : Generator ( Color, Color )
+generatePill =
+    Random.pair generateColor generateColor
+
+
+generateColor : Generator Color
+generateColor =
+    selectWithDefault Blue [ Red, Yellow, Blue ]
+
+
+generateEmptyCoords : Bottle -> Generator Grid.Coords
+generateEmptyCoords grid =
+    let
+        emptyCoords : List ( Int, Int )
+        emptyCoords =
+            grid
+                |> Grid.filter
+                    (\{ x, y } ->
+                        y >= 5 && (Grid.isEmpty ( x, y ) grid)
+                    )
+                |> List.map (\{ x, y } -> ( x, y ))
+    in
+        selectWithDefault ( -1, -1 ) emptyCoords
 
 
 
@@ -651,3 +637,25 @@ cellStyle =
 cellSize : Int
 cellSize =
     24
+
+
+
+-- UTILS --
+
+
+subLists : Int -> List a -> List (List a)
+subLists len list =
+    if List.length list < len then
+        []
+    else
+        (List.take len list) :: subLists len (List.drop 1 list)
+
+
+applyNtimes : Int -> (a -> a) -> a -> a
+applyNtimes n f x =
+    if n <= 0 then
+        x
+    else if n == 1 then
+        f x
+    else
+        f (applyNtimes (n - 1) f x)
