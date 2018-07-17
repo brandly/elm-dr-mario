@@ -1,8 +1,8 @@
 module Main exposing (..)
 
-import Html exposing (Html, h1, h3, text, div, p, input)
+import Html exposing (Html, h1, h3, text, div, p)
 import Html.Attributes exposing (style, type_)
-import Html.Events exposing (onClick, onSubmit)
+import Html.Events exposing (onClick)
 import Grid
 import Time exposing (Time, second)
 import Random exposing (Generator)
@@ -155,21 +155,16 @@ view model =
         , case model of
             Init state ->
                 state
-                    |> (Menu.view >> List.map (Html.map MenuMsg))
-                    |> (\fields ->
-                            fields
-                                ++ [ input [ style [ ( "margin", "16px 0" ) ], type_ "submit" ] []
-                                   ]
-                       )
-                    |> Html.form
-                        [ onSubmit
-                            (Begin
-                                { level = state.level
-                                , speed = state.speed
-                                , score = 0
-                                }
-                            )
-                        ]
+                    |> Menu.view
+                        { onSubmit =
+                            \state ->
+                                (Begin
+                                    { level = state.level
+                                    , speed = state.speed
+                                    , score = 0
+                                    }
+                                )
+                        }
 
             PrepareGame _ ->
                 div [] [ text "💊💊💊" ]

@@ -1,8 +1,8 @@
 module Menu exposing (..)
 
-import Html exposing (Html, h3, div, text)
+import Html exposing (Html, h3, div, text, input)
 import Html.Attributes exposing (style, type_)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onSubmit)
 import Keyboard exposing (KeyCode)
 import Game exposing (Speed(..))
 
@@ -93,19 +93,22 @@ update msg ({ selecting, speed } as state) =
             state
 
 
-view : State -> List (Html Msg)
-view { level, speed, selecting } =
-    [ heading (selecting == Level) "virus level"
-    , div []
-        ((List.range 0 20)
-            |> List.map (toButton level)
-        )
-    , heading (selecting == Speed) "speed"
-    , div []
-        ([ Low, Med, High ]
-            |> List.map (toButton speed)
-        )
-    ]
+view : { onSubmit : State -> msg } -> State -> Html msg
+view events ({ level, speed, selecting } as state) =
+    Html.form
+        [ onSubmit (events.onSubmit state) ]
+        [ heading (selecting == Level) "virus level"
+        , div []
+            ((List.range 0 20)
+                |> List.map (toButton level)
+            )
+        , heading (selecting == Speed) "speed"
+        , div []
+            ([ Low, Med, High ]
+                |> List.map (toButton speed)
+            )
+        , input [ style [ ( "margin", "16px 0" ) ], type_ "submit" ] []
+        ]
 
 
 heading : Bool -> String -> Html msg
