@@ -58,8 +58,16 @@ type alias State =
 
 type Msg
     = TickTock Time
-    | KeyDown KeyCode
     | NewPill ( Color, Color )
+    | KeyDown Key
+
+
+type Key
+    = Up
+    | Down
+    | Left
+    | Right
+    | Noop
 
 
 init :
@@ -89,7 +97,26 @@ subscriptions : State -> Sub Msg
 subscriptions { speed } =
     Sub.batch
         [ Time.every (tickForSpeed speed) TickTock
-        , Keyboard.downs KeyDown
+        , Keyboard.downs
+            ((\keyCode ->
+                case keyCode of
+                    38 ->
+                        Up
+
+                    37 ->
+                        Left
+
+                    39 ->
+                        Right
+
+                    40 ->
+                        Down
+
+                    _ ->
+                        Noop
+             )
+                >> KeyDown
+            )
         ]
 
 
@@ -137,65 +164,63 @@ pointsForClearedViruses speed cleared =
 
 update : Msg -> State -> ( State, Cmd Msg )
 update action model =
-    case action of
-        TickTock _ ->
-            case model.mode of
-                PlacingPill pill ( x, y ) ->
+    case ( model.mode, action ) of
+        ( PlacingPill pill ( x, y ), TickTock _ ) ->
+            let
+                newCoords =
+                    ( x, y + 1 )
+
+                afterPill : Pill -> Grid.Coords -> State -> State
+                afterPill pill coords model =
                     let
-                        newCoords =
-                            ( x, y + 1 )
+                        newBottle =
+                            addPill pill coords model.bottle
 
-                        afterPill : Pill -> Grid.Coords -> State -> State
-                        afterPill pill coords model =
-                            let
-                                newBottle =
-                                    addPill pill coords model.bottle
-
-                                modify =
-                                    if canSweep newBottle then
-                                        sweep
-                                    else
-                                        (\m -> { m | bottle = fall newBottle })
-                            in
-                                modify
-                                    { model
-                                        | mode = Falling
-                                        , bottle = newBottle
-                                    }
+                        modify =
+                            if canSweep newBottle then
+                                sweep
+                            else
+                                (\m -> { m | bottle = fall newBottle })
                     in
-                        ( if isAvailable newCoords pill model.bottle then
-                            { model | mode = PlacingPill pill newCoords }
-                          else
-                            afterPill pill ( x, y ) model
-                        , Cmd.none
-                        )
-
-                Falling ->
-                    let
-                        timeToFall : Bool
-                        timeToFall =
-                            model.bottle
-                                |> Grid.filter
-                                    (\{ coords } -> canFall coords model.bottle)
-                                |> (List.isEmpty >> not)
-                    in
-                        if timeToFall then
-                            ( { model
+                        modify
+                            { model
                                 | mode = Falling
-                                , bottle =
-                                    fall model.bottle
-                              }
-                            , Cmd.none
-                            )
-                        else if canSweep model.bottle then
-                            ( sweep model, Cmd.none )
-                        else
-                            ( model
-                            , Random.generate NewPill <|
-                                generatePill
-                            )
+                                , bottle = newBottle
+                            }
+            in
+                ( if isAvailable newCoords pill model.bottle then
+                    { model | mode = PlacingPill pill newCoords }
+                  else
+                    afterPill pill ( x, y ) model
+                , Cmd.none
+                )
 
-        NewPill next ->
+        ( Falling, TickTock _ ) ->
+            let
+                timeToFall : Bool
+                timeToFall =
+                    model.bottle
+                        |> Grid.filter
+                            (\{ coords } -> canFall coords model.bottle)
+                        |> (List.isEmpty >> not)
+            in
+                if timeToFall then
+                    ( { model
+                        | mode = Falling
+                        , bottle =
+                            fall model.bottle
+                      }
+                    , Cmd.none
+                    )
+                else if canSweep model.bottle then
+                    ( sweep model, Cmd.none )
+                else
+                    ( model
+                    , Random.generate NewPill <|
+                        generatePill
+                    )
+
+        ( Falling, NewPill next ) ->
             let
                 ( a, b ) =
                     model.next
@@ -207,7 +232,10 @@ update action model =
                 , Cmd.none
                 )
 
-        KeyDown code ->
+        ( _, NewPill _ ) ->
+            ( model, Cmd.none )
+
+        ( PlacingPill pill ( x, y ), KeyDown key ) ->
             let
                 moveIfAvailable : Pill -> Grid.Coords -> ( State, Cmd Msg )
                 moveIfAvailable pill coords =
@@ -216,35 +244,33 @@ update action model =
                     else
                         ( model, Cmd.none )
             in
-                case model.mode of
-                    PlacingPill pill ( x, y ) ->
-                        case code of
-                            38 ->
-                                let
-                                    newPill =
-                                        case pill of
-                                            Horizontal a b ->
-                                                Vertical a b
+                case key of
+                    Up ->
+                        let
+                            newPill =
+                                case pill of
+                                    Horizontal a b ->
+                                        Vertical a b
 
-                                            Vertical a b ->
-                                                Horizontal b a
-                                in
-                                    moveIfAvailable newPill ( x, y )
+                                    Vertical a b ->
+                                        Horizontal b a
+                        in
+                            moveIfAvailable newPill ( x, y )
 
-                            37 ->
-                                moveIfAvailable pill ( x - 1, y )
+                    Left ->
+                        moveIfAvailable pill ( x - 1, y )
 
-                            39 ->
-                                moveIfAvailable pill ( x + 1, y )
+                    Right ->
+                        moveIfAvailable pill ( x + 1, y )
 
-                            40 ->
-                                moveIfAvailable pill ( x, y + 1 )
+                    Down ->
+                        moveIfAvailable pill ( x, y + 1 )
 
-                            _ ->
-                                ( model, Cmd.none )
-
-                    _ ->
+                    Noop ->
                         ( model, Cmd.none )
+
+        ( _, KeyDown _ ) ->
+            ( model, Cmd.none )
 
 
 addPill : Pill -> Grid.Coords -> Bottle -> Bottle
