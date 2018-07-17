@@ -8,7 +8,11 @@ import Game exposing (Speed(..))
 
 
 type Msg
-    = KeyChange Bool KeyCode
+    = Up
+    | Left
+    | Right
+    | Down
+    | Noop
 
 
 type Selection
@@ -26,71 +30,76 @@ init =
 
 
 subscriptions : State -> Sub Msg
-subscriptions { speed } =
-    Sub.batch
-        [ Keyboard.downs (KeyChange True)
-        , Keyboard.ups (KeyChange False)
-        ]
+subscriptions _ =
+    Keyboard.downs
+        (\keyCode ->
+            case keyCode of
+                38 ->
+                    Up
+
+                37 ->
+                    Left
+
+                39 ->
+                    Right
+
+                40 ->
+                    Down
+
+                _ ->
+                    Noop
+        )
 
 
 update : Msg -> State -> State
 update msg ({ selecting, speed } as state) =
-    case msg of
-        KeyChange True code ->
-            let
-                other : Selection
-                other =
-                    case selecting of
-                        Speed ->
-                            Level
+    let
+        other : Selection
+        other =
+            case selecting of
+                Speed ->
+                    Level
 
-                        Level ->
-                            Speed
-            in
-                case code of
-                    -- up
-                    38 ->
-                        { state | selecting = other }
+                Level ->
+                    Speed
+    in
+        case msg of
+            Up ->
+                { state | selecting = other }
 
-                    -- left
-                    37 ->
-                        case ( selecting, speed ) of
-                            ( Level, _ ) ->
-                                { state | level = max 0 (state.level - 1) }
+            Down ->
+                { state | selecting = other }
 
-                            ( Speed, High ) ->
-                                { state | speed = Med }
+            Left ->
+                case ( selecting, speed ) of
+                    ( Level, _ ) ->
+                        { state | level = max 0 (state.level - 1) }
 
-                            ( Speed, Med ) ->
-                                { state | speed = Low }
+                    ( Speed, High ) ->
+                        { state | speed = Med }
 
-                            ( Speed, _ ) ->
-                                state
+                    ( Speed, Med ) ->
+                        { state | speed = Low }
 
-                    -- right
-                    39 ->
-                        case ( selecting, speed ) of
-                            ( Level, _ ) ->
-                                { state | level = min 20 (state.level + 1) }
-
-                            ( Speed, Low ) ->
-                                { state | speed = Med }
-
-                            ( Speed, Med ) ->
-                                { state | speed = High }
-
-                            ( Speed, _ ) ->
-                                state
-
-                    -- down
-                    40 ->
-                        { state | selecting = other }
-
-                    _ ->
+                    ( Speed, _ ) ->
                         state
 
-        KeyChange False code ->
-            state
+            Right ->
+                case ( selecting, speed ) of
+                    ( Level, _ ) ->
+                        { state | level = min 20 (state.level + 1) }
+
+                    ( Speed, Low ) ->
+                        { state | speed = Med }
+
+                    ( Speed, Med ) ->
+                        { state | speed = High }
+
+                    ( Speed, _ ) ->
+                        state
+
+            Noop ->
+                state
 
 
 view : { onSubmit : State -> msg } -> State -> Html msg
