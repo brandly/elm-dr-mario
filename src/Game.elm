@@ -58,7 +58,7 @@ type alias State =
 
 type Msg
     = TickTock Time
-    | KeyChange Bool KeyCode
+    | KeyDown KeyCode
     | NewPill ( Color, Color )
 
 
@@ -89,8 +89,7 @@ subscriptions : State -> Sub Msg
 subscriptions { speed } =
     Sub.batch
         [ Time.every (tickForSpeed speed) TickTock
-        , Keyboard.downs (KeyChange True)
-        , Keyboard.ups (KeyChange False)
+        , Keyboard.downs KeyDown
         ]
 
 
@@ -208,7 +207,7 @@ update action model =
                 , Cmd.none
                 )
 
-        KeyChange True code ->
+        KeyDown code ->
             let
                 moveIfAvailable : Pill -> Grid.Coords -> ( State, Cmd Msg )
                 moveIfAvailable pill coords =
@@ -246,9 +245,6 @@ update action model =
 
                     _ ->
                         ( model, Cmd.none )
-
-        KeyChange False _ ->
-            ( model, Cmd.none )
 
 
 addPill : Pill -> Grid.Coords -> Bottle -> Bottle
