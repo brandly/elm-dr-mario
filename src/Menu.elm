@@ -12,6 +12,7 @@ type Msg
     | Left
     | Right
     | Down
+    | Enter
     | Noop
 
 
@@ -34,6 +35,9 @@ subscriptions _ =
     Keyboard.downs
         (\keyCode ->
             case keyCode of
+                13 ->
+                    Enter
+
                 38 ->
                     Up
 
@@ -51,8 +55,8 @@ subscriptions _ =
         )
 
 
-update : Msg -> State -> State
-update msg ({ selecting, speed } as state) =
+update : { onSubmit : State -> msg } -> Msg -> State -> ( State, Maybe msg )
+update events msg ({ selecting, speed } as state) =
     let
         other : Selection
         other =
@@ -62,50 +66,60 @@ update msg ({ selecting, speed } as state) =
 
                 Level ->
                     Speed
+
+        withNothing s =
+            ( s, Nothing )
     in
         case msg of
             Up ->
-                { state | selecting = other }
+                withNothing { state | selecting = other }
 
             Down ->
-                { state | selecting = other }
+                withNothing { state | selecting = other }
 
             Left ->
-                case ( selecting, speed ) of
-                    ( Level, _ ) ->
-                        { state | level = max 0 (state.level - 1) }
+                withNothing
+                    (case ( selecting, speed ) of
+                        ( Level, _ ) ->
+                            { state | level = max 0 (state.level - 1) }
 
-                    ( Speed, High ) ->
-                        { state | speed = Med }
+                        ( Speed, High ) ->
+                            { state | speed = Med }
 
-                    ( Speed, Med ) ->
-                        { state | speed = Low }
+                        ( Speed, Med ) ->
+                            { state | speed = Low }
 
-                    ( Speed, _ ) ->
-                        state
+                        ( Speed, _ ) ->
+                            state
+                    )
 
             Right ->
-                case ( selecting, speed ) of
-                    ( Level, _ ) ->
-                        { state | level = min 20 (state.level + 1) }
+                withNothing
+                    (case ( selecting, speed ) of
+                        ( Level, _ ) ->
+                            { state | level = min 20 (state.level + 1) }
 
-                    ( Speed, Low ) ->
-                        { state | speed = Med }
+                        ( Speed, Low ) ->
+                            { state | speed = Med }
 
-                    ( Speed, Med ) ->
-                        { state | speed = High }
+                        ( Speed, Med ) ->
+                            { state | speed = High }
 
-                    ( Speed, _ ) ->
-                        state
+                        ( Speed, _ ) ->
+                            state
+                    )
+
+            Enter ->
+                ( state, Just <| events.onSubmit state )
 
             Noop ->
-                state
+                withNothing state
 
 
-view : { onSubmit : State -> msg } -> State -> Html msg
-view events ({ level, speed, selecting } as state) =
-    Html.form
-        [ onSubmit (events.onSubmit state) ]
+view : State -> Html msg
+view { level, speed, selecting } =
+    div
+        []
         [ heading (selecting == Level) "virus level"
         , div []
             ((List.range 0 20)
@@ -116,7 +130,6 @@ view events ({ level, speed, selecting } as state) =
             ([ Low, Med, High ]
                 |> List.map (toButton speed)
             )
-        , input [ style [ ( "margin", "16px 0" ) ], type_ "submit" ] []
         ]
 
 

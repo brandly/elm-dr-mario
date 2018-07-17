@@ -106,7 +106,24 @@ update action model =
             ( Playing state, Cmd.none )
 
         ( Init state, MenuMsg msg ) ->
-            ( Init (Menu.update msg state), Cmd.none )
+            case
+                Menu.update
+                    { onSubmit =
+                        \menu ->
+                            Begin
+                                { level = menu.level
+                                , speed = menu.speed
+                                , score = 0
+                                }
+                    }
+                    msg
+                    state
+            of
+                ( newState, Nothing ) ->
+                    ( Init newState, Cmd.none )
+
+                ( _, Just msg ) ->
+                    update msg model
 
         ( Playing state, PlayMsg msg ) ->
             if Game.totalViruses state.bottle == 0 then
@@ -154,17 +171,7 @@ view model =
         [ h1 [] [ text "dr. mario 💊" ]
         , case model of
             Init state ->
-                state
-                    |> Menu.view
-                        { onSubmit =
-                            \state ->
-                                (Begin
-                                    { level = state.level
-                                    , speed = state.speed
-                                    , score = 0
-                                    }
-                                )
-                        }
+                Menu.view state
 
             PrepareGame _ ->
                 div [] [ text "💊💊💊" ]
