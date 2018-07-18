@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "elm reactor"
+    "start": "elm reactor",
+    "build": "elm make src/Main.elm --output dist/the.js && cp src/index.html dist"
   },
   "devDependencies": {
     "elm": "0.18.0"
