@@ -1,9 +1,11 @@
 {
   "scripts": {
     "start": "elm reactor",
-    "build": "elm make src/Main.elm --output dist/the.js && cp src/index.html dist"
+    "build": "elm make src/Main.elm --output dist/the.js && cp src/index.html dist",
+    "deploy": "npm run build && gh-pages --dist dist/"
   },
   "devDependencies": {
-    "elm": "0.18.0"
+    "elm": "0.18.0",
+    "gh-pages": "1.2.0"
   }
 }
