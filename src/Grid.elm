@@ -103,18 +103,14 @@ setState state coords grid =
 
 updateCellAtCoords : (Cell val -> Cell val) -> Coords -> Grid val -> Grid val
 updateCellAtCoords update coords grid =
-    let
-        replaceCell : Column val -> Column val
-        replaceCell =
-            List.map
-                (\cell ->
-                    if cell.coords == coords then
-                        update cell
-                    else
-                        cell
-                )
-    in
-        grid |> List.map replaceCell
+    map
+        (\cell ->
+            if cell.coords == coords then
+                update cell
+            else
+                cell
+        )
+        grid
 
 
 below : Coords -> Grid val -> List (Cell val)
