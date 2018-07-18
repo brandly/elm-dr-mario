@@ -509,7 +509,7 @@ isOver state =
         PlacingPill pill coords ->
             pillCoordsPair pill coords
                 |> List.map (\p -> Grid.isEmpty p state.bottle)
-                |> (List.all not)
+                |> (List.any not)
 
         _ ->
             False
