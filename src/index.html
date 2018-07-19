@@ -22,7 +22,11 @@
     <script src="/_compile/src/Main.elm"></script>
     <script src="the.js"></script>
     <script>
-      Elm.Main.fullscreen();
+      if (runElmProgram) {
+        runElmProgram();
+      } else {
+        Elm.Main.fullscreen();
+      }
     </script>
   </body>
 </html>
