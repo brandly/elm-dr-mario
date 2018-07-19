@@ -1,6 +1,6 @@
 module Element exposing (..)
 
-import Html exposing (Attribute, Html)
+import Html exposing (Attribute, Html, text)
 import Html.Attributes exposing (style)
 
 
@@ -17,3 +17,8 @@ styled el css =
 px : Int -> String
 px x =
     toString x ++ "px"
+
+
+none : Html msg
+none =
+    text ""

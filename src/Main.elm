@@ -8,6 +8,7 @@ import Time exposing (Time, second)
 import Random exposing (Generator)
 import Menu
 import Game exposing (Color(..))
+import Element exposing (none)
 
 
 main : Program Never Model Msg
@@ -209,7 +210,7 @@ view model =
                                     ]
                                     [ text "Next Level" ]
                                else
-                                text ""
+                                none
                               )
                             , Html.button [ onClick Reset ] [ text "Main Menu" ]
                             ]

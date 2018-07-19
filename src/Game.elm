@@ -8,7 +8,7 @@ import Keyboard exposing (KeyCode)
 import Random exposing (Generator(..))
 import RandomExtra exposing (selectWithDefault)
 import Time exposing (Time)
-import Element exposing (Element, px, styled)
+import Element exposing (Element, px, styled, none)
 
 
 type Mode
@@ -551,7 +551,14 @@ generateEmptyCoords grid =
 view : Maybe msg -> State -> Html msg
 view pauseMsg state =
     div [ style [ ( "display", "flex" ) ] ]
-        [ viewBottle
+        [ columnEl []
+            [ h3 [] [ text "score" ]
+            , p [] [ (toString >> text) state.score ]
+            , pauseMsg
+                |> Maybe.map (\msg -> Html.button [ onClick msg ] [ text "pause" ])
+                |> Maybe.withDefault none
+            ]
+        , viewBottle
             (case state.mode of
                 PlacingPill pill coords ->
                     addPill pill coords state.bottle
@@ -559,28 +566,27 @@ view pauseMsg state =
                 _ ->
                     state.bottle
             )
-        , div [ style [ ( "margin", "0 16px" ) ] ]
+        , columnEl []
             [ h3 [] [ text "next" ]
             , div [ style [ ( "display", "flex" ) ] ]
                 [ (Tuple.first >> viewPill) state.next
                 , (Tuple.second >> viewPill) state.next
                 ]
-            , h3 [] [ text "level" ]
-            , p [] [ (toString >> text) state.level ]
-            , h3 [] [ text "speed" ]
-            , p [] [ (toString >> text) state.speed ]
-            , h3 [] [ text "virus" ]
-            , p [] [ text <| toString (totalViruses state.bottle) ]
-            , h3 [] [ text "score" ]
-            , p [] [ (toString >> text) state.score ]
-            , case pauseMsg of
-                Just msg ->
-                    Html.button [ onClick msg ] [ text "pause" ]
-
-                Nothing ->
-                    text ""
+            , div [ style [ ( "margin", (px (3 * cellSize)) ++ " 0" ) ] ]
+                [ h3 [] [ text "level" ]
+                , p [] [ (toString >> text) state.level ]
+                , h3 [] [ text "speed" ]
+                , p [] [ (toString >> text) state.speed ]
+                , h3 [] [ text "virus" ]
+                , p [] [ text <| toString (totalViruses state.bottle) ]
+                ]
             ]
         ]
+
+
+columnEl : Element msg
+columnEl =
+    styled div [ ( "margin", "0 16px" ) ]
 
 
 viewBottle : Bottle -> Html msg
