@@ -1,10 +1,19 @@
-module Menu exposing (..)
+module Menu
+    exposing
+        ( Msg(..)
+        , State
+        , init
+        , view
+        , update
+        , subscriptions
+        )
 
-import Html exposing (Html, h3, div, text, input)
+import Html exposing (Html, h3, h4, div, text, p)
 import Html.Attributes exposing (style, type_)
 import Html.Events exposing (onSubmit)
 import Keyboard exposing (KeyCode)
 import Game exposing (Speed(..))
+import Element exposing (Element, styled, px)
 
 
 type Msg
@@ -119,41 +128,105 @@ update events msg ({ selecting, speed } as state) =
 view : State -> Html msg
 view { level, speed, selecting } =
     div
-        []
-        [ heading (selecting == Level) "virus level"
-        , div []
-            ((List.range 0 20)
-                |> List.map (toButton level)
-            )
-        , heading (selecting == Speed) "speed"
-        , div []
-            ([ Low, Med, High ]
-                |> List.map (toButton speed)
-            )
+        [ style [ ( "width", "420px" ), ( "max-width", "100%" ) ] ]
+        [ row []
+            [ heading (selecting == Level) "virus level"
+            , viewLevel level
+            ]
+        , row []
+            [ heading (selecting == Speed) "speed"
+            , div
+                [ style
+                    [ ( "width", "100%" )
+                    , ( "display", "flex" )
+                    , ( "justify-content", "space-around" )
+                    ]
+                ]
+                ([ Low, Med, High ]
+                    |> List.map (viewSpeed speed)
+                )
+            ]
+        , btw [] [ text "use arrows, hit enter" ]
+        ]
+
+
+viewLevel level =
+    div [ style [ ( "padding", "0 24px" ) ] ]
+        [ h4 [ style [ ( "text-align", "right" ) ] ] [ (toString >> text) level ]
+        , viewLevelSlider level
+        ]
+
+
+viewLevelSlider level =
+    div
+        [ style
+            [ ( "display", "flex" )
+            , ( "justify-content", "space-between" )
+            , ( "align-items", "center" )
+            ]
+        ]
+        (List.range 0 20
+            |> List.map
+                (\n ->
+                    div
+                        [ style
+                            [ ( "height"
+                              , px
+                                    (if n % 5 == 0 then
+                                        16
+                                     else
+                                        8
+                                    )
+                              )
+                            , ( "width", "4px" )
+                            , ( "background"
+                              , (if n == level then
+                                    "#fb7c54"
+                                 else
+                                    "#000"
+                                )
+                              )
+                            ]
+                        ]
+                        []
+                )
+        )
+
+
+btw : Element msg
+btw =
+    styled p
+        [ ( "font-color", "#666" )
+        , ( "text-align", "center" )
         ]
 
 
 heading : Bool -> String -> Html msg
 heading selected str =
-    h3 []
-        [ text
-            (if selected then
-                "💊" ++ str
-             else
+    h3
+        []
+        [ text <|
+            if selected then
+                ">" ++ str ++ "<"
+            else
                 str
-            )
         ]
 
 
-toButton : a -> a -> Html msg
-toButton ideal real =
-    Html.button
-        [ type_ "button"
-        , style
-            (if real == ideal then
-                [ ( "border", "3px solid blue" ) ]
-             else
-                []
-            )
+row : Element msg
+row =
+    styled div [ ( "margin-bottom", "48px" ) ]
+
+
+viewSpeed : a -> a -> Html msg
+viewSpeed ideal real =
+    h4
+        [ style <|
+            [ ( "padding", "4px 8px" ) ]
+                ++ (if real == ideal then
+                        [ ( "border", "3px solid #fb7c54" ) ]
+                    else
+                        []
+                   )
         ]
         [ (toString >> text) real ]
