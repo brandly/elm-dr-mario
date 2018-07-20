@@ -107,8 +107,8 @@ update action model =
             ( Playing state, Cmd.none )
 
         ( Init state, MenuMsg msg ) ->
-            case
-                Menu.update
+            state
+                |> Menu.update
                     { onSubmit =
                         \menu ->
                             Begin
@@ -118,13 +118,7 @@ update action model =
                                 }
                     }
                     msg
-                    state
-            of
-                ( newState, Nothing ) ->
-                    ( Init newState, Cmd.none )
-
-                ( _, Just msg ) ->
-                    update msg model
+                |> mapComponent update Init MenuMsg
 
         ( Playing state, PlayMsg msg ) ->
             if Game.totalViruses state.bottle == 0 then
@@ -150,7 +144,27 @@ update action model =
             ( Init Menu.init, Cmd.none )
 
         ( _, _ ) ->
-            ( model, Cmd.none )
+            z
+                ( model, Cmd.none )
+
+
+mapComponent :
+    (msg2 -> model2 -> ( model2, Cmd msg2 ))
+    -> (model1 -> model2)
+    -> (msg1 -> msg2)
+    -> { result : ( model1, Cmd msg1 ), event : Maybe msg2 }
+    -> ( model2, Cmd msg2 )
+mapComponent update toModel toMsg { result, event } =
+    case ( result, event ) of
+        ( _, Nothing ) ->
+            result
+                |> Tuple.mapFirst toModel
+                |> Tuple.mapSecond (Cmd.map toMsg)
+
+        ( ( newModel, cmd1 ), Just msg ) ->
+            update msg (toModel newModel)
+                |> Tuple.mapSecond
+                    (\cmd2 -> Cmd.batch [ Cmd.map toMsg cmd1, cmd2 ])
 
 
 subscriptions : Model -> Sub Msg
