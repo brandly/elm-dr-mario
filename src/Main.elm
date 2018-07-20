@@ -144,8 +144,7 @@ update action model =
             ( Init Menu.init, Cmd.none )
 
         ( _, _ ) ->
-            z
-                ( model, Cmd.none )
+            ( model, Cmd.none )
 
 
 mapComponent :
