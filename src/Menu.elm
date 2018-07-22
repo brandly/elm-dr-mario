@@ -65,10 +65,10 @@ subscriptions _ =
 
 
 update :
-    { onSubmit : State -> msg }
+    { onSubmit : { level : Int, speed : Speed } -> msg }
     -> Msg
     -> State
-    -> { result : ( State, Cmd Msg ), event : Maybe msg }
+    -> ( State, Cmd Msg, Maybe msg )
 update events msg ({ selecting, speed } as state) =
     let
         other : Selection
@@ -81,7 +81,7 @@ update events msg ({ selecting, speed } as state) =
                     Speed
 
         withNothing s =
-            { result = ( s, Cmd.none ), event = Nothing }
+            ( s, Cmd.none, Nothing )
     in
         case msg of
             Up ->
@@ -123,7 +123,10 @@ update events msg ({ selecting, speed } as state) =
                     )
 
             Enter ->
-                { result = ( state, Cmd.none ), event = Just <| events.onSubmit state }
+                ( state
+                , Cmd.none
+                , Just <| events.onSubmit { level = state.level, speed = state.speed }
+                )
 
             Noop ->
                 withNothing state
