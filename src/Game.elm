@@ -9,16 +9,8 @@ import Random exposing (Generator(..))
 import RandomExtra exposing (selectWithDefault)
 import Time exposing (Time)
 import Element exposing (Element, px, styled, none)
-
-
-type Mode
-    = PlacingPill Pill Grid.Coords
-    | Falling
-
-
-type Pill
-    = Horizontal Color Color
-    | Vertical Color Color
+import Bottle exposing (Bottle, Color(..))
+import Component
 
 
 type Speed
@@ -27,39 +19,42 @@ type Speed
     | High
 
 
-type Type
-    = Virus
-    | Pill
-
-
-type Color
-    = Red
-    | Blue
-    | Yellow
-
-
-type alias Contents =
-    ( Color, Type )
-
-
-type alias Bottle =
-    Grid Contents
-
-
 type alias State =
-    { bottle : Bottle
-    , mode : Mode
-    , next : ( Color, Color )
+    { bottle : Bottle.Model
     , level : Int
     , score : Int
     , speed : Speed
     }
 
 
+type Model
+    = PrepareGame
+        { level : Int
+        , score : Int
+        , bottle : Bottle.Model
+        , speed : Speed
+        }
+    | Playing State
+    | Paused State
+    | Over
+        { won : Bool
+        , game : State
+        }
+
+
 type Msg
     = TickTock Time
-    | NewPill ( Color, Color )
-    | KeyDown Key
+    | BottleMsg Bottle.Msg
+    | Advance
+        { level : Int
+        , score : Int
+        , speed : Speed
+        }
+    | NewVirus ( Color, Grid.Coords )
+    | InitPill ( Color, Color )
+    | Pause
+    | Resume
+    | Reset
 
 
 type Key
@@ -70,54 +65,38 @@ type Key
     | Noop
 
 
-init :
-    { level : Int
-    , bottle : Bottle
-    , score : Int
-    , colors : ( Color, Color )
-    , speed : Speed
-    }
-    -> State
-init { level, bottle, score, colors, speed } =
-    { bottle = bottle
-    , mode = Falling
-    , next = colors
-    , level = level
-    , score = score
-    , speed = speed
-    }
+init : Int -> Speed -> ( Model, Cmd Msg )
+init level speed =
+    initWithScore level speed 0
 
 
-emptyBottle : Grid val
-emptyBottle =
-    Grid.fromDimensions 8 16
+initWithScore level speed score =
+    let
+        bottle =
+            Bottle.init
+    in
+        ( PrepareGame
+            { level = level
+            , score = score
+            , bottle = bottle
+            , speed = speed
+            }
+        , randomNewVirus bottle.contents
+        )
 
 
-subscriptions : State -> Sub Msg
-subscriptions { speed } =
-    Sub.batch
-        [ Time.every (tickForSpeed speed) TickTock
-        , Keyboard.downs
-            ((\keyCode ->
-                case keyCode of
-                    38 ->
-                        Up
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    case model of
+        Playing { speed, bottle } ->
+            Sub.batch
+                [ Time.every (tickForSpeed speed) TickTock
+                , Bottle.subscriptions bottle
+                    |> Sub.map BottleMsg
+                ]
 
-                    37 ->
-                        Left
-
-                    39 ->
-                        Right
-
-                    40 ->
-                        Down
-
-                    _ ->
-                        Noop
-             )
-                >> KeyDown
-            )
-        ]
+        _ ->
+            Sub.none
 
 
 
@@ -144,441 +123,242 @@ tickForSpeed speed =
 
 pointsForClearedViruses : Speed -> Int -> Int
 pointsForClearedViruses speed cleared =
-    applyNtimes (cleared - 1)
-        ((*) 2)
-        (case speed of
-            Low ->
-                100
+    if cleared > 0 then
+        applyNtimes (cleared - 1)
+            ((*) 2)
+            (case speed of
+                Low ->
+                    100
 
-            Med ->
-                200
+                Med ->
+                    200
 
-            High ->
-                300
-        )
+                High ->
+                    300
+            )
+    else
+        0
 
 
 
 -- UPDATE --
 
 
-update : Msg -> State -> ( State, Cmd Msg )
+update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
-    case ( model.mode, action ) of
-        ( PlacingPill pill ( x, y ), TickTock _ ) ->
+    case ( model, action ) of
+        ( PrepareGame ({ level, score, bottle } as state), NewVirus ( color, coords ) ) ->
             let
-                newCoords =
-                    ( x, y + 1 )
-
-                afterPill : Pill -> Grid.Coords -> State -> State
-                afterPill pill coords model =
-                    let
-                        newBottle =
-                            addPill pill coords model.bottle
-
-                        modify =
-                            if canSweep newBottle then
-                                sweep
-                            else
-                                (\m -> { m | bottle = fall newBottle })
-                    in
-                        modify
-                            { model
-                                | mode = Falling
-                                , bottle = newBottle
-                            }
+                newBottle =
+                    Bottle.withVirus color coords bottle
             in
-                ( if isAvailable newCoords pill model.bottle then
-                    { model | mode = PlacingPill pill newCoords }
-                  else
-                    afterPill pill ( x, y ) model
-                , Cmd.none
-                )
-
-        ( Falling, TickTock _ ) ->
-            let
-                timeToFall : Bool
-                timeToFall =
-                    model.bottle
-                        |> Grid.filter
-                            (\{ coords } -> canFall coords model.bottle)
-                        |> (List.isEmpty >> not)
-            in
-                if timeToFall then
-                    ( { model
-                        | mode = Falling
-                        , bottle =
-                            fall model.bottle
-                      }
-                    , Cmd.none
+                if Bottle.isCleared coords newBottle.contents then
+                    -- would create a 4-in-a-row, so let's try a new virus
+                    ( PrepareGame state, randomNewVirus bottle.contents )
+                else if Bottle.totalViruses newBottle.contents >= virusesForLevel level then
+                    ( PrepareGame { state | bottle = newBottle }
+                    , Random.generate InitPill <|
+                        Bottle.generatePill
                     )
-                else if canSweep model.bottle then
-                    ( sweep model, Cmd.none )
                 else
-                    ( model
-                    , Random.generate NewPill <|
-                        generatePill
+                    ( PrepareGame { state | bottle = newBottle }
+                    , randomNewVirus newBottle.contents
                     )
 
-        ( Falling, NewPill next ) ->
-            let
-                ( a, b ) =
-                    model.next
-            in
-                ( { model
-                    | mode = PlacingPill (Horizontal a b) ( 4, 0 )
-                    , next = next
-                  }
+        ( PrepareGame { level, bottle, score, speed }, InitPill colors ) ->
+            ( Playing
+                { level = level
+                , bottle =
+                    bottle |> Bottle.withNext colors
+                , score = score
+                , speed = speed
+                }
+            , Cmd.none
+            )
+
+        ( PrepareGame _, _ ) ->
+            ( model, Cmd.none )
+
+        ( Playing state, Pause ) ->
+            ( Paused state, Cmd.none )
+
+        ( Paused state, Resume ) ->
+            ( Playing state, Cmd.none )
+
+        ( Paused state, _ ) ->
+            ( model, Cmd.none )
+
+        ( Playing state, msg ) ->
+            if Bottle.totalViruses state.bottle.contents == 0 then
+                ( Over
+                    { won = True
+                    , game = state
+                    }
                 , Cmd.none
                 )
+            else if isOver state then
+                ( Over
+                    { won = False
+                    , game = state
+                    }
+                , Cmd.none
+                )
+            else
+                updatePlayState msg state
 
-        ( _, NewPill _ ) ->
-            ( model, Cmd.none )
+        ( Over _, Advance { level, score, speed } ) ->
+            initWithScore level speed score
 
-        ( PlacingPill pill ( x, y ), KeyDown key ) ->
-            let
-                moveIfAvailable : Pill -> Grid.Coords -> ( State, Cmd Msg )
-                moveIfAvailable pill coords =
-                    if isAvailable coords pill model.bottle then
-                        ( { model | mode = PlacingPill pill coords }, Cmd.none )
-                    else
-                        ( model, Cmd.none )
-            in
-                case key of
-                    Up ->
-                        let
-                            newPill =
-                                case pill of
-                                    Horizontal a b ->
-                                        Vertical a b
-
-                                    Vertical a b ->
-                                        Horizontal b a
-                        in
-                            moveIfAvailable newPill ( x, y )
-
-                    Left ->
-                        moveIfAvailable pill ( x - 1, y )
-
-                    Right ->
-                        moveIfAvailable pill ( x + 1, y )
-
-                    Down ->
-                        moveIfAvailable pill ( x, y + 1 )
-
-                    Noop ->
-                        ( model, Cmd.none )
-
-        ( _, KeyDown _ ) ->
+        ( Over _, _ ) ->
             ( model, Cmd.none )
 
 
-addPill : Pill -> Grid.Coords -> Bottle -> Bottle
-addPill pill coords bottle =
-    colorCoords pill coords
-        |> List.foldl
-            (\( color, coords ) grid ->
-                Grid.setState (( color, Pill )) coords grid
-            )
-            bottle
-
-
-colorCoords : Pill -> Grid.Coords -> List ( Color, Grid.Coords )
-colorCoords pill coords =
+updatePlayState : Msg -> State -> ( Model, Cmd Msg )
+updatePlayState action ({ bottle, speed, score } as model) =
     let
-        ( a, b ) =
-            case pill of
-                Horizontal a b ->
-                    ( a, b )
+        withBottle : Bottle.Model -> Model
+        withBottle newBottle =
+            let
+                sweptViruses =
+                    (Bottle.totalViruses bottle.contents) - (Bottle.totalViruses newBottle.contents)
 
-                Vertical a b ->
-                    ( a, b )
+                additionalPoints =
+                    pointsForClearedViruses speed sweptViruses
+            in
+                Playing
+                    { model
+                        | bottle = newBottle
+                        , score = score + additionalPoints
+                    }
     in
-        case pillCoordsPair pill coords of
-            first :: second :: [] ->
-                [ ( a, first ), ( b, second ) ]
+        case action of
+            TickTock _ ->
+                Bottle.advance model.bottle
+                    |> Tuple.mapFirst withBottle
+                    |> Tuple.mapSecond (Cmd.map BottleMsg)
+
+            BottleMsg msg ->
+                Bottle.update msg model.bottle
+                    |> Component.mapOutMsg update
+                        withBottle
+                        BottleMsg
 
             _ ->
-                []
+                -- TODO: get rid of this
+                ( Playing model, Cmd.none )
 
 
 sweep : State -> State
 sweep ({ bottle, score, speed } as model) =
     let
-        sweepableVirusCount : Bottle -> Int
-        sweepableVirusCount grid =
-            grid
-                |> Grid.filter
-                    (\({ coords, state } as cell) ->
-                        case state of
-                            Just ( _, Virus ) ->
-                                isCleared coords grid
+        newBottle =
+            Bottle.sweep bottle
 
-                            _ ->
-                                False
-                    )
-                |> (List.length)
-
-        sweptBottle =
-            Grid.map
-                (\({ coords } as cell) ->
-                    if isCleared coords bottle then
-                        { cell | state = Nothing }
-                    else
-                        cell
-                )
-                bottle
+        sweptViruses =
+            (Bottle.totalViruses bottle.contents) - (Bottle.totalViruses newBottle.contents)
 
         additionalPoints =
-            (sweepableVirusCount >> (pointsForClearedViruses speed)) bottle
+            pointsForClearedViruses speed sweptViruses
     in
-        { model | bottle = sweptBottle, score = score + additionalPoints }
-
-
-fall : Bottle -> Bottle
-fall bottle =
-    Grid.map
-        (\({ coords, state } as cell) ->
-            let
-                ( x, y ) =
-                    coords
-            in
-                if canFall ( x, y ) bottle then
-                    -- look above
-                    if canFall ( x, y - 1 ) bottle then
-                        { cell
-                            | state =
-                                .state <| Grid.findCellAtCoords ( x, y - 1 ) bottle
-                        }
-                    else
-                        { cell | state = Nothing }
-                else if state == Nothing && canFall ( x, y - 1 ) bottle then
-                    { cell
-                        | state =
-                            .state <|
-                                Grid.findCellAtCoords ( x, y - 1 ) bottle
-                    }
-                else
-                    cell
-        )
-        bottle
+        { model | bottle = newBottle, score = score + additionalPoints }
 
 
 
 -- QUERIES
 
 
-pillCoordsPair : Pill -> Grid.Coords -> List Grid.Coords
-pillCoordsPair pill ( x, y ) =
-    case pill of
-        Horizontal _ _ ->
-            [ ( x, y + 1 ), ( x + 1, y + 1 ) ]
-
-        Vertical _ _ ->
-            [ ( x, y ), ( x, y + 1 ) ]
-
-
-isAvailable : Grid.Coords -> Pill -> Bottle -> Bool
-isAvailable (( x, y ) as coords) pill grid =
-    let
-        aboveBottom =
-            y < Grid.height grid
-
-        withinRight =
-            case pill of
-                Vertical _ _ ->
-                    x <= Grid.width grid
-
-                Horizontal _ _ ->
-                    x < Grid.width grid
-
-        inBottle =
-            (x >= 1)
-                && withinRight
-                && aboveBottom
-
-        noOccupant =
-            pillCoordsPair pill coords
-                |> List.map (\p -> Grid.isEmpty p grid)
-                |> List.all identity
-    in
-        inBottle && noOccupant
-
-
-canSweep : Bottle -> Bool
-canSweep grid =
-    grid
-        |> Grid.filter
-            (\cell ->
-                isCleared cell.coords grid
-            )
-        |> (List.length >> (/=) 0)
-
-
-canFall : Grid.Coords -> Bottle -> Bool
-canFall coords bottle =
-    let
-        cell =
-            Grid.findCellAtCoords coords bottle
-
-        hasRoom : List (Cell Contents) -> Bool
-        hasRoom cells =
-            case cells of
-                [] ->
-                    False
-
-                head :: tail ->
-                    case head.state of
-                        Nothing ->
-                            True
-
-                        Just ( _, Pill ) ->
-                            hasRoom tail
-
-                        Just ( _, Virus ) ->
-                            False
-    in
-        case cell.state of
-            Just ( _, Pill ) ->
-                (Grid.below coords bottle |> hasRoom)
-
-            _ ->
-                False
-
-
-isCleared : Grid.Coords -> Bottle -> Bool
-isCleared ( x, y ) grid =
-    let
-        cell =
-            Grid.findCellAtCoords ( x, y ) grid
-
-        len =
-            4
-
-        horizontal : List (List (Cell Contents))
-        horizontal =
-            neighbors (\offset -> ( x + offset, y ))
-
-        vertical : List (List (Cell Contents))
-        vertical =
-            neighbors (\offset -> ( x, y + offset ))
-
-        neighbors f =
-            List.range (len * -1 + 1) (len - 1)
-                |> List.map f
-                |> List.map (\coords -> Grid.findCellAtCoords coords grid)
-                |> subLists len
-    in
-        case cell.state of
-            Nothing ->
-                False
-
-            Just ( color, _ ) ->
-                List.any
-                    (List.all
-                        (\cell ->
-                            case cell.state of
-                                Just ( c, _ ) ->
-                                    c == color
-
-                                Nothing ->
-                                    False
-                        )
-                    )
-                    (vertical ++ horizontal)
-
-
-totalViruses : Bottle -> Int
-totalViruses grid =
-    List.length <|
-        Grid.filter
-            (\c ->
-                case c.state of
-                    Just ( _, Virus ) ->
-                        True
-
-                    _ ->
-                        False
-            )
-            grid
-
-
 isOver : State -> Bool
 isOver state =
-    case state.mode of
-        PlacingPill pill coords ->
-            pillCoordsPair pill coords
-                |> List.map (\p -> Grid.isEmpty p state.bottle)
-                |> (List.any not)
-
-        _ ->
-            False
+    Bottle.hasConflict state.bottle
 
 
 
--- GENERATORS --
+-- GENERATORS
 
 
-generatePill : Generator ( Color, Color )
-generatePill =
-    Random.pair generateColor generateColor
-
-
-generateColor : Generator Color
-generateColor =
-    selectWithDefault Blue [ Red, Yellow, Blue ]
-
-
-generateEmptyCoords : Bottle -> Generator Grid.Coords
-generateEmptyCoords grid =
-    let
-        emptyCoords : List ( Int, Int )
-        emptyCoords =
-            grid
-                |> Grid.filter
-                    (\{ coords } ->
-                        Tuple.second coords >= 5 && (Grid.isEmpty coords grid)
-                    )
-                |> List.map .coords
-    in
-        selectWithDefault ( -1, -1 ) emptyCoords
+randomNewVirus : Bottle -> Cmd Msg
+randomNewVirus bottle =
+    Random.generate NewVirus <|
+        Random.pair Bottle.generateColor (Bottle.generateEmptyCoords bottle)
 
 
 
 -- VIEW --
 
 
-view : Maybe msg -> State -> Html msg
-view pauseMsg state =
+view : Model -> Html Msg
+view model =
+    case model of
+        PrepareGame _ ->
+            div [] [ text "💊💊💊" ]
+
+        Playing state ->
+            viewPlaying (Just Pause) state
+
+        Paused state ->
+            div []
+                [ viewMessage "Paused"
+                    (Html.button
+                        [ onClick Resume ]
+                        [ text "resume" ]
+                    )
+                ]
+
+        Over state ->
+            div []
+                [ viewMessage
+                    (if state.won then
+                        "You Win!"
+                     else
+                        "Game Over"
+                    )
+                    (div []
+                        [ (if state.won then
+                            Html.button
+                                [ onClick
+                                    (Advance
+                                        { speed = state.game.speed
+                                        , level = (state.game.level + 1)
+                                        , score = state.game.score
+                                        }
+                                    )
+                                ]
+                                [ text "Next Level" ]
+                           else
+                            none
+                          )
+                        , Html.button [ onClick Reset ] [ text "Main Menu" ]
+                        ]
+                    )
+                , viewPlaying Nothing state.game
+                ]
+
+
+viewPlaying : Maybe msg -> State -> Html msg
+viewPlaying pauseMsg { score, bottle, level, speed } =
     div [ style [ ( "display", "flex" ) ] ]
         [ columnEl []
             [ h3 [] [ text "score" ]
-            , p [] [ (toString >> text) state.score ]
+            , p [ style [ ( "text-align", "right" ) ] ]
+                [ (toString >> text) score ]
             , pauseMsg
                 |> Maybe.map (\msg -> Html.button [ onClick msg ] [ text "pause" ])
                 |> Maybe.withDefault none
             ]
-        , viewBottle
-            (case state.mode of
-                PlacingPill pill coords ->
-                    addPill pill coords state.bottle
-
-                _ ->
-                    state.bottle
-            )
+        , Bottle.view bottle
         , columnEl []
             [ h3 [] [ text "next" ]
             , div [ style [ ( "display", "flex" ) ] ]
-                [ (Tuple.first >> viewPill) state.next
-                , (Tuple.second >> viewPill) state.next
+                [ (Tuple.first >> Bottle.viewPill) bottle.next
+                , (Tuple.second >> Bottle.viewPill) bottle.next
                 ]
-            , div [ style [ ( "margin", (px (3 * cellSize)) ++ " 0" ) ] ]
+            , div [ style [ ( "margin", "72px 0" ) ] ]
                 [ h3 [] [ text "level" ]
-                , p [] [ (toString >> text) state.level ]
+                , p [] [ (toString >> text) level ]
                 , h3 [] [ text "speed" ]
-                , p [] [ (toString >> text) state.speed ]
+                , p [] [ (toString >> text) speed ]
                 , h3 [] [ text "virus" ]
-                , p [] [ text <| toString (totalViruses state.bottle) ]
+                , p [] [ text <| toString (Bottle.totalViruses bottle.contents) ]
                 ]
             ]
         ]
@@ -589,98 +369,16 @@ columnEl =
     styled div [ ( "margin", "0 16px" ) ]
 
 
-viewBottle : Bottle -> Html msg
-viewBottle bottle =
-    div []
-        [ div
-            [ style
-                [ ( "display", "inline-block" )
-                , ( "border", "3px solid #CCC" )
-                , ( "border-radius", "3px" )
-                , ( "background", "#000" )
-                ]
-            ]
-            (List.map
-                (\column ->
-                    div
-                        [ style [ ( "display", "inline-block" ), ( "vertical-align", "top" ) ] ]
-                        (List.map
-                            (\cell ->
-                                case cell.state of
-                                    Nothing ->
-                                        div [ style cellStyle ] []
-
-                                    Just ( color, Pill ) ->
-                                        viewPill color
-
-                                    Just ( color, Virus ) ->
-                                        viewVirus color
-                            )
-                            column
-                        )
-                )
-                bottle
-            )
+viewMessage : String -> Html msg -> Html msg
+viewMessage message below =
+    div [ style [ ( "text-align", "center" ), ( "margin", "16px 0" ) ] ]
+        [ h3 [] [ text message ]
+        , below
         ]
-
-
-viewPill : Color -> Html msg
-viewPill color =
-    viewColor color 8 []
-
-
-viewVirus : Color -> Html msg
-viewVirus color =
-    viewColor color 3 [ text "◔̯◔" ]
-
-
-viewColor : Color -> Int -> List (Html msg) -> Html msg
-viewColor color radius =
-    let
-        bg =
-            case color of
-                Red ->
-                    "#e8005a"
-
-                Blue ->
-                    "#39bdff"
-
-                Yellow ->
-                    "#ffbd03"
-    in
-        div
-            [ style
-                ([ ( "background-color", bg )
-                 , ( "border-radius", px radius )
-                 ]
-                    ++ cellStyle
-                )
-            ]
-
-
-cellStyle : List ( String, String )
-cellStyle =
-    [ ( "width", px cellSize )
-    , ( "height", px cellSize )
-    , ( "border", "1px solid black" )
-    ]
-
-
-cellSize : Int
-cellSize =
-    24
 
 
 
 -- UTILS --
-
-
-subLists : Int -> List a -> List (List a)
-subLists len list =
-    if List.length list < len then
-        []
-    else
-        (List.take len list) :: subLists len (List.drop 1 list)
 
 
 applyNtimes : Int -> (a -> a) -> a -> a
