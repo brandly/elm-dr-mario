@@ -28,12 +28,7 @@ type alias State =
 
 
 type Model
-    = PrepareGame
-        { level : Int
-        , score : Int
-        , bottle : Bottle.Model
-        , speed : Speed
-        }
+    = PrepareGame State
     | Playing State
     | Paused State
     | Over
@@ -144,8 +139,8 @@ pointsForClearedViruses speed cleared =
 -- UPDATE --
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update action model =
+update : { onLeave : msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
+update { onLeave } action model =
     case ( model, action ) of
         ( PrepareGame ({ level, score, bottle } as state), NewVirus ( color, coords ) ) ->
             let
@@ -154,15 +149,17 @@ update action model =
             in
                 if Bottle.isCleared coords newBottle.contents then
                     -- would create a 4-in-a-row, so let's try a new virus
-                    ( PrepareGame state, randomNewVirus bottle.contents )
+                    ( PrepareGame state, randomNewVirus bottle.contents, Nothing )
                 else if Bottle.totalViruses newBottle.contents >= virusesForLevel level then
                     ( PrepareGame { state | bottle = newBottle }
                     , Random.generate InitPill <|
                         Bottle.generatePill
+                    , Nothing
                     )
                 else
                     ( PrepareGame { state | bottle = newBottle }
                     , randomNewVirus newBottle.contents
+                    , Nothing
                     )
 
         ( PrepareGame { level, bottle, score, speed }, InitPill colors ) ->
@@ -174,19 +171,20 @@ update action model =
                 , speed = speed
                 }
             , Cmd.none
+            , Nothing
             )
 
         ( PrepareGame _, _ ) ->
-            ( model, Cmd.none )
+            ( model, Cmd.none, Nothing )
 
         ( Playing state, Pause ) ->
-            ( Paused state, Cmd.none )
+            ( Paused state, Cmd.none, Nothing )
 
         ( Paused state, Resume ) ->
-            ( Playing state, Cmd.none )
+            ( Playing state, Cmd.none, Nothing )
 
         ( Paused state, _ ) ->
-            ( model, Cmd.none )
+            ( model, Cmd.none, Nothing )
 
         ( Playing state, msg ) ->
             if Bottle.totalViruses state.bottle.contents == 0 then
@@ -195,26 +193,35 @@ update action model =
                     , game = state
                     }
                 , Cmd.none
+                , Nothing
                 )
-            else if isOver state then
+            else if Bottle.hasConflict state.bottle then
                 ( Over
                     { won = False
                     , game = state
                     }
                 , Cmd.none
+                , Nothing
                 )
             else
-                updatePlayState msg state
+                updatePlayState onLeave msg state
 
         ( Over _, Advance { level, score, speed } ) ->
-            initWithScore level speed score
+            let
+                ( model, msg ) =
+                    initWithScore level speed score
+            in
+                ( model, msg, Nothing )
+
+        ( Over _, Reset ) ->
+            ( model, Cmd.none, Just onLeave )
 
         ( Over _, _ ) ->
-            ( model, Cmd.none )
+            ( model, Cmd.none, Nothing )
 
 
-updatePlayState : Msg -> State -> ( Model, Cmd Msg )
-updatePlayState action ({ bottle, speed, score } as model) =
+updatePlayState : msg -> Msg -> State -> ( Model, Cmd Msg, Maybe msg )
+updatePlayState onLeave action ({ bottle, speed, score } as model) =
     let
         withBottle : Bottle.Model -> Model
         withBottle newBottle =
@@ -233,43 +240,23 @@ updatePlayState action ({ bottle, speed, score } as model) =
     in
         case action of
             TickTock _ ->
-                Bottle.advance model.bottle
-                    |> Tuple.mapFirst withBottle
-                    |> Tuple.mapSecond (Cmd.map BottleMsg)
+                let
+                    ( a, b ) =
+                        Bottle.advance model.bottle
+                            |> Tuple.mapFirst withBottle
+                            |> Tuple.mapSecond (Cmd.map BottleMsg)
+                in
+                    ( a, b, Nothing )
 
             BottleMsg msg ->
                 Bottle.update msg model.bottle
-                    |> Component.mapOutMsg update
+                    |> Component.raiseOutMsg (update { onLeave = onLeave })
                         withBottle
                         BottleMsg
 
             _ ->
                 -- TODO: get rid of this
-                ( Playing model, Cmd.none )
-
-
-sweep : State -> State
-sweep ({ bottle, score, speed } as model) =
-    let
-        newBottle =
-            Bottle.sweep bottle
-
-        sweptViruses =
-            (Bottle.totalViruses bottle.contents) - (Bottle.totalViruses newBottle.contents)
-
-        additionalPoints =
-            pointsForClearedViruses speed sweptViruses
-    in
-        { model | bottle = newBottle, score = score + additionalPoints }
-
-
-
--- QUERIES
-
-
-isOver : State -> Bool
-isOver state =
-    Bottle.hasConflict state.bottle
+                ( Playing model, Cmd.none, Nothing )
 
 
 

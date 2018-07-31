@@ -58,8 +58,11 @@ update action model =
 
         ( InGame state, GameMsg msg ) ->
             state
-                |> Game.update msg
-                |> Component.mapSimple update InGame GameMsg
+                |> Game.update { onLeave = Reset } msg
+                |> Component.mapOutMsg update InGame GameMsg
+
+        ( InGame state, Reset ) ->
+            ( Init Menu.init, Cmd.none )
 
         ( _, _ ) ->
             ( model, Cmd.none )
