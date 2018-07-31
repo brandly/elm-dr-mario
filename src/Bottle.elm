@@ -81,30 +81,28 @@ type Key
     | Noop
 
 
+controls : Int -> Key
+controls keyCode =
+    case keyCode of
+        38 ->
+            Up
+
+        37 ->
+            Left
+
+        39 ->
+            Right
+
+        40 ->
+            Down
+
+        _ ->
+            Noop
+
+
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.batch
-        [ Keyboard.downs
-            ((\keyCode ->
-                case keyCode of
-                    38 ->
-                        Up
-
-                    37 ->
-                        Left
-
-                    39 ->
-                        Right
-
-                    40 ->
-                        Down
-
-                    _ ->
-                        Noop
-             )
-                >> KeyDown
-            )
-        ]
+    Keyboard.downs (controls >> KeyDown)
 
 
 
