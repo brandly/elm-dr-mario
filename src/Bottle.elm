@@ -42,14 +42,16 @@ type alias Model =
     { contents : Bottle
     , mode : Mode
     , next : ( Color, Color )
+    , controls : Int -> Key
     }
 
 
-init : Model
-init =
+init : (Int -> Key) -> Model
+init controls =
     { contents = Grid.fromDimensions 8 16
     , mode = Falling
     , next = ( Red, Red )
+    , controls = controls
     }
 
 
@@ -81,28 +83,9 @@ type Key
     | Noop
 
 
-controls : Int -> Key
-controls keyCode =
-    case keyCode of
-        38 ->
-            Up
-
-        37 ->
-            Left
-
-        39 ->
-            Right
-
-        40 ->
-            Down
-
-        _ ->
-            Noop
-
-
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Keyboard.downs (controls >> KeyDown)
+subscriptions model =
+    Keyboard.downs (model.controls >> KeyDown)
 
 
 

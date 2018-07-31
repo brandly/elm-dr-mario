@@ -52,23 +52,34 @@ type Msg
     | Reset
 
 
-type Key
-    = Up
-    | Down
-    | Left
-    | Right
-    | Noop
-
-
 init : Int -> Speed -> ( Model, Cmd Msg )
 init level speed =
     initWithScore level speed 0
 
 
+controls : Int -> Bottle.Key
+controls keyCode =
+    case keyCode of
+        38 ->
+            Bottle.Up
+
+        37 ->
+            Bottle.Left
+
+        39 ->
+            Bottle.Right
+
+        40 ->
+            Bottle.Down
+
+        _ ->
+            Bottle.Noop
+
+
 initWithScore level speed score =
     let
         bottle =
-            Bottle.init
+            Bottle.init controls
     in
         ( PrepareGame
             { level = level
