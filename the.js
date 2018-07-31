@@ -9432,6 +9432,38 @@ var _user$project$Element$styled = F4(
 			children);
 	});
 
+var _user$project$RandomExtra$selectWithDefault = F2(
+	function (defaultValue, list) {
+		var get = F2(
+			function (index, list) {
+				if (_elm_lang$core$Native_Utils.cmp(index, 0) < 0) {
+					return _elm_lang$core$Maybe$Nothing;
+				} else {
+					var _p0 = A2(_elm_lang$core$List$drop, index, list);
+					if (_p0.ctor === '[]') {
+						return _elm_lang$core$Maybe$Nothing;
+					} else {
+						return _elm_lang$core$Maybe$Just(_p0._0);
+					}
+				}
+			});
+		var select = function (list) {
+			return A2(
+				_elm_lang$core$Random$map,
+				function (index) {
+					return A2(get, index, list);
+				},
+				A2(
+					_elm_lang$core$Random$int,
+					0,
+					_elm_lang$core$List$length(list) - 1));
+		};
+		return A2(
+			_elm_lang$core$Random$map,
+			_elm_lang$core$Maybe$withDefault(defaultValue),
+			select(list));
+	});
+
 var _user$project$Grid$below = F2(
 	function (_p0, grid) {
 		var _p1 = _p0;
@@ -9552,44 +9584,7 @@ var _user$project$Grid$isEmpty = F2(
 			A2(_user$project$Grid$findCellAtCoords, coords, grid));
 	});
 
-var _user$project$RandomExtra$selectWithDefault = F2(
-	function (defaultValue, list) {
-		var get = F2(
-			function (index, list) {
-				if (_elm_lang$core$Native_Utils.cmp(index, 0) < 0) {
-					return _elm_lang$core$Maybe$Nothing;
-				} else {
-					var _p0 = A2(_elm_lang$core$List$drop, index, list);
-					if (_p0.ctor === '[]') {
-						return _elm_lang$core$Maybe$Nothing;
-					} else {
-						return _elm_lang$core$Maybe$Just(_p0._0);
-					}
-				}
-			});
-		var select = function (list) {
-			return A2(
-				_elm_lang$core$Random$map,
-				function (index) {
-					return A2(get, index, list);
-				},
-				A2(
-					_elm_lang$core$Random$int,
-					0,
-					_elm_lang$core$List$length(list) - 1));
-		};
-		return A2(
-			_elm_lang$core$Random$map,
-			_elm_lang$core$Maybe$withDefault(defaultValue),
-			select(list));
-	});
-
-var _user$project$Game$applyNtimes = F3(
-	function (n, f, x) {
-		return (_elm_lang$core$Native_Utils.cmp(n, 0) < 1) ? x : (_elm_lang$core$Native_Utils.eq(n, 1) ? f(x) : f(
-			A3(_user$project$Game$applyNtimes, n - 1, f, x)));
-	});
-var _user$project$Game$subLists = F2(
+var _user$project$Bottle$subLists = F2(
 	function (len, list) {
 		return (_elm_lang$core$Native_Utils.cmp(
 			_elm_lang$core$List$length(list),
@@ -9597,25 +9592,25 @@ var _user$project$Game$subLists = F2(
 			ctor: '::',
 			_0: A2(_elm_lang$core$List$take, len, list),
 			_1: A2(
-				_user$project$Game$subLists,
+				_user$project$Bottle$subLists,
 				len,
 				A2(_elm_lang$core$List$drop, 1, list))
 		};
 	});
-var _user$project$Game$cellSize = 24;
-var _user$project$Game$cellStyle = {
+var _user$project$Bottle$cellSize = 24;
+var _user$project$Bottle$cellStyle = {
 	ctor: '::',
 	_0: {
 		ctor: '_Tuple2',
 		_0: 'width',
-		_1: _user$project$Element$px(_user$project$Game$cellSize)
+		_1: _user$project$Element$px(_user$project$Bottle$cellSize)
 	},
 	_1: {
 		ctor: '::',
 		_0: {
 			ctor: '_Tuple2',
 			_0: 'height',
-			_1: _user$project$Element$px(_user$project$Game$cellSize)
+			_1: _user$project$Element$px(_user$project$Bottle$cellSize)
 		},
 		_1: {
 			ctor: '::',
@@ -9624,7 +9619,7 @@ var _user$project$Game$cellStyle = {
 		}
 	}
 };
-var _user$project$Game$viewColor = F2(
+var _user$project$Bottle$viewColor = F2(
 	function (color, radius) {
 		var bg = function () {
 			var _p0 = color;
@@ -9656,13 +9651,13 @@ var _user$project$Game$viewColor = F2(
 								_1: {ctor: '[]'}
 							}
 						},
-						_user$project$Game$cellStyle)),
+						_user$project$Bottle$cellStyle)),
 				_1: {ctor: '[]'}
 			});
 	});
-var _user$project$Game$viewVirus = function (color) {
+var _user$project$Bottle$viewVirus = function (color) {
 	return A3(
-		_user$project$Game$viewColor,
+		_user$project$Bottle$viewColor,
 		color,
 		3,
 		{
@@ -9671,14 +9666,454 @@ var _user$project$Game$viewVirus = function (color) {
 			_1: {ctor: '[]'}
 		});
 };
-var _user$project$Game$viewPill = function (color) {
+var _user$project$Bottle$viewPill = function (color) {
 	return A3(
-		_user$project$Game$viewColor,
+		_user$project$Bottle$viewColor,
 		color,
 		8,
 		{ctor: '[]'});
 };
-var _user$project$Game$viewBottle = function (bottle) {
+var _user$project$Bottle$generateEmptyCoords = function (grid) {
+	var emptyCoords = A2(
+		_elm_lang$core$List$map,
+		function (_) {
+			return _.coords;
+		},
+		A2(
+			_user$project$Grid$filter,
+			function (_p1) {
+				var _p2 = _p1;
+				var _p3 = _p2.coords;
+				return (_elm_lang$core$Native_Utils.cmp(
+					_elm_lang$core$Tuple$second(_p3),
+					5) > -1) && A2(_user$project$Grid$isEmpty, _p3, grid);
+			},
+			grid));
+	return A2(
+		_user$project$RandomExtra$selectWithDefault,
+		{ctor: '_Tuple2', _0: -1, _1: -1},
+		emptyCoords);
+};
+var _user$project$Bottle$totalViruses = function (contents) {
+	return _elm_lang$core$List$length(
+		A2(
+			_user$project$Grid$filter,
+			function (c) {
+				var _p4 = c.state;
+				if (((_p4.ctor === 'Just') && (_p4._0.ctor === '_Tuple2')) && (_p4._0._1.ctor === 'Virus')) {
+					return true;
+				} else {
+					return false;
+				}
+			},
+			contents));
+};
+var _user$project$Bottle$isCleared = F2(
+	function (_p5, grid) {
+		var _p6 = _p5;
+		var _p10 = _p6._1;
+		var _p9 = _p6._0;
+		var len = 4;
+		var neighbors = function (f) {
+			return A2(
+				_user$project$Bottle$subLists,
+				len,
+				A2(
+					_elm_lang$core$List$map,
+					function (coords) {
+						return A2(_user$project$Grid$findCellAtCoords, coords, grid);
+					},
+					A2(
+						_elm_lang$core$List$map,
+						f,
+						A2(_elm_lang$core$List$range, (len * -1) + 1, len - 1))));
+		};
+		var horizontal = neighbors(
+			function (offset) {
+				return {ctor: '_Tuple2', _0: _p9 + offset, _1: _p10};
+			});
+		var vertical = neighbors(
+			function (offset) {
+				return {ctor: '_Tuple2', _0: _p9, _1: _p10 + offset};
+			});
+		var cell = A2(
+			_user$project$Grid$findCellAtCoords,
+			{ctor: '_Tuple2', _0: _p9, _1: _p10},
+			grid);
+		var _p7 = cell.state;
+		if (_p7.ctor === 'Nothing') {
+			return false;
+		} else {
+			return A2(
+				_elm_lang$core$List$any,
+				_elm_lang$core$List$all(
+					function (cell) {
+						var _p8 = cell.state;
+						if (_p8.ctor === 'Just') {
+							return _elm_lang$core$Native_Utils.eq(_p8._0._0, _p7._0._0);
+						} else {
+							return false;
+						}
+					}),
+				A2(_elm_lang$core$Basics_ops['++'], vertical, horizontal));
+		}
+	});
+var _user$project$Bottle$canFall = F2(
+	function (coords, bottle) {
+		var hasRoom = function (cells) {
+			hasRoom:
+			while (true) {
+				var _p11 = cells;
+				if (_p11.ctor === '[]') {
+					return false;
+				} else {
+					var _p12 = _p11._0.state;
+					if (_p12.ctor === 'Nothing') {
+						return true;
+					} else {
+						if (_p12._0._1.ctor === 'Pill') {
+							var _v8 = _p11._1;
+							cells = _v8;
+							continue hasRoom;
+						} else {
+							return false;
+						}
+					}
+				}
+			}
+		};
+		var cell = A2(_user$project$Grid$findCellAtCoords, coords, bottle);
+		var _p13 = cell.state;
+		if (((_p13.ctor === 'Just') && (_p13._0.ctor === '_Tuple2')) && (_p13._0._1.ctor === 'Pill')) {
+			return hasRoom(
+				A2(_user$project$Grid$below, coords, bottle));
+		} else {
+			return false;
+		}
+	});
+var _user$project$Bottle$canSweep = function (grid) {
+	return function (_p14) {
+		return A2(
+			F2(
+				function (x, y) {
+					return !_elm_lang$core$Native_Utils.eq(x, y);
+				}),
+			0,
+			_elm_lang$core$List$length(_p14));
+	}(
+		A2(
+			_user$project$Grid$filter,
+			function (cell) {
+				return A2(_user$project$Bottle$isCleared, cell.coords, grid);
+			},
+			grid));
+};
+var _user$project$Bottle$pillCoordsPair = F2(
+	function (pill, _p15) {
+		var _p16 = _p15;
+		var _p19 = _p16._1;
+		var _p18 = _p16._0;
+		var _p17 = pill;
+		if (_p17.ctor === 'Horizontal') {
+			return {
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: _p18, _1: _p19 + 1},
+				_1: {
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: _p18 + 1, _1: _p19 + 1},
+					_1: {ctor: '[]'}
+				}
+			};
+		} else {
+			return {
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: _p18, _1: _p19},
+				_1: {
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: _p18, _1: _p19 + 1},
+					_1: {ctor: '[]'}
+				}
+			};
+		}
+	});
+var _user$project$Bottle$isAvailable = F3(
+	function (_p20, pill, grid) {
+		var _p21 = _p20;
+		var _p23 = _p21._0;
+		var noOccupant = A2(
+			_elm_lang$core$List$all,
+			_elm_lang$core$Basics$identity,
+			A2(
+				_elm_lang$core$List$map,
+				function (p) {
+					return A2(_user$project$Grid$isEmpty, p, grid);
+				},
+				A2(_user$project$Bottle$pillCoordsPair, pill, _p21)));
+		var withinRight = function () {
+			var _p22 = pill;
+			if (_p22.ctor === 'Vertical') {
+				return _elm_lang$core$Native_Utils.cmp(
+					_p23,
+					_user$project$Grid$width(grid)) < 1;
+			} else {
+				return _elm_lang$core$Native_Utils.cmp(
+					_p23,
+					_user$project$Grid$width(grid)) < 0;
+			}
+		}();
+		var aboveBottom = _elm_lang$core$Native_Utils.cmp(
+			_p21._1,
+			_user$project$Grid$height(grid)) < 0;
+		var inBottle = (_elm_lang$core$Native_Utils.cmp(_p23, 1) > -1) && (withinRight && aboveBottom);
+		return inBottle && noOccupant;
+	});
+var _user$project$Bottle$hasConflict = function (_p24) {
+	var _p25 = _p24;
+	var _p26 = _p25.mode;
+	if (_p26.ctor === 'PlacingPill') {
+		return A2(
+			_elm_lang$core$List$any,
+			_elm_lang$core$Basics$not,
+			A2(
+				_elm_lang$core$List$map,
+				function (p) {
+					return A2(_user$project$Grid$isEmpty, p, _p25.contents);
+				},
+				A2(_user$project$Bottle$pillCoordsPair, _p26._0, _p26._1)));
+	} else {
+		return false;
+	}
+};
+var _user$project$Bottle$sweep = function (_p27) {
+	var _p28 = _p27;
+	var _p35 = _p28.contents;
+	var swept = A2(
+		_user$project$Grid$map,
+		function (_p29) {
+			var _p30 = _p29;
+			var _p31 = _p30;
+			return A2(_user$project$Bottle$isCleared, _p30.coords, _p35) ? _elm_lang$core$Native_Utils.update(
+				_p31,
+				{state: _elm_lang$core$Maybe$Nothing}) : _p31;
+		},
+		_p35);
+	var sweepableVirusCount = function (grid) {
+		return _elm_lang$core$List$length(
+			A2(
+				_user$project$Grid$filter,
+				function (_p32) {
+					var _p33 = _p32;
+					var _p34 = _p33.state;
+					if (((_p34.ctor === 'Just') && (_p34._0.ctor === '_Tuple2')) && (_p34._0._1.ctor === 'Virus')) {
+						return A2(_user$project$Bottle$isCleared, _p33.coords, grid);
+					} else {
+						return false;
+					}
+				},
+				grid));
+	};
+	return _elm_lang$core$Native_Utils.update(
+		_p28,
+		{contents: swept});
+};
+var _user$project$Bottle$fall = function (bottle) {
+	return A2(
+		_user$project$Grid$map,
+		function (_p36) {
+			var _p37 = _p36;
+			var _p39 = _p37;
+			var _p38 = _p37.coords;
+			var x = _p38._0;
+			var y = _p38._1;
+			return A2(
+				_user$project$Bottle$canFall,
+				{ctor: '_Tuple2', _0: x, _1: y},
+				bottle) ? (A2(
+				_user$project$Bottle$canFall,
+				{ctor: '_Tuple2', _0: x, _1: y - 1},
+				bottle) ? _elm_lang$core$Native_Utils.update(
+				_p39,
+				{
+					state: function (_) {
+						return _.state;
+					}(
+						A2(
+							_user$project$Grid$findCellAtCoords,
+							{ctor: '_Tuple2', _0: x, _1: y - 1},
+							bottle))
+				}) : _elm_lang$core$Native_Utils.update(
+				_p39,
+				{state: _elm_lang$core$Maybe$Nothing})) : ((_elm_lang$core$Native_Utils.eq(_p37.state, _elm_lang$core$Maybe$Nothing) && A2(
+				_user$project$Bottle$canFall,
+				{ctor: '_Tuple2', _0: x, _1: y - 1},
+				bottle)) ? _elm_lang$core$Native_Utils.update(
+				_p39,
+				{
+					state: function (_) {
+						return _.state;
+					}(
+						A2(
+							_user$project$Grid$findCellAtCoords,
+							{ctor: '_Tuple2', _0: x, _1: y - 1},
+							bottle))
+				}) : _p39);
+		},
+		bottle);
+};
+var _user$project$Bottle$colorCoords = F2(
+	function (pill, coords) {
+		var _p40 = function () {
+			var _p41 = pill;
+			if (_p41.ctor === 'Horizontal') {
+				return {ctor: '_Tuple2', _0: _p41._0, _1: _p41._1};
+			} else {
+				return {ctor: '_Tuple2', _0: _p41._0, _1: _p41._1};
+			}
+		}();
+		var a = _p40._0;
+		var b = _p40._1;
+		var _p42 = A2(_user$project$Bottle$pillCoordsPair, pill, coords);
+		if (((_p42.ctor === '::') && (_p42._1.ctor === '::')) && (_p42._1._1.ctor === '[]')) {
+			return {
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: a, _1: _p42._0},
+				_1: {
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: b, _1: _p42._1._0},
+					_1: {ctor: '[]'}
+				}
+			};
+		} else {
+			return {ctor: '[]'};
+		}
+	});
+var _user$project$Bottle$withNothing = function (model) {
+	return {ctor: '_Tuple3', _0: model, _1: _elm_lang$core$Platform_Cmd$none, _2: _elm_lang$core$Maybe$Nothing};
+};
+var _user$project$Bottle$withNext = F2(
+	function (next, model) {
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{next: next});
+	});
+var _user$project$Bottle$Model = F3(
+	function (a, b, c) {
+		return {contents: a, mode: b, next: c};
+	});
+var _user$project$Bottle$Falling = {ctor: 'Falling'};
+var _user$project$Bottle$PlacingPill = F2(
+	function (a, b) {
+		return {ctor: 'PlacingPill', _0: a, _1: b};
+	});
+var _user$project$Bottle$Vertical = F2(
+	function (a, b) {
+		return {ctor: 'Vertical', _0: a, _1: b};
+	});
+var _user$project$Bottle$Horizontal = F2(
+	function (a, b) {
+		return {ctor: 'Horizontal', _0: a, _1: b};
+	});
+var _user$project$Bottle$update = F2(
+	function (msg, model) {
+		var _p43 = {ctor: '_Tuple2', _0: model.mode, _1: msg};
+		_v23_3:
+		do {
+			if (_p43.ctor === '_Tuple2') {
+				if (_p43._1.ctor === 'NewPill') {
+					if (_p43._0.ctor === 'Falling') {
+						var _p44 = model.next;
+						var a = _p44._0;
+						var b = _p44._1;
+						return _user$project$Bottle$withNothing(
+							_elm_lang$core$Native_Utils.update(
+								model,
+								{
+									mode: A2(
+										_user$project$Bottle$PlacingPill,
+										A2(_user$project$Bottle$Horizontal, a, b),
+										{ctor: '_Tuple2', _0: 4, _1: 0}),
+									next: _p43._1._0
+								}));
+					} else {
+						break _v23_3;
+					}
+				} else {
+					if ((_p43._0.ctor === 'PlacingPill') && (_p43._0._1.ctor === '_Tuple2')) {
+						var _p49 = _p43._0._1._1;
+						var _p48 = _p43._0._1._0;
+						var _p47 = _p43._0._0;
+						var moveIfAvailable = F2(
+							function (pill, coords) {
+								return _user$project$Bottle$withNothing(
+									A3(_user$project$Bottle$isAvailable, coords, pill, model.contents) ? _elm_lang$core$Native_Utils.update(
+										model,
+										{
+											mode: A2(_user$project$Bottle$PlacingPill, pill, coords)
+										}) : model);
+							});
+						var _p45 = _p43._1._0;
+						switch (_p45.ctor) {
+							case 'Up':
+								var newPill = function () {
+									var _p46 = _p47;
+									if (_p46.ctor === 'Horizontal') {
+										return A2(_user$project$Bottle$Vertical, _p46._0, _p46._1);
+									} else {
+										return A2(_user$project$Bottle$Horizontal, _p46._1, _p46._0);
+									}
+								}();
+								return A2(
+									moveIfAvailable,
+									newPill,
+									{ctor: '_Tuple2', _0: _p48, _1: _p49});
+							case 'Left':
+								return A2(
+									moveIfAvailable,
+									_p47,
+									{ctor: '_Tuple2', _0: _p48 - 1, _1: _p49});
+							case 'Right':
+								return A2(
+									moveIfAvailable,
+									_p47,
+									{ctor: '_Tuple2', _0: _p48 + 1, _1: _p49});
+							case 'Down':
+								return A2(
+									moveIfAvailable,
+									_p47,
+									{ctor: '_Tuple2', _0: _p48, _1: _p49 + 1});
+							default:
+								return _user$project$Bottle$withNothing(model);
+						}
+					} else {
+						return _user$project$Bottle$withNothing(model);
+					}
+				}
+			} else {
+				break _v23_3;
+			}
+		} while(false);
+		return _user$project$Bottle$withNothing(model);
+	});
+var _user$project$Bottle$Pill = {ctor: 'Pill'};
+var _user$project$Bottle$addPill = F3(
+	function (pill, coords, bottle) {
+		return A3(
+			_elm_lang$core$List$foldl,
+			F2(
+				function (_p50, grid) {
+					var _p51 = _p50;
+					return A3(
+						_user$project$Grid$setState,
+						{ctor: '_Tuple2', _0: _p51._0, _1: _user$project$Bottle$Pill},
+						_p51._1,
+						grid);
+				}),
+			bottle,
+			A2(_user$project$Bottle$colorCoords, pill, coords));
+	});
+var _user$project$Bottle$view = function (_p52) {
+	var _p53 = _p52;
+	var _p56 = _p53.contents;
 	return A2(
 		_elm_lang$html$Html$div,
 		{ctor: '[]'},
@@ -9730,30 +10165,285 @@ var _user$project$Game$viewBottle = function (bottle) {
 							A2(
 								_elm_lang$core$List$map,
 								function (cell) {
-									var _p1 = cell.state;
-									if (_p1.ctor === 'Nothing') {
+									var _p54 = cell.state;
+									if (_p54.ctor === 'Nothing') {
 										return A2(
 											_elm_lang$html$Html$div,
 											{
 												ctor: '::',
-												_0: _elm_lang$html$Html_Attributes$style(_user$project$Game$cellStyle),
+												_0: _elm_lang$html$Html_Attributes$style(_user$project$Bottle$cellStyle),
 												_1: {ctor: '[]'}
 											},
 											{ctor: '[]'});
 									} else {
-										if (_p1._0._1.ctor === 'Pill') {
-											return _user$project$Game$viewPill(_p1._0._0);
+										if (_p54._0._1.ctor === 'Pill') {
+											return _user$project$Bottle$viewPill(_p54._0._0);
 										} else {
-											return _user$project$Game$viewVirus(_p1._0._0);
+											return _user$project$Bottle$viewVirus(_p54._0._0);
 										}
 									}
 								},
 								column));
 					},
-					bottle)),
+					function () {
+						var _p55 = _p53.mode;
+						if (_p55.ctor === 'PlacingPill') {
+							return A3(_user$project$Bottle$addPill, _p55._0, _p55._1, _p56);
+						} else {
+							return _p56;
+						}
+					}())),
 			_1: {ctor: '[]'}
 		});
 };
+var _user$project$Bottle$Virus = {ctor: 'Virus'};
+var _user$project$Bottle$withVirus = F3(
+	function (color, coords, model) {
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{
+				contents: A3(
+					_user$project$Grid$setState,
+					{ctor: '_Tuple2', _0: color, _1: _user$project$Bottle$Virus},
+					coords,
+					model.contents)
+			});
+	});
+var _user$project$Bottle$Yellow = {ctor: 'Yellow'};
+var _user$project$Bottle$Blue = {ctor: 'Blue'};
+var _user$project$Bottle$Red = {ctor: 'Red'};
+var _user$project$Bottle$init = {
+	contents: A2(_user$project$Grid$fromDimensions, 8, 16),
+	mode: _user$project$Bottle$Falling,
+	next: {ctor: '_Tuple2', _0: _user$project$Bottle$Red, _1: _user$project$Bottle$Red}
+};
+var _user$project$Bottle$generateColor = A2(
+	_user$project$RandomExtra$selectWithDefault,
+	_user$project$Bottle$Blue,
+	{
+		ctor: '::',
+		_0: _user$project$Bottle$Red,
+		_1: {
+			ctor: '::',
+			_0: _user$project$Bottle$Yellow,
+			_1: {
+				ctor: '::',
+				_0: _user$project$Bottle$Blue,
+				_1: {ctor: '[]'}
+			}
+		}
+	});
+var _user$project$Bottle$generatePill = A2(_elm_lang$core$Random$pair, _user$project$Bottle$generateColor, _user$project$Bottle$generateColor);
+var _user$project$Bottle$KeyDown = function (a) {
+	return {ctor: 'KeyDown', _0: a};
+};
+var _user$project$Bottle$NewPill = function (a) {
+	return {ctor: 'NewPill', _0: a};
+};
+var _user$project$Bottle$advance = function (model) {
+	var _p57 = model.mode;
+	if (_p57.ctor === 'PlacingPill') {
+		var _p60 = _p57._1._1;
+		var _p59 = _p57._1._0;
+		var _p58 = _p57._0;
+		var afterPill = F3(
+			function (pill, coords, model) {
+				var newContents = A3(_user$project$Bottle$addPill, pill, coords, model.contents);
+				var modify = _user$project$Bottle$canSweep(newContents) ? _user$project$Bottle$sweep : function (m) {
+					return _elm_lang$core$Native_Utils.update(
+						m,
+						{
+							contents: _user$project$Bottle$fall(newContents)
+						});
+				};
+				return modify(
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{mode: _user$project$Bottle$Falling, contents: newContents}));
+			});
+		var newCoords = {ctor: '_Tuple2', _0: _p59, _1: _p60 + 1};
+		return {
+			ctor: '_Tuple2',
+			_0: A3(_user$project$Bottle$isAvailable, newCoords, _p58, model.contents) ? _elm_lang$core$Native_Utils.update(
+				model,
+				{
+					mode: A2(_user$project$Bottle$PlacingPill, _p58, newCoords)
+				}) : A3(
+				afterPill,
+				_p58,
+				{ctor: '_Tuple2', _0: _p59, _1: _p60},
+				model),
+			_1: _elm_lang$core$Platform_Cmd$none
+		};
+	} else {
+		var timeToFall = function (_p61) {
+			return !_elm_lang$core$List$isEmpty(_p61);
+		}(
+			A2(
+				_user$project$Grid$filter,
+				function (_p62) {
+					var _p63 = _p62;
+					return A2(_user$project$Bottle$canFall, _p63.coords, model.contents);
+				},
+				model.contents));
+		return timeToFall ? {
+			ctor: '_Tuple2',
+			_0: _elm_lang$core$Native_Utils.update(
+				model,
+				{
+					mode: _user$project$Bottle$Falling,
+					contents: _user$project$Bottle$fall(model.contents)
+				}),
+			_1: _elm_lang$core$Platform_Cmd$none
+		} : (_user$project$Bottle$canSweep(model.contents) ? {
+			ctor: '_Tuple2',
+			_0: _user$project$Bottle$sweep(model),
+			_1: _elm_lang$core$Platform_Cmd$none
+		} : {
+			ctor: '_Tuple2',
+			_0: model,
+			_1: A2(_elm_lang$core$Random$generate, _user$project$Bottle$NewPill, _user$project$Bottle$generatePill)
+		});
+	}
+};
+var _user$project$Bottle$Noop = {ctor: 'Noop'};
+var _user$project$Bottle$Right = {ctor: 'Right'};
+var _user$project$Bottle$Left = {ctor: 'Left'};
+var _user$project$Bottle$Down = {ctor: 'Down'};
+var _user$project$Bottle$Up = {ctor: 'Up'};
+var _user$project$Bottle$subscriptions = function (_p64) {
+	return _elm_lang$core$Platform_Sub$batch(
+		{
+			ctor: '::',
+			_0: _elm_lang$keyboard$Keyboard$downs(
+				function (_p65) {
+					return _user$project$Bottle$KeyDown(
+						function (keyCode) {
+							var _p66 = keyCode;
+							switch (_p66) {
+								case 38:
+									return _user$project$Bottle$Up;
+								case 37:
+									return _user$project$Bottle$Left;
+								case 39:
+									return _user$project$Bottle$Right;
+								case 40:
+									return _user$project$Bottle$Down;
+								default:
+									return _user$project$Bottle$Noop;
+							}
+						}(_p65));
+				}),
+			_1: {ctor: '[]'}
+		});
+};
+
+var _user$project$Component$raiseOutMsg = F4(
+	function (update, toModel, toMsg, result) {
+		var _p0 = result;
+		if (_p0._2.ctor === 'Nothing') {
+			return {
+				ctor: '_Tuple3',
+				_0: toModel(_p0._0),
+				_1: A2(_elm_lang$core$Platform_Cmd$map, toMsg, _p0._1),
+				_2: _elm_lang$core$Maybe$Nothing
+			};
+		} else {
+			var _p1 = A2(
+				update,
+				_p0._2._0,
+				toModel(_p0._0));
+			var model__ = _p1._0;
+			var cmd2 = _p1._1;
+			var msg3 = _p1._2;
+			return {
+				ctor: '_Tuple3',
+				_0: model__,
+				_1: _elm_lang$core$Platform_Cmd$batch(
+					{
+						ctor: '::',
+						_0: A2(_elm_lang$core$Platform_Cmd$map, toMsg, _p0._1),
+						_1: {
+							ctor: '::',
+							_0: cmd2,
+							_1: {ctor: '[]'}
+						}
+					}),
+				_2: msg3
+			};
+		}
+	});
+var _user$project$Component$mapOutMsg = F4(
+	function (update, toModel, toMsg, result) {
+		var _p2 = result;
+		if (_p2._2.ctor === 'Nothing') {
+			return {
+				ctor: '_Tuple2',
+				_0: toModel(_p2._0),
+				_1: A2(_elm_lang$core$Platform_Cmd$map, toMsg, _p2._1)
+			};
+		} else {
+			return A2(
+				_elm_lang$core$Tuple$mapSecond,
+				function (cmd2) {
+					return _elm_lang$core$Platform_Cmd$batch(
+						{
+							ctor: '::',
+							_0: A2(_elm_lang$core$Platform_Cmd$map, toMsg, _p2._1),
+							_1: {
+								ctor: '::',
+								_0: cmd2,
+								_1: {ctor: '[]'}
+							}
+						});
+				},
+				A2(
+					update,
+					_p2._2._0,
+					toModel(_p2._0)));
+		}
+	});
+
+var _user$project$Game$applyNtimes = F3(
+	function (n, f, x) {
+		return (_elm_lang$core$Native_Utils.cmp(n, 0) < 1) ? x : (_elm_lang$core$Native_Utils.eq(n, 1) ? f(x) : f(
+			A3(_user$project$Game$applyNtimes, n - 1, f, x)));
+	});
+var _user$project$Game$viewMessage = F2(
+	function (message, below) {
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(
+					{
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'margin', _1: '16px 0'},
+							_1: {ctor: '[]'}
+						}
+					}),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$h3,
+					{ctor: '[]'},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text(message),
+						_1: {ctor: '[]'}
+					}),
+				_1: {
+					ctor: '::',
+					_0: below,
+					_1: {ctor: '[]'}
+				}
+			});
+	});
 var _user$project$Game$columnEl = A2(
 	_user$project$Element$styled,
 	_elm_lang$html$Html$div,
@@ -9762,404 +10452,10 @@ var _user$project$Game$columnEl = A2(
 		_0: {ctor: '_Tuple2', _0: 'margin', _1: '0 16px'},
 		_1: {ctor: '[]'}
 	});
-var _user$project$Game$generateEmptyCoords = function (grid) {
-	var emptyCoords = A2(
-		_elm_lang$core$List$map,
-		function (_) {
-			return _.coords;
-		},
-		A2(
-			_user$project$Grid$filter,
-			function (_p2) {
-				var _p3 = _p2;
-				var _p4 = _p3.coords;
-				return (_elm_lang$core$Native_Utils.cmp(
-					_elm_lang$core$Tuple$second(_p4),
-					5) > -1) && A2(_user$project$Grid$isEmpty, _p4, grid);
-			},
-			grid));
-	return A2(
-		_user$project$RandomExtra$selectWithDefault,
-		{ctor: '_Tuple2', _0: -1, _1: -1},
-		emptyCoords);
-};
-var _user$project$Game$totalViruses = function (grid) {
-	return _elm_lang$core$List$length(
-		A2(
-			_user$project$Grid$filter,
-			function (c) {
-				var _p5 = c.state;
-				if (((_p5.ctor === 'Just') && (_p5._0.ctor === '_Tuple2')) && (_p5._0._1.ctor === 'Virus')) {
-					return true;
-				} else {
-					return false;
-				}
-			},
-			grid));
-};
-var _user$project$Game$isCleared = F2(
-	function (_p6, grid) {
-		var _p7 = _p6;
-		var _p11 = _p7._1;
-		var _p10 = _p7._0;
-		var len = 4;
-		var neighbors = function (f) {
-			return A2(
-				_user$project$Game$subLists,
-				len,
-				A2(
-					_elm_lang$core$List$map,
-					function (coords) {
-						return A2(_user$project$Grid$findCellAtCoords, coords, grid);
-					},
-					A2(
-						_elm_lang$core$List$map,
-						f,
-						A2(_elm_lang$core$List$range, (len * -1) + 1, len - 1))));
-		};
-		var horizontal = neighbors(
-			function (offset) {
-				return {ctor: '_Tuple2', _0: _p10 + offset, _1: _p11};
-			});
-		var vertical = neighbors(
-			function (offset) {
-				return {ctor: '_Tuple2', _0: _p10, _1: _p11 + offset};
-			});
-		var cell = A2(
-			_user$project$Grid$findCellAtCoords,
-			{ctor: '_Tuple2', _0: _p10, _1: _p11},
-			grid);
-		var _p8 = cell.state;
-		if (_p8.ctor === 'Nothing') {
-			return false;
-		} else {
-			return A2(
-				_elm_lang$core$List$any,
-				_elm_lang$core$List$all(
-					function (cell) {
-						var _p9 = cell.state;
-						if (_p9.ctor === 'Just') {
-							return _elm_lang$core$Native_Utils.eq(_p9._0._0, _p8._0._0);
-						} else {
-							return false;
-						}
-					}),
-				A2(_elm_lang$core$Basics_ops['++'], vertical, horizontal));
-		}
-	});
-var _user$project$Game$canFall = F2(
-	function (coords, bottle) {
-		var hasRoom = function (cells) {
-			hasRoom:
-			while (true) {
-				var _p12 = cells;
-				if (_p12.ctor === '[]') {
-					return false;
-				} else {
-					var _p13 = _p12._0.state;
-					if (_p13.ctor === 'Nothing') {
-						return true;
-					} else {
-						if (_p13._0._1.ctor === 'Pill') {
-							var _v9 = _p12._1;
-							cells = _v9;
-							continue hasRoom;
-						} else {
-							return false;
-						}
-					}
-				}
-			}
-		};
-		var cell = A2(_user$project$Grid$findCellAtCoords, coords, bottle);
-		var _p14 = cell.state;
-		if (((_p14.ctor === 'Just') && (_p14._0.ctor === '_Tuple2')) && (_p14._0._1.ctor === 'Pill')) {
-			return hasRoom(
-				A2(_user$project$Grid$below, coords, bottle));
-		} else {
-			return false;
-		}
-	});
-var _user$project$Game$canSweep = function (grid) {
-	return function (_p15) {
-		return A2(
-			F2(
-				function (x, y) {
-					return !_elm_lang$core$Native_Utils.eq(x, y);
-				}),
-			0,
-			_elm_lang$core$List$length(_p15));
-	}(
-		A2(
-			_user$project$Grid$filter,
-			function (cell) {
-				return A2(_user$project$Game$isCleared, cell.coords, grid);
-			},
-			grid));
-};
-var _user$project$Game$pillCoordsPair = F2(
-	function (pill, _p16) {
-		var _p17 = _p16;
-		var _p20 = _p17._1;
-		var _p19 = _p17._0;
-		var _p18 = pill;
-		if (_p18.ctor === 'Horizontal') {
-			return {
-				ctor: '::',
-				_0: {ctor: '_Tuple2', _0: _p19, _1: _p20 + 1},
-				_1: {
-					ctor: '::',
-					_0: {ctor: '_Tuple2', _0: _p19 + 1, _1: _p20 + 1},
-					_1: {ctor: '[]'}
-				}
-			};
-		} else {
-			return {
-				ctor: '::',
-				_0: {ctor: '_Tuple2', _0: _p19, _1: _p20},
-				_1: {
-					ctor: '::',
-					_0: {ctor: '_Tuple2', _0: _p19, _1: _p20 + 1},
-					_1: {ctor: '[]'}
-				}
-			};
-		}
-	});
-var _user$project$Game$isAvailable = F3(
-	function (_p21, pill, grid) {
-		var _p22 = _p21;
-		var _p24 = _p22._0;
-		var noOccupant = A2(
-			_elm_lang$core$List$all,
-			_elm_lang$core$Basics$identity,
-			A2(
-				_elm_lang$core$List$map,
-				function (p) {
-					return A2(_user$project$Grid$isEmpty, p, grid);
-				},
-				A2(_user$project$Game$pillCoordsPair, pill, _p22)));
-		var withinRight = function () {
-			var _p23 = pill;
-			if (_p23.ctor === 'Vertical') {
-				return _elm_lang$core$Native_Utils.cmp(
-					_p24,
-					_user$project$Grid$width(grid)) < 1;
-			} else {
-				return _elm_lang$core$Native_Utils.cmp(
-					_p24,
-					_user$project$Grid$width(grid)) < 0;
-			}
-		}();
-		var aboveBottom = _elm_lang$core$Native_Utils.cmp(
-			_p22._1,
-			_user$project$Grid$height(grid)) < 0;
-		var inBottle = (_elm_lang$core$Native_Utils.cmp(_p24, 1) > -1) && (withinRight && aboveBottom);
-		return inBottle && noOccupant;
-	});
-var _user$project$Game$isOver = function (state) {
-	var _p25 = state.mode;
-	if (_p25.ctor === 'PlacingPill') {
-		return A2(
-			_elm_lang$core$List$any,
-			_elm_lang$core$Basics$not,
-			A2(
-				_elm_lang$core$List$map,
-				function (p) {
-					return A2(_user$project$Grid$isEmpty, p, state.bottle);
-				},
-				A2(_user$project$Game$pillCoordsPair, _p25._0, _p25._1)));
-	} else {
-		return false;
-	}
-};
-var _user$project$Game$fall = function (bottle) {
-	return A2(
-		_user$project$Grid$map,
-		function (_p26) {
-			var _p27 = _p26;
-			var _p29 = _p27;
-			var _p28 = _p27.coords;
-			var x = _p28._0;
-			var y = _p28._1;
-			return A2(
-				_user$project$Game$canFall,
-				{ctor: '_Tuple2', _0: x, _1: y},
-				bottle) ? (A2(
-				_user$project$Game$canFall,
-				{ctor: '_Tuple2', _0: x, _1: y - 1},
-				bottle) ? _elm_lang$core$Native_Utils.update(
-				_p29,
-				{
-					state: function (_) {
-						return _.state;
-					}(
-						A2(
-							_user$project$Grid$findCellAtCoords,
-							{ctor: '_Tuple2', _0: x, _1: y - 1},
-							bottle))
-				}) : _elm_lang$core$Native_Utils.update(
-				_p29,
-				{state: _elm_lang$core$Maybe$Nothing})) : ((_elm_lang$core$Native_Utils.eq(_p27.state, _elm_lang$core$Maybe$Nothing) && A2(
-				_user$project$Game$canFall,
-				{ctor: '_Tuple2', _0: x, _1: y - 1},
-				bottle)) ? _elm_lang$core$Native_Utils.update(
-				_p29,
-				{
-					state: function (_) {
-						return _.state;
-					}(
-						A2(
-							_user$project$Grid$findCellAtCoords,
-							{ctor: '_Tuple2', _0: x, _1: y - 1},
-							bottle))
-				}) : _p29);
-		},
-		bottle);
-};
-var _user$project$Game$colorCoords = F2(
-	function (pill, coords) {
-		var _p30 = function () {
-			var _p31 = pill;
-			if (_p31.ctor === 'Horizontal') {
-				return {ctor: '_Tuple2', _0: _p31._0, _1: _p31._1};
-			} else {
-				return {ctor: '_Tuple2', _0: _p31._0, _1: _p31._1};
-			}
-		}();
-		var a = _p30._0;
-		var b = _p30._1;
-		var _p32 = A2(_user$project$Game$pillCoordsPair, pill, coords);
-		if (((_p32.ctor === '::') && (_p32._1.ctor === '::')) && (_p32._1._1.ctor === '[]')) {
-			return {
-				ctor: '::',
-				_0: {ctor: '_Tuple2', _0: a, _1: _p32._0},
-				_1: {
-					ctor: '::',
-					_0: {ctor: '_Tuple2', _0: b, _1: _p32._1._0},
-					_1: {ctor: '[]'}
-				}
-			};
-		} else {
-			return {ctor: '[]'};
-		}
-	});
-var _user$project$Game$pointsForClearedViruses = F2(
-	function (speed, cleared) {
-		return A3(
-			_user$project$Game$applyNtimes,
-			cleared - 1,
-			F2(
-				function (x, y) {
-					return x * y;
-				})(2),
-			function () {
-				var _p33 = speed;
-				switch (_p33.ctor) {
-					case 'Low':
-						return 100;
-					case 'Med':
-						return 200;
-					default:
-						return 300;
-				}
-			}());
-	});
-var _user$project$Game$sweep = function (_p34) {
-	var _p35 = _p34;
-	var _p43 = _p35.bottle;
-	var sweptBottle = A2(
-		_user$project$Grid$map,
-		function (_p36) {
-			var _p37 = _p36;
-			var _p38 = _p37;
-			return A2(_user$project$Game$isCleared, _p37.coords, _p43) ? _elm_lang$core$Native_Utils.update(
-				_p38,
-				{state: _elm_lang$core$Maybe$Nothing}) : _p38;
-		},
-		_p43);
-	var sweepableVirusCount = function (grid) {
-		return _elm_lang$core$List$length(
-			A2(
-				_user$project$Grid$filter,
-				function (_p39) {
-					var _p40 = _p39;
-					var _p41 = _p40.state;
-					if (((_p41.ctor === 'Just') && (_p41._0.ctor === '_Tuple2')) && (_p41._0._1.ctor === 'Virus')) {
-						return A2(_user$project$Game$isCleared, _p40.coords, grid);
-					} else {
-						return false;
-					}
-				},
-				grid));
-	};
-	var additionalPoints = function (_p42) {
-		return A2(
-			_user$project$Game$pointsForClearedViruses,
-			_p35.speed,
-			sweepableVirusCount(_p42));
-	}(_p43);
-	return _elm_lang$core$Native_Utils.update(
-		_p35,
-		{bottle: sweptBottle, score: _p35.score + additionalPoints});
-};
-var _user$project$Game$tickForSpeed = function (speed) {
-	var _p44 = speed;
-	switch (_p44.ctor) {
-		case 'High':
-			return 300 * _elm_lang$core$Time$millisecond;
-		case 'Med':
-			return 700 * _elm_lang$core$Time$millisecond;
-		default:
-			return _elm_lang$core$Time$second;
-	}
-};
-var _user$project$Game$virusesForLevel = function (level) {
-	return A2(_elm_lang$core$Basics$min, 84, (4 * level) + 4);
-};
-var _user$project$Game$emptyBottle = A2(_user$project$Grid$fromDimensions, 8, 16);
-var _user$project$Game$State = F6(
-	function (a, b, c, d, e, f) {
-		return {bottle: a, mode: b, next: c, level: d, score: e, speed: f};
-	});
-var _user$project$Game$Falling = {ctor: 'Falling'};
-var _user$project$Game$init = function (_p45) {
-	var _p46 = _p45;
-	return {bottle: _p46.bottle, mode: _user$project$Game$Falling, next: _p46.colors, level: _p46.level, score: _p46.score, speed: _p46.speed};
-};
-var _user$project$Game$PlacingPill = F2(
-	function (a, b) {
-		return {ctor: 'PlacingPill', _0: a, _1: b};
-	});
-var _user$project$Game$Vertical = F2(
-	function (a, b) {
-		return {ctor: 'Vertical', _0: a, _1: b};
-	});
-var _user$project$Game$Horizontal = F2(
-	function (a, b) {
-		return {ctor: 'Horizontal', _0: a, _1: b};
-	});
-var _user$project$Game$High = {ctor: 'High'};
-var _user$project$Game$Med = {ctor: 'Med'};
-var _user$project$Game$Low = {ctor: 'Low'};
-var _user$project$Game$Pill = {ctor: 'Pill'};
-var _user$project$Game$addPill = F3(
-	function (pill, coords, bottle) {
-		return A3(
-			_elm_lang$core$List$foldl,
-			F2(
-				function (_p47, grid) {
-					var _p48 = _p47;
-					return A3(
-						_user$project$Grid$setState,
-						{ctor: '_Tuple2', _0: _p48._0, _1: _user$project$Game$Pill},
-						_p48._1,
-						grid);
-				}),
-			bottle,
-			A2(_user$project$Game$colorCoords, pill, coords));
-	});
-var _user$project$Game$view = F2(
-	function (pauseMsg, state) {
+var _user$project$Game$viewPlaying = F2(
+	function (pauseMsg, _p0) {
+		var _p1 = _p0;
+		var _p7 = _p1.bottle;
 		return A2(
 			_elm_lang$html$Html$div,
 			{
@@ -10191,13 +10487,22 @@ var _user$project$Game$view = F2(
 							ctor: '::',
 							_0: A2(
 								_elm_lang$html$Html$p,
-								{ctor: '[]'},
 								{
 									ctor: '::',
-									_0: function (_p49) {
+									_0: _elm_lang$html$Html_Attributes$style(
+										{
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'right'},
+											_1: {ctor: '[]'}
+										}),
+									_1: {ctor: '[]'}
+								},
+								{
+									ctor: '::',
+									_0: function (_p2) {
 										return _elm_lang$html$Html$text(
-											_elm_lang$core$Basics$toString(_p49));
-									}(state.score),
+											_elm_lang$core$Basics$toString(_p2));
+									}(_p1.score),
 									_1: {ctor: '[]'}
 								}),
 							_1: {
@@ -10228,15 +10533,7 @@ var _user$project$Game$view = F2(
 					}),
 				_1: {
 					ctor: '::',
-					_0: _user$project$Game$viewBottle(
-						function () {
-							var _p50 = state.mode;
-							if (_p50.ctor === 'PlacingPill') {
-								return A3(_user$project$Game$addPill, _p50._0, _p50._1, state.bottle);
-							} else {
-								return state.bottle;
-							}
-						}()),
+					_0: _user$project$Bottle$view(_p7),
 					_1: {
 						ctor: '::',
 						_0: A2(
@@ -10268,16 +10565,16 @@ var _user$project$Game$view = F2(
 										},
 										{
 											ctor: '::',
-											_0: function (_p51) {
-												return _user$project$Game$viewPill(
-													_elm_lang$core$Tuple$first(_p51));
-											}(state.next),
+											_0: function (_p3) {
+												return _user$project$Bottle$viewPill(
+													_elm_lang$core$Tuple$first(_p3));
+											}(_p7.next),
 											_1: {
 												ctor: '::',
-												_0: function (_p52) {
-													return _user$project$Game$viewPill(
-														_elm_lang$core$Tuple$second(_p52));
-												}(state.next),
+												_0: function (_p4) {
+													return _user$project$Bottle$viewPill(
+														_elm_lang$core$Tuple$second(_p4));
+												}(_p7.next),
 												_1: {ctor: '[]'}
 											}
 										}),
@@ -10290,14 +10587,7 @@ var _user$project$Game$view = F2(
 												_0: _elm_lang$html$Html_Attributes$style(
 													{
 														ctor: '::',
-														_0: {
-															ctor: '_Tuple2',
-															_0: 'margin',
-															_1: A2(
-																_elm_lang$core$Basics_ops['++'],
-																_user$project$Element$px(3 * _user$project$Game$cellSize),
-																' 0')
-														},
+														_0: {ctor: '_Tuple2', _0: 'margin', _1: '72px 0'},
 														_1: {ctor: '[]'}
 													}),
 												_1: {ctor: '[]'}
@@ -10319,10 +10609,10 @@ var _user$project$Game$view = F2(
 														{ctor: '[]'},
 														{
 															ctor: '::',
-															_0: function (_p53) {
+															_0: function (_p5) {
 																return _elm_lang$html$Html$text(
-																	_elm_lang$core$Basics$toString(_p53));
-															}(state.level),
+																	_elm_lang$core$Basics$toString(_p5));
+															}(_p1.level),
 															_1: {ctor: '[]'}
 														}),
 													_1: {
@@ -10342,10 +10632,10 @@ var _user$project$Game$view = F2(
 																{ctor: '[]'},
 																{
 																	ctor: '::',
-																	_0: function (_p54) {
+																	_0: function (_p6) {
 																		return _elm_lang$html$Html$text(
-																			_elm_lang$core$Basics$toString(_p54));
-																	}(state.speed),
+																			_elm_lang$core$Basics$toString(_p6));
+																	}(_p1.speed),
 																	_1: {ctor: '[]'}
 																}),
 															_1: {
@@ -10367,7 +10657,7 @@ var _user$project$Game$view = F2(
 																			ctor: '::',
 																			_0: _elm_lang$html$Html$text(
 																				_elm_lang$core$Basics$toString(
-																					_user$project$Game$totalViruses(state.bottle))),
+																					_user$project$Bottle$totalViruses(_p7.contents))),
 																			_1: {ctor: '[]'}
 																		}),
 																	_1: {ctor: '[]'}
@@ -10386,219 +10676,382 @@ var _user$project$Game$view = F2(
 				}
 			});
 	});
-var _user$project$Game$Virus = {ctor: 'Virus'};
-var _user$project$Game$Yellow = {ctor: 'Yellow'};
-var _user$project$Game$Blue = {ctor: 'Blue'};
-var _user$project$Game$Red = {ctor: 'Red'};
-var _user$project$Game$generateColor = A2(
-	_user$project$RandomExtra$selectWithDefault,
-	_user$project$Game$Blue,
-	{
-		ctor: '::',
-		_0: _user$project$Game$Red,
-		_1: {
-			ctor: '::',
-			_0: _user$project$Game$Yellow,
-			_1: {
-				ctor: '::',
-				_0: _user$project$Game$Blue,
-				_1: {ctor: '[]'}
-			}
+var _user$project$Game$pointsForClearedViruses = F2(
+	function (speed, cleared) {
+		return (_elm_lang$core$Native_Utils.cmp(cleared, 0) > 0) ? A3(
+			_user$project$Game$applyNtimes,
+			cleared - 1,
+			F2(
+				function (x, y) {
+					return x * y;
+				})(2),
+			function () {
+				var _p8 = speed;
+				switch (_p8.ctor) {
+					case 'Low':
+						return 100;
+					case 'Med':
+						return 200;
+					default:
+						return 300;
+				}
+			}()) : 0;
+	});
+var _user$project$Game$tickForSpeed = function (speed) {
+	var _p9 = speed;
+	switch (_p9.ctor) {
+		case 'High':
+			return 300 * _elm_lang$core$Time$millisecond;
+		case 'Med':
+			return 700 * _elm_lang$core$Time$millisecond;
+		default:
+			return _elm_lang$core$Time$second;
+	}
+};
+var _user$project$Game$virusesForLevel = function (level) {
+	return A2(_elm_lang$core$Basics$min, 84, (4 * level) + 4);
+};
+var _user$project$Game$State = F4(
+	function (a, b, c, d) {
+		return {bottle: a, level: b, score: c, speed: d};
+	});
+var _user$project$Game$High = {ctor: 'High'};
+var _user$project$Game$Med = {ctor: 'Med'};
+var _user$project$Game$Low = {ctor: 'Low'};
+var _user$project$Game$Over = function (a) {
+	return {ctor: 'Over', _0: a};
+};
+var _user$project$Game$Paused = function (a) {
+	return {ctor: 'Paused', _0: a};
+};
+var _user$project$Game$Playing = function (a) {
+	return {ctor: 'Playing', _0: a};
+};
+var _user$project$Game$PrepareGame = function (a) {
+	return {ctor: 'PrepareGame', _0: a};
+};
+var _user$project$Game$Reset = {ctor: 'Reset'};
+var _user$project$Game$Resume = {ctor: 'Resume'};
+var _user$project$Game$Pause = {ctor: 'Pause'};
+var _user$project$Game$InitPill = function (a) {
+	return {ctor: 'InitPill', _0: a};
+};
+var _user$project$Game$NewVirus = function (a) {
+	return {ctor: 'NewVirus', _0: a};
+};
+var _user$project$Game$randomNewVirus = function (bottle) {
+	return A2(
+		_elm_lang$core$Random$generate,
+		_user$project$Game$NewVirus,
+		A2(
+			_elm_lang$core$Random$pair,
+			_user$project$Bottle$generateColor,
+			_user$project$Bottle$generateEmptyCoords(bottle)));
+};
+var _user$project$Game$initWithScore = F3(
+	function (level, speed, score) {
+		var bottle = _user$project$Bottle$init;
+		return {
+			ctor: '_Tuple2',
+			_0: _user$project$Game$PrepareGame(
+				{level: level, score: score, bottle: bottle, speed: speed}),
+			_1: _user$project$Game$randomNewVirus(bottle.contents)
+		};
+	});
+var _user$project$Game$init = F2(
+	function (level, speed) {
+		return A3(_user$project$Game$initWithScore, level, speed, 0);
+	});
+var _user$project$Game$Advance = function (a) {
+	return {ctor: 'Advance', _0: a};
+};
+var _user$project$Game$view = function (model) {
+	var _p10 = model;
+	switch (_p10.ctor) {
+		case 'PrepareGame':
+			return A2(
+				_elm_lang$html$Html$div,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('💊💊💊'),
+					_1: {ctor: '[]'}
+				});
+		case 'Playing':
+			return A2(
+				_user$project$Game$viewPlaying,
+				_elm_lang$core$Maybe$Just(_user$project$Game$Pause),
+				_p10._0);
+		case 'Paused':
+			return A2(
+				_elm_lang$html$Html$div,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: A2(
+						_user$project$Game$viewMessage,
+						'Paused',
+						A2(
+							_elm_lang$html$Html$button,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Events$onClick(_user$project$Game$Resume),
+								_1: {ctor: '[]'}
+							},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text('resume'),
+								_1: {ctor: '[]'}
+							})),
+					_1: {ctor: '[]'}
+				});
+		default:
+			var _p11 = _p10._0;
+			return A2(
+				_elm_lang$html$Html$div,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: A2(
+						_user$project$Game$viewMessage,
+						_p11.won ? 'You Win!' : 'Game Over',
+						A2(
+							_elm_lang$html$Html$div,
+							{ctor: '[]'},
+							{
+								ctor: '::',
+								_0: _p11.won ? A2(
+									_elm_lang$html$Html$button,
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html_Events$onClick(
+											_user$project$Game$Advance(
+												{speed: _p11.game.speed, level: _p11.game.level + 1, score: _p11.game.score})),
+										_1: {ctor: '[]'}
+									},
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html$text('Next Level'),
+										_1: {ctor: '[]'}
+									}) : _user$project$Element$none,
+								_1: {
+									ctor: '::',
+									_0: A2(
+										_elm_lang$html$Html$button,
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html_Events$onClick(_user$project$Game$Reset),
+											_1: {ctor: '[]'}
+										},
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html$text('Main Menu'),
+											_1: {ctor: '[]'}
+										}),
+									_1: {ctor: '[]'}
+								}
+							})),
+					_1: {
+						ctor: '::',
+						_0: A2(_user$project$Game$viewPlaying, _elm_lang$core$Maybe$Nothing, _p11.game),
+						_1: {ctor: '[]'}
+					}
+				});
+	}
+};
+var _user$project$Game$BottleMsg = function (a) {
+	return {ctor: 'BottleMsg', _0: a};
+};
+var _user$project$Game$updatePlayState = F3(
+	function (onLeave, action, _p12) {
+		var _p13 = _p12;
+		var _p16 = _p13;
+		var withBottle = function (newBottle) {
+			var sweptViruses = _user$project$Bottle$totalViruses(_p13.bottle.contents) - _user$project$Bottle$totalViruses(newBottle.contents);
+			var additionalPoints = A2(_user$project$Game$pointsForClearedViruses, _p13.speed, sweptViruses);
+			return _user$project$Game$Playing(
+				_elm_lang$core$Native_Utils.update(
+					_p16,
+					{bottle: newBottle, score: _p13.score + additionalPoints}));
+		};
+		var _p14 = action;
+		switch (_p14.ctor) {
+			case 'TickTock':
+				var _p15 = A2(
+					_elm_lang$core$Tuple$mapSecond,
+					_elm_lang$core$Platform_Cmd$map(_user$project$Game$BottleMsg),
+					A2(
+						_elm_lang$core$Tuple$mapFirst,
+						withBottle,
+						_user$project$Bottle$advance(_p16.bottle)));
+				var a = _p15._0;
+				var b = _p15._1;
+				return {ctor: '_Tuple3', _0: a, _1: b, _2: _elm_lang$core$Maybe$Nothing};
+			case 'BottleMsg':
+				return A4(
+					_user$project$Component$raiseOutMsg,
+					_user$project$Game$update(
+						{onLeave: onLeave}),
+					withBottle,
+					_user$project$Game$BottleMsg,
+					A2(_user$project$Bottle$update, _p14._0, _p16.bottle));
+			default:
+				return {
+					ctor: '_Tuple3',
+					_0: _user$project$Game$Playing(_p16),
+					_1: _elm_lang$core$Platform_Cmd$none,
+					_2: _elm_lang$core$Maybe$Nothing
+				};
 		}
 	});
-var _user$project$Game$generatePill = A2(_elm_lang$core$Random$pair, _user$project$Game$generateColor, _user$project$Game$generateColor);
-var _user$project$Game$KeyDown = function (a) {
-	return {ctor: 'KeyDown', _0: a};
-};
-var _user$project$Game$NewPill = function (a) {
-	return {ctor: 'NewPill', _0: a};
-};
-var _user$project$Game$update = F2(
-	function (action, model) {
-		var _p55 = {ctor: '_Tuple2', _0: model.mode, _1: action};
-		switch (_p55._1.ctor) {
-			case 'TickTock':
-				if (_p55._0.ctor === 'PlacingPill') {
-					var _p58 = _p55._0._1._1;
-					var _p57 = _p55._0._1._0;
-					var _p56 = _p55._0._0;
-					var afterPill = F3(
-						function (pill, coords, model) {
-							var newBottle = A3(_user$project$Game$addPill, pill, coords, model.bottle);
-							var modify = _user$project$Game$canSweep(newBottle) ? _user$project$Game$sweep : function (m) {
-								return _elm_lang$core$Native_Utils.update(
-									m,
+var _user$project$Game$update = F3(
+	function (_p17, action, model) {
+		var _p18 = _p17;
+		var _p25 = _p18.onLeave;
+		var _p19 = {ctor: '_Tuple2', _0: model, _1: action};
+		_v7_2:
+		do {
+			switch (_p19._0.ctor) {
+				case 'PrepareGame':
+					switch (_p19._1.ctor) {
+						case 'NewVirus':
+							if (_p19._1._0.ctor === '_Tuple2') {
+								var _p22 = _p19._0._0;
+								var _p21 = _p19._1._0._1;
+								var _p20 = _p19._0._0.bottle;
+								var newBottle = A3(_user$project$Bottle$withVirus, _p19._1._0._0, _p21, _p20);
+								return A2(_user$project$Bottle$isCleared, _p21, newBottle.contents) ? {
+									ctor: '_Tuple3',
+									_0: _user$project$Game$PrepareGame(_p22),
+									_1: _user$project$Game$randomNewVirus(_p20.contents),
+									_2: _elm_lang$core$Maybe$Nothing
+								} : ((_elm_lang$core$Native_Utils.cmp(
+									_user$project$Bottle$totalViruses(newBottle.contents),
+									_user$project$Game$virusesForLevel(_p19._0._0.level)) > -1) ? {
+									ctor: '_Tuple3',
+									_0: _user$project$Game$PrepareGame(
+										_elm_lang$core$Native_Utils.update(
+											_p22,
+											{bottle: newBottle})),
+									_1: A2(_elm_lang$core$Random$generate, _user$project$Game$InitPill, _user$project$Bottle$generatePill),
+									_2: _elm_lang$core$Maybe$Nothing
+								} : {
+									ctor: '_Tuple3',
+									_0: _user$project$Game$PrepareGame(
+										_elm_lang$core$Native_Utils.update(
+											_p22,
+											{bottle: newBottle})),
+									_1: _user$project$Game$randomNewVirus(newBottle.contents),
+									_2: _elm_lang$core$Maybe$Nothing
+								});
+							} else {
+								break _v7_2;
+							}
+						case 'InitPill':
+							return {
+								ctor: '_Tuple3',
+								_0: _user$project$Game$Playing(
 									{
-										bottle: _user$project$Game$fall(newBottle)
-									});
-							};
-							return modify(
-								_elm_lang$core$Native_Utils.update(
-									model,
-									{mode: _user$project$Game$Falling, bottle: newBottle}));
-						});
-					var newCoords = {ctor: '_Tuple2', _0: _p57, _1: _p58 + 1};
-					return {
-						ctor: '_Tuple2',
-						_0: A3(_user$project$Game$isAvailable, newCoords, _p56, model.bottle) ? _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								mode: A2(_user$project$Game$PlacingPill, _p56, newCoords)
-							}) : A3(
-							afterPill,
-							_p56,
-							{ctor: '_Tuple2', _0: _p57, _1: _p58},
-							model),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				} else {
-					var timeToFall = function (_p59) {
-						return !_elm_lang$core$List$isEmpty(_p59);
-					}(
-						A2(
-							_user$project$Grid$filter,
-							function (_p60) {
-								var _p61 = _p60;
-								return A2(_user$project$Game$canFall, _p61.coords, model.bottle);
-							},
-							model.bottle));
-					return timeToFall ? {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								mode: _user$project$Game$Falling,
-								bottle: _user$project$Game$fall(model.bottle)
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					} : (_user$project$Game$canSweep(model.bottle) ? {
-						ctor: '_Tuple2',
-						_0: _user$project$Game$sweep(model),
-						_1: _elm_lang$core$Platform_Cmd$none
-					} : {
-						ctor: '_Tuple2',
-						_0: model,
-						_1: A2(_elm_lang$core$Random$generate, _user$project$Game$NewPill, _user$project$Game$generatePill)
-					});
-				}
-			case 'NewPill':
-				if (_p55._0.ctor === 'Falling') {
-					var _p62 = model.next;
-					var a = _p62._0;
-					var b = _p62._1;
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								mode: A2(
-									_user$project$Game$PlacingPill,
-									A2(_user$project$Game$Horizontal, a, b),
-									{ctor: '_Tuple2', _0: 4, _1: 0}),
-								next: _p55._1._0
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				} else {
-					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-				}
-			default:
-				if ((_p55._0.ctor === 'PlacingPill') && (_p55._0._1.ctor === '_Tuple2')) {
-					var _p67 = _p55._0._1._1;
-					var _p66 = _p55._0._1._0;
-					var _p65 = _p55._0._0;
-					var moveIfAvailable = F2(
-						function (pill, coords) {
-							return A3(_user$project$Game$isAvailable, coords, pill, model.bottle) ? {
-								ctor: '_Tuple2',
-								_0: _elm_lang$core$Native_Utils.update(
-									model,
-									{
-										mode: A2(_user$project$Game$PlacingPill, pill, coords)
+										level: _p19._0._0.level,
+										bottle: A2(_user$project$Bottle$withNext, _p19._1._0, _p19._0._0.bottle),
+										score: _p19._0._0.score,
+										speed: _p19._0._0.speed
 									}),
-								_1: _elm_lang$core$Platform_Cmd$none
-							} : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-						});
-					var _p63 = _p55._1._0;
-					switch (_p63.ctor) {
-						case 'Up':
-							var newPill = function () {
-								var _p64 = _p65;
-								if (_p64.ctor === 'Horizontal') {
-									return A2(_user$project$Game$Vertical, _p64._0, _p64._1);
-								} else {
-									return A2(_user$project$Game$Horizontal, _p64._1, _p64._0);
-								}
-							}();
-							return A2(
-								moveIfAvailable,
-								newPill,
-								{ctor: '_Tuple2', _0: _p66, _1: _p67});
-						case 'Left':
-							return A2(
-								moveIfAvailable,
-								_p65,
-								{ctor: '_Tuple2', _0: _p66 - 1, _1: _p67});
-						case 'Right':
-							return A2(
-								moveIfAvailable,
-								_p65,
-								{ctor: '_Tuple2', _0: _p66 + 1, _1: _p67});
-						case 'Down':
-							return A2(
-								moveIfAvailable,
-								_p65,
-								{ctor: '_Tuple2', _0: _p66, _1: _p67 + 1});
+								_1: _elm_lang$core$Platform_Cmd$none,
+								_2: _elm_lang$core$Maybe$Nothing
+							};
 						default:
-							return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+							break _v7_2;
 					}
-				} else {
-					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-				}
-		}
+				case 'Paused':
+					if (_p19._1.ctor === 'Resume') {
+						return {
+							ctor: '_Tuple3',
+							_0: _user$project$Game$Playing(_p19._0._0),
+							_1: _elm_lang$core$Platform_Cmd$none,
+							_2: _elm_lang$core$Maybe$Nothing
+						};
+					} else {
+						return {ctor: '_Tuple3', _0: model, _1: _elm_lang$core$Platform_Cmd$none, _2: _elm_lang$core$Maybe$Nothing};
+					}
+				case 'Playing':
+					if (_p19._1.ctor === 'Pause') {
+						return {
+							ctor: '_Tuple3',
+							_0: _user$project$Game$Paused(_p19._0._0),
+							_1: _elm_lang$core$Platform_Cmd$none,
+							_2: _elm_lang$core$Maybe$Nothing
+						};
+					} else {
+						var _p23 = _p19._0._0;
+						return _elm_lang$core$Native_Utils.eq(
+							_user$project$Bottle$totalViruses(_p23.bottle.contents),
+							0) ? {
+							ctor: '_Tuple3',
+							_0: _user$project$Game$Over(
+								{won: true, game: _p23}),
+							_1: _elm_lang$core$Platform_Cmd$none,
+							_2: _elm_lang$core$Maybe$Nothing
+						} : (_user$project$Bottle$hasConflict(_p23.bottle) ? {
+							ctor: '_Tuple3',
+							_0: _user$project$Game$Over(
+								{won: false, game: _p23}),
+							_1: _elm_lang$core$Platform_Cmd$none,
+							_2: _elm_lang$core$Maybe$Nothing
+						} : A3(_user$project$Game$updatePlayState, _p25, _p19._1, _p23));
+					}
+				default:
+					switch (_p19._1.ctor) {
+						case 'Advance':
+							var _p24 = A3(_user$project$Game$initWithScore, _p19._1._0.level, _p19._1._0.speed, _p19._1._0.score);
+							var model = _p24._0;
+							var msg = _p24._1;
+							return {ctor: '_Tuple3', _0: model, _1: msg, _2: _elm_lang$core$Maybe$Nothing};
+						case 'Reset':
+							return {
+								ctor: '_Tuple3',
+								_0: model,
+								_1: _elm_lang$core$Platform_Cmd$none,
+								_2: _elm_lang$core$Maybe$Just(_p25)
+							};
+						default:
+							return {ctor: '_Tuple3', _0: model, _1: _elm_lang$core$Platform_Cmd$none, _2: _elm_lang$core$Maybe$Nothing};
+					}
+			}
+		} while(false);
+		return {ctor: '_Tuple3', _0: model, _1: _elm_lang$core$Platform_Cmd$none, _2: _elm_lang$core$Maybe$Nothing};
 	});
 var _user$project$Game$TickTock = function (a) {
 	return {ctor: 'TickTock', _0: a};
+};
+var _user$project$Game$subscriptions = function (model) {
+	var _p26 = model;
+	if (_p26.ctor === 'Playing') {
+		return _elm_lang$core$Platform_Sub$batch(
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$core$Time$every,
+					_user$project$Game$tickForSpeed(_p26._0.speed),
+					_user$project$Game$TickTock),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$core$Platform_Sub$map,
+						_user$project$Game$BottleMsg,
+						_user$project$Bottle$subscriptions(_p26._0.bottle)),
+					_1: {ctor: '[]'}
+				}
+			});
+	} else {
+		return _elm_lang$core$Platform_Sub$none;
+	}
 };
 var _user$project$Game$Noop = {ctor: 'Noop'};
 var _user$project$Game$Right = {ctor: 'Right'};
 var _user$project$Game$Left = {ctor: 'Left'};
 var _user$project$Game$Down = {ctor: 'Down'};
 var _user$project$Game$Up = {ctor: 'Up'};
-var _user$project$Game$subscriptions = function (_p68) {
-	var _p69 = _p68;
-	return _elm_lang$core$Platform_Sub$batch(
-		{
-			ctor: '::',
-			_0: A2(
-				_elm_lang$core$Time$every,
-				_user$project$Game$tickForSpeed(_p69.speed),
-				_user$project$Game$TickTock),
-			_1: {
-				ctor: '::',
-				_0: _elm_lang$keyboard$Keyboard$downs(
-					function (_p70) {
-						return _user$project$Game$KeyDown(
-							function (keyCode) {
-								var _p71 = keyCode;
-								switch (_p71) {
-									case 38:
-										return _user$project$Game$Up;
-									case 37:
-										return _user$project$Game$Left;
-									case 39:
-										return _user$project$Game$Right;
-									case 40:
-										return _user$project$Game$Down;
-									default:
-										return _user$project$Game$Noop;
-								}
-							}(_p70));
-					}),
-				_1: {ctor: '[]'}
-			}
-		});
-};
 
 var _user$project$Menu$viewSpeed = F2(
 	function (ideal, real) {
@@ -10806,7 +11259,7 @@ var _user$project$Menu$update = F3(
 		var _p11 = _p5.speed;
 		var _p10 = _p5.selecting;
 		var withNothing = function (s) {
-			return {ctor: '_Tuple2', _0: s, _1: _elm_lang$core$Maybe$Nothing};
+			return {ctor: '_Tuple3', _0: s, _1: _elm_lang$core$Platform_Cmd$none, _2: _elm_lang$core$Maybe$Nothing};
 		};
 		var other = function () {
 			var _p6 = _p10;
@@ -10880,10 +11333,12 @@ var _user$project$Menu$update = F3(
 					}());
 			case 'Enter':
 				return {
-					ctor: '_Tuple2',
+					ctor: '_Tuple3',
 					_0: _p12,
-					_1: _elm_lang$core$Maybe$Just(
-						events.onSubmit(_p12))
+					_1: _elm_lang$core$Platform_Cmd$none,
+					_2: _elm_lang$core$Maybe$Just(
+						events.onSubmit(
+							{level: _p12.level, speed: _p12.speed}))
 				};
 			default:
 				return withNothing(_p12);
@@ -10993,251 +11448,16 @@ var _user$project$Menu$view = function (_p13) {
 		});
 };
 
-var _user$project$Main$viewMessage = F2(
-	function (message, below) {
-		return A2(
-			_elm_lang$html$Html$div,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$style(
-					{
-						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'text-align', _1: 'center'},
-						_1: {
-							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'margin', _1: '16px 0'},
-							_1: {ctor: '[]'}
-						}
-					}),
-				_1: {ctor: '[]'}
-			},
-			{
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$h3,
-					{ctor: '[]'},
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html$text(message),
-						_1: {ctor: '[]'}
-					}),
-				_1: {
-					ctor: '::',
-					_0: below,
-					_1: {ctor: '[]'}
-				}
-			});
-	});
-var _user$project$Main$Over = function (a) {
-	return {ctor: 'Over', _0: a};
-};
-var _user$project$Main$Paused = function (a) {
-	return {ctor: 'Paused', _0: a};
-};
-var _user$project$Main$Playing = function (a) {
-	return {ctor: 'Playing', _0: a};
-};
-var _user$project$Main$PrepareGame = function (a) {
-	return {ctor: 'PrepareGame', _0: a};
+var _user$project$Main$InGame = function (a) {
+	return {ctor: 'InGame', _0: a};
 };
 var _user$project$Main$Init = function (a) {
 	return {ctor: 'Init', _0: a};
 };
 var _user$project$Main$Reset = {ctor: 'Reset'};
-var _user$project$Main$Resume = {ctor: 'Resume'};
-var _user$project$Main$Pause = {ctor: 'Pause'};
-var _user$project$Main$PlayMsg = function (a) {
-	return {ctor: 'PlayMsg', _0: a};
+var _user$project$Main$GameMsg = function (a) {
+	return {ctor: 'GameMsg', _0: a};
 };
-var _user$project$Main$MenuMsg = function (a) {
-	return {ctor: 'MenuMsg', _0: a};
-};
-var _user$project$Main$subscriptions = function (model) {
-	var _p0 = model;
-	switch (_p0.ctor) {
-		case 'Init':
-			return A2(
-				_elm_lang$core$Platform_Sub$map,
-				_user$project$Main$MenuMsg,
-				_user$project$Menu$subscriptions(_p0._0));
-		case 'Playing':
-			return A2(
-				_elm_lang$core$Platform_Sub$map,
-				_user$project$Main$PlayMsg,
-				_user$project$Game$subscriptions(_p0._0));
-		default:
-			return _elm_lang$core$Platform_Sub$none;
-	}
-};
-var _user$project$Main$InitPill = function (a) {
-	return {ctor: 'InitPill', _0: a};
-};
-var _user$project$Main$NewVirus = function (a) {
-	return {ctor: 'NewVirus', _0: a};
-};
-var _user$project$Main$randomNewVirus = function (bottle) {
-	return A2(
-		_elm_lang$core$Random$generate,
-		_user$project$Main$NewVirus,
-		A2(
-			_elm_lang$core$Random$pair,
-			_user$project$Game$generateColor,
-			_user$project$Game$generateEmptyCoords(bottle)));
-};
-var _user$project$Main$Begin = function (a) {
-	return {ctor: 'Begin', _0: a};
-};
-var _user$project$Main$update = F2(
-	function (action, model) {
-		update:
-		while (true) {
-			var _p1 = {ctor: '_Tuple2', _0: model, _1: action};
-			_v1_8:
-			do {
-				switch (_p1._1.ctor) {
-					case 'Begin':
-						return {
-							ctor: '_Tuple2',
-							_0: _user$project$Main$PrepareGame(
-								{level: _p1._1._0.level, score: _p1._1._0.score, bottle: _user$project$Game$emptyBottle, speed: _p1._1._0.speed}),
-							_1: _user$project$Main$randomNewVirus(_user$project$Game$emptyBottle)
-						};
-					case 'NewVirus':
-						if ((_p1._0.ctor === 'PrepareGame') && (_p1._1._0.ctor === '_Tuple2')) {
-							var _p4 = _p1._0._0;
-							var _p3 = _p1._1._0._1;
-							var _p2 = _p1._0._0.bottle;
-							var newBottle = A3(
-								_user$project$Grid$setState,
-								{ctor: '_Tuple2', _0: _p1._1._0._0, _1: _user$project$Game$Virus},
-								_p3,
-								_p2);
-							return A2(_user$project$Game$isCleared, _p3, newBottle) ? {
-								ctor: '_Tuple2',
-								_0: _user$project$Main$PrepareGame(_p4),
-								_1: _user$project$Main$randomNewVirus(_p2)
-							} : ((_elm_lang$core$Native_Utils.cmp(
-								_user$project$Game$totalViruses(newBottle),
-								_user$project$Game$virusesForLevel(_p1._0._0.level)) > -1) ? {
-								ctor: '_Tuple2',
-								_0: _user$project$Main$PrepareGame(
-									_elm_lang$core$Native_Utils.update(
-										_p4,
-										{bottle: newBottle})),
-								_1: A2(_elm_lang$core$Random$generate, _user$project$Main$InitPill, _user$project$Game$generatePill)
-							} : {
-								ctor: '_Tuple2',
-								_0: _user$project$Main$PrepareGame(
-									_elm_lang$core$Native_Utils.update(
-										_p4,
-										{bottle: newBottle})),
-								_1: _user$project$Main$randomNewVirus(newBottle)
-							});
-						} else {
-							break _v1_8;
-						}
-					case 'InitPill':
-						if (_p1._0.ctor === 'PrepareGame') {
-							return {
-								ctor: '_Tuple2',
-								_0: function (_p5) {
-									return _user$project$Main$Playing(
-										_user$project$Game$init(_p5));
-								}(
-									{level: _p1._0._0.level, bottle: _p1._0._0.bottle, score: _p1._0._0.score, colors: _p1._1._0, speed: _p1._0._0.speed}),
-								_1: _elm_lang$core$Platform_Cmd$none
-							};
-						} else {
-							break _v1_8;
-						}
-					case 'Pause':
-						if (_p1._0.ctor === 'Playing') {
-							return {
-								ctor: '_Tuple2',
-								_0: _user$project$Main$Paused(_p1._0._0),
-								_1: _elm_lang$core$Platform_Cmd$none
-							};
-						} else {
-							break _v1_8;
-						}
-					case 'Resume':
-						if (_p1._0.ctor === 'Paused') {
-							return {
-								ctor: '_Tuple2',
-								_0: _user$project$Main$Playing(_p1._0._0),
-								_1: _elm_lang$core$Platform_Cmd$none
-							};
-						} else {
-							break _v1_8;
-						}
-					case 'MenuMsg':
-						if (_p1._0.ctor === 'Init') {
-							var _p6 = A3(
-								_user$project$Menu$update,
-								{
-									onSubmit: function (menu) {
-										return _user$project$Main$Begin(
-											{level: menu.level, speed: menu.speed, score: 0});
-									}
-								},
-								_p1._1._0,
-								_p1._0._0);
-							if (_p6._1.ctor === 'Nothing') {
-								return {
-									ctor: '_Tuple2',
-									_0: _user$project$Main$Init(_p6._0),
-									_1: _elm_lang$core$Platform_Cmd$none
-								};
-							} else {
-								var _v3 = _p6._1._0,
-									_v4 = model;
-								action = _v3;
-								model = _v4;
-								continue update;
-							}
-						} else {
-							break _v1_8;
-						}
-					case 'PlayMsg':
-						if (_p1._0.ctor === 'Playing') {
-							var _p7 = _p1._0._0;
-							return _elm_lang$core$Native_Utils.eq(
-								_user$project$Game$totalViruses(_p7.bottle),
-								0) ? {
-								ctor: '_Tuple2',
-								_0: _user$project$Main$Over(
-									{won: true, game: _p7}),
-								_1: _elm_lang$core$Platform_Cmd$none
-							} : (_user$project$Game$isOver(_p7) ? {
-								ctor: '_Tuple2',
-								_0: _user$project$Main$Over(
-									{won: false, game: _p7}),
-								_1: _elm_lang$core$Platform_Cmd$none
-							} : A2(
-								_elm_lang$core$Tuple$mapSecond,
-								_elm_lang$core$Platform_Cmd$map(_user$project$Main$PlayMsg),
-								A2(
-									_elm_lang$core$Tuple$mapFirst,
-									_user$project$Main$Playing,
-									A2(_user$project$Game$update, _p1._1._0, _p7))));
-						} else {
-							break _v1_8;
-						}
-					default:
-						if (_p1._0.ctor === 'Over') {
-							return {
-								ctor: '_Tuple2',
-								_0: _user$project$Main$Init(_user$project$Menu$init),
-								_1: _elm_lang$core$Platform_Cmd$none
-							};
-						} else {
-							break _v1_8;
-						}
-				}
-			} while(false);
-			return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-		}
-	});
 var _user$project$Main$view = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -11272,104 +11492,103 @@ var _user$project$Main$view = function (model) {
 			_1: {
 				ctor: '::',
 				_0: function () {
-					var _p8 = model;
-					switch (_p8.ctor) {
-						case 'Init':
-							return _user$project$Menu$view(_p8._0);
-						case 'PrepareGame':
-							return A2(
-								_elm_lang$html$Html$div,
-								{ctor: '[]'},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text('💊💊💊'),
-									_1: {ctor: '[]'}
-								});
-						case 'Playing':
-							return A2(
-								_user$project$Game$view,
-								_elm_lang$core$Maybe$Just(_user$project$Main$Pause),
-								_p8._0);
-						case 'Paused':
-							return A2(
-								_elm_lang$html$Html$div,
-								{ctor: '[]'},
-								{
-									ctor: '::',
-									_0: A2(
-										_user$project$Main$viewMessage,
-										'Paused',
-										A2(
-											_elm_lang$html$Html$button,
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$Resume),
-												_1: {ctor: '[]'}
-											},
-											{
-												ctor: '::',
-												_0: _elm_lang$html$Html$text('resume'),
-												_1: {ctor: '[]'}
-											})),
-									_1: {ctor: '[]'}
-								});
-						default:
-							var _p9 = _p8._0;
-							return A2(
-								_elm_lang$html$Html$div,
-								{ctor: '[]'},
-								{
-									ctor: '::',
-									_0: A2(
-										_user$project$Main$viewMessage,
-										_p9.won ? 'You Win!' : 'Game Over',
-										A2(
-											_elm_lang$html$Html$div,
-											{ctor: '[]'},
-											{
-												ctor: '::',
-												_0: _p9.won ? A2(
-													_elm_lang$html$Html$button,
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html_Events$onClick(
-															_user$project$Main$Begin(
-																{speed: _p9.game.speed, level: _p9.game.level + 1, score: _p9.game.score})),
-														_1: {ctor: '[]'}
-													},
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html$text('Next Level'),
-														_1: {ctor: '[]'}
-													}) : _user$project$Element$none,
-												_1: {
-													ctor: '::',
-													_0: A2(
-														_elm_lang$html$Html$button,
-														{
-															ctor: '::',
-															_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$Reset),
-															_1: {ctor: '[]'}
-														},
-														{
-															ctor: '::',
-															_0: _elm_lang$html$Html$text('Main Menu'),
-															_1: {ctor: '[]'}
-														}),
-													_1: {ctor: '[]'}
-												}
-											})),
-									_1: {
-										ctor: '::',
-										_0: A2(_user$project$Game$view, _elm_lang$core$Maybe$Nothing, _p9.game),
-										_1: {ctor: '[]'}
-									}
-								});
+					var _p0 = model;
+					if (_p0.ctor === 'Init') {
+						return _user$project$Menu$view(_p0._0);
+					} else {
+						return A2(
+							_elm_lang$html$Html$map,
+							_user$project$Main$GameMsg,
+							_user$project$Game$view(_p0._0));
 					}
 				}(),
 				_1: {ctor: '[]'}
 			}
 		});
+};
+var _user$project$Main$Start = function (a) {
+	return {ctor: 'Start', _0: a};
+};
+var _user$project$Main$MenuMsg = function (a) {
+	return {ctor: 'MenuMsg', _0: a};
+};
+var _user$project$Main$update = F2(
+	function (action, model) {
+		var _p1 = {ctor: '_Tuple2', _0: model, _1: action};
+		_v1_4:
+		do {
+			switch (_p1._1.ctor) {
+				case 'Start':
+					return A2(
+						_elm_lang$core$Tuple$mapSecond,
+						_elm_lang$core$Platform_Cmd$map(_user$project$Main$GameMsg),
+						A2(
+							_elm_lang$core$Tuple$mapFirst,
+							_user$project$Main$InGame,
+							A2(_user$project$Game$init, _p1._1._0.level, _p1._1._0.speed)));
+				case 'MenuMsg':
+					if (_p1._0.ctor === 'Init') {
+						return A4(
+							_user$project$Component$mapOutMsg,
+							_user$project$Main$update,
+							_user$project$Main$Init,
+							_user$project$Main$MenuMsg,
+							A3(
+								_user$project$Menu$update,
+								{
+									onSubmit: function (_p2) {
+										var _p3 = _p2;
+										return _user$project$Main$Start(
+											{level: _p3.level, speed: _p3.speed});
+									}
+								},
+								_p1._1._0,
+								_p1._0._0));
+					} else {
+						break _v1_4;
+					}
+				case 'GameMsg':
+					if (_p1._0.ctor === 'InGame') {
+						return A4(
+							_user$project$Component$mapOutMsg,
+							_user$project$Main$update,
+							_user$project$Main$InGame,
+							_user$project$Main$GameMsg,
+							A3(
+								_user$project$Game$update,
+								{onLeave: _user$project$Main$Reset},
+								_p1._1._0,
+								_p1._0._0));
+					} else {
+						break _v1_4;
+					}
+				default:
+					if (_p1._0.ctor === 'InGame') {
+						return {
+							ctor: '_Tuple2',
+							_0: _user$project$Main$Init(_user$project$Menu$init),
+							_1: _elm_lang$core$Platform_Cmd$none
+						};
+					} else {
+						break _v1_4;
+					}
+			}
+		} while(false);
+		return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+	});
+var _user$project$Main$subscriptions = function (model) {
+	var _p4 = model;
+	if (_p4.ctor === 'Init') {
+		return A2(
+			_elm_lang$core$Platform_Sub$map,
+			_user$project$Main$MenuMsg,
+			_user$project$Menu$subscriptions(_p4._0));
+	} else {
+		return A2(
+			_elm_lang$core$Platform_Sub$map,
+			_user$project$Main$GameMsg,
+			_user$project$Game$subscriptions(_p4._0));
+	}
 };
 var _user$project$Main$main = _elm_lang$html$Html$program(
 	{
