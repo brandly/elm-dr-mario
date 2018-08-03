@@ -277,20 +277,6 @@ fall bottle =
 sweep : Model -> Model
 sweep ({ contents } as model) =
     let
-        sweepableVirusCount : Bottle -> Int
-        sweepableVirusCount grid =
-            grid
-                |> Grid.filter
-                    (\({ coords, state } as cell) ->
-                        case state of
-                            Just ( _, Virus ) ->
-                                isCleared coords grid
-
-                            _ ->
-                                False
-                    )
-                |> (List.length)
-
         swept =
             Grid.map
                 (\({ coords } as cell) ->
