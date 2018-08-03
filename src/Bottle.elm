@@ -21,7 +21,11 @@ type Pill
 
 type Type
     = Virus
-    | Pill
+    | Pill (Maybe Dependent)
+
+
+type alias Dependent =
+    Direction
 
 
 type Color
@@ -217,7 +221,7 @@ addPill pill coords bottle =
     colorCoords pill coords
         |> List.foldl
             (\( color, coords ) grid ->
-                Grid.setState (( color, Pill )) coords grid
+                Grid.setState (( color, Pill Nothing )) coords grid
             )
             bottle
 
@@ -368,14 +372,14 @@ canFall coords bottle =
                         Nothing ->
                             True
 
-                        Just ( _, Pill ) ->
+                        Just ( _, Pill _ ) ->
                             hasRoom tail
 
                         Just ( _, Virus ) ->
                             False
     in
         case cell.state of
-            Just ( _, Pill ) ->
+            Just ( _, Pill _ ) ->
                 (Grid.below coords bottle |> hasRoom)
 
             _ ->
@@ -505,7 +509,7 @@ view { contents, mode } =
                                     Nothing ->
                                         div [ style cellStyle ] []
 
-                                    Just ( color, Pill ) ->
+                                    Just ( color, Pill _ ) ->
                                         viewPill color
 
                                     Just ( color, Virus ) ->
