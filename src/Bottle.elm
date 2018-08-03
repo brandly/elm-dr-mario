@@ -42,11 +42,11 @@ type alias Model =
     { contents : Bottle
     , mode : Mode
     , next : ( Color, Color )
-    , controls : Int -> Key
+    , controls : Int -> Maybe Direction
     }
 
 
-init : (Int -> Key) -> Model
+init : (Int -> Maybe Direction) -> Model
 init controls =
     { contents = Grid.fromDimensions 8 16
     , mode = Falling
@@ -72,15 +72,14 @@ withVirus color coords model =
 
 type Msg
     = NewPill ( Color, Color )
-    | KeyDown Key
+    | KeyDown (Maybe Direction)
 
 
-type Key
+type Direction
     = Up
     | Down
     | Left
     | Right
-    | Noop
 
 
 subscriptions : Model -> Sub Msg
@@ -118,7 +117,7 @@ update msg model =
                         )
             in
                 case key of
-                    Up ->
+                    Just Up ->
                         let
                             newPill =
                                 case pill of
@@ -130,16 +129,16 @@ update msg model =
                         in
                             moveIfAvailable newPill ( x, y )
 
-                    Left ->
+                    Just Left ->
                         moveIfAvailable pill ( x - 1, y )
 
-                    Right ->
+                    Just Right ->
                         moveIfAvailable pill ( x + 1, y )
 
-                    Down ->
+                    Just Down ->
                         moveIfAvailable pill ( x, y + 1 )
 
-                    Noop ->
+                    Nothing ->
                         withNothing model
 
         ( _, KeyDown _ ) ->

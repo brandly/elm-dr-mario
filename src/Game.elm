@@ -57,23 +57,23 @@ init level speed =
     initWithScore level speed 0
 
 
-controls : Int -> Bottle.Key
+controls : Int -> Maybe Bottle.Direction
 controls keyCode =
     case keyCode of
         38 ->
-            Bottle.Up
+            Just Bottle.Up
 
         37 ->
-            Bottle.Left
+            Just Bottle.Left
 
         39 ->
-            Bottle.Right
+            Just Bottle.Right
 
         40 ->
-            Bottle.Down
+            Just Bottle.Down
 
         _ ->
-            Bottle.Noop
+            Nothing
 
 
 initWithScore level speed score =
