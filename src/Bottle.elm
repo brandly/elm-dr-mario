@@ -220,26 +220,26 @@ addPill : Pill -> Grid.Coords -> Bottle -> Bottle
 addPill pill coords bottle =
     colorCoords pill coords
         |> List.foldl
-            (\( color, coords ) grid ->
-                Grid.setState (( color, Pill Nothing )) coords grid
+            (\( coords, color, dependent ) grid ->
+                Grid.setState (( color, Pill (Just dependent) )) coords grid
             )
             bottle
 
 
-colorCoords : Pill -> Grid.Coords -> List ( Color, Grid.Coords )
+colorCoords : Pill -> Grid.Coords -> List ( Grid.Coords, Color, Dependent )
 colorCoords pill coords =
     let
-        ( a, b ) =
+        ( a_color, a_dep, b_color, b_dep ) =
             case pill of
                 Horizontal a b ->
-                    ( a, b )
+                    ( a, Right, b, Left )
 
                 Vertical a b ->
-                    ( a, b )
+                    ( a, Down, b, Up )
     in
         case pillCoordsPair pill coords of
             first :: second :: [] ->
-                [ ( a, first ), ( b, second ) ]
+                [ ( first, a_color, a_dep ), ( second, b_color, b_dep ) ]
 
             _ ->
                 []
@@ -509,8 +509,8 @@ view { contents, mode } =
                                     Nothing ->
                                         div [ style cellStyle ] []
 
-                                    Just ( color, Pill _ ) ->
-                                        viewPill color
+                                    Just ( color, Pill dependent ) ->
+                                        viewPill dependent color
 
                                     Just ( color, Virus ) ->
                                         viewVirus color
@@ -529,18 +529,36 @@ view { contents, mode } =
         ]
 
 
-viewPill : Color -> Html msg
-viewPill color =
-    viewColor color 8 []
+viewPill : Maybe Dependent -> Color -> Html msg
+viewPill dependent color =
+    viewColor color
+        8
+        (case dependent of
+            Just Up ->
+                [ ( "border-top-left-radius", px 0 ), ( "border-top-right-radius", px 0 ) ]
+
+            Just Down ->
+                [ ( "border-bottom-left-radius", px 0 ), ( "border-bottom-right-radius", px 0 ) ]
+
+            Just Left ->
+                [ ( "border-top-left-radius", px 0 ), ( "border-bottom-left-radius", px 0 ) ]
+
+            Just Right ->
+                [ ( "border-top-right-radius", px 0 ), ( "border-bottom-right-radius", px 0 ) ]
+
+            Nothing ->
+                []
+        )
+        []
 
 
 viewVirus : Color -> Html msg
 viewVirus color =
-    viewColor color 3 [ text "◔̯◔" ]
+    viewColor color 3 [] [ text "◔̯◔" ]
 
 
-viewColor : Color -> Int -> List (Html msg) -> Html msg
-viewColor color radius =
+viewColor : Color -> Int -> List ( String, String ) -> List (Html msg) -> Html msg
+viewColor color radius extraStyle =
     let
         bg =
             case color of
@@ -556,9 +574,13 @@ viewColor color radius =
         div
             [ style
                 ([ ( "background-color", bg )
-                 , ( "border-radius", px radius )
+                 , ( "border-top-left-radius", px radius )
+                 , ( "border-top-right-radius", px radius )
+                 , ( "border-bottom-left-radius", px radius )
+                 , ( "border-bottom-right-radius", px radius )
                  ]
                     ++ cellStyle
+                    ++ extraStyle
                 )
             ]
 
