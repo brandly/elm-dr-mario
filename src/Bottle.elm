@@ -4,6 +4,7 @@ import Html exposing (Html, h1, h3, text, div, p)
 import Html.Attributes exposing (style)
 import Element exposing (Element, px, styled, none)
 import Keyboard exposing (KeyCode)
+import Set
 import Random exposing (Generator(..))
 import RandomExtra exposing (selectWithDefault)
 import Grid exposing (Cell, Column, Grid)
@@ -277,17 +278,65 @@ fall bottle =
 sweep : Model -> Model
 sweep ({ contents } as model) =
     let
+        coordsLosingDependent =
+            contents
+                |> Grid.filter
+                    (\({ coords, state } as cell) ->
+                        case state of
+                            Just ( _, Pill (Just dependent) ) ->
+                                if isCleared coords contents then
+                                    True
+                                else
+                                    False
+
+                            _ ->
+                                False
+                    )
+                |> List.map
+                    (\{ coords, state } ->
+                        case state of
+                            Just ( _, Pill (Just dependent) ) ->
+                                coordsWithDirection coords dependent
+
+                            _ ->
+                                Debug.crash "Shouldn't have made it thru the preceding filter"
+                    )
+                |> Set.fromList
+
         swept =
             Grid.map
-                (\({ coords } as cell) ->
+                (\({ coords, state } as cell) ->
                     if isCleared coords contents then
                         { cell | state = Nothing }
+                    else if Set.member coords coordsLosingDependent then
+                        case state of
+                            Just ( color, _ ) ->
+                                { cell | state = Just ( color, Pill Nothing ) }
+
+                            Nothing ->
+                                cell
                     else
                         cell
                 )
                 contents
     in
         { model | contents = swept }
+
+
+coordsWithDirection : Grid.Coords -> Direction -> Grid.Coords
+coordsWithDirection ( x, y ) direction =
+    case direction of
+        Up ->
+            ( x, y - 1 )
+
+        Down ->
+            ( x, y + 1 )
+
+        Left ->
+            ( x - 1, y )
+
+        Right ->
+            ( x + 1, y )
 
 
 
