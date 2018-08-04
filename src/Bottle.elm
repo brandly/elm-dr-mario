@@ -407,15 +407,32 @@ canFall coords bottle =
                         Nothing ->
                             True
 
-                        Just ( _, Pill _ ) ->
+                        Just ( _, Pill Nothing ) ->
                             hasRoom tail
+
+                        Just ( _, Pill dependent ) ->
+                            canFall head.coords bottle
 
                         Just ( _, Virus ) ->
                             False
     in
         case cell.state of
-            Just ( _, Pill _ ) ->
+            Just ( _, Pill Nothing ) ->
                 (Grid.below coords bottle |> hasRoom)
+
+            Just ( _, Pill (Just Up) ) ->
+                (Grid.below coords bottle |> hasRoom)
+
+            Just ( _, Pill (Just Down) ) ->
+                canFall (coordsWithDirection coords Down) bottle
+
+            Just ( _, Pill (Just dependent) ) ->
+                -- Left or Right
+                (Grid.below coords bottle |> hasRoom)
+                    && (bottle
+                            |> Grid.below (coordsWithDirection coords dependent)
+                            |> hasRoom
+                       )
 
             _ ->
                 False
