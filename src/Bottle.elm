@@ -4,6 +4,7 @@ import Html exposing (Html, h1, h3, text, div, p)
 import Html.Attributes exposing (style)
 import Element exposing (Element, px, styled, none)
 import Keyboard exposing (KeyCode)
+import Set
 import Random exposing (Generator(..))
 import RandomExtra exposing (selectWithDefault)
 import Grid exposing (Cell, Column, Grid)
@@ -21,7 +22,11 @@ type Pill
 
 type Type
     = Virus
-    | Pill
+    | Pill (Maybe Dependent)
+
+
+type alias Dependent =
+    Direction
 
 
 type Color
@@ -216,26 +221,26 @@ addPill : Pill -> Grid.Coords -> Bottle -> Bottle
 addPill pill coords bottle =
     colorCoords pill coords
         |> List.foldl
-            (\( color, coords ) grid ->
-                Grid.setState (( color, Pill )) coords grid
+            (\( coords, color, dependent ) grid ->
+                Grid.setState (( color, Pill (Just dependent) )) coords grid
             )
             bottle
 
 
-colorCoords : Pill -> Grid.Coords -> List ( Color, Grid.Coords )
+colorCoords : Pill -> Grid.Coords -> List ( Grid.Coords, Color, Dependent )
 colorCoords pill coords =
     let
-        ( a, b ) =
+        ( a_color, a_dep, b_color, b_dep ) =
             case pill of
                 Horizontal a b ->
-                    ( a, b )
+                    ( a, Right, b, Left )
 
                 Vertical a b ->
-                    ( a, b )
+                    ( a, Down, b, Up )
     in
         case pillCoordsPair pill coords of
             first :: second :: [] ->
-                [ ( a, first ), ( b, second ) ]
+                [ ( first, a_color, a_dep ), ( second, b_color, b_dep ) ]
 
             _ ->
                 []
@@ -273,31 +278,65 @@ fall bottle =
 sweep : Model -> Model
 sweep ({ contents } as model) =
     let
-        sweepableVirusCount : Bottle -> Int
-        sweepableVirusCount grid =
-            grid
+        coordsLosingDependent =
+            contents
                 |> Grid.filter
                     (\({ coords, state } as cell) ->
                         case state of
-                            Just ( _, Virus ) ->
-                                isCleared coords grid
+                            Just ( _, Pill (Just dependent) ) ->
+                                if isCleared coords contents then
+                                    True
+                                else
+                                    False
 
                             _ ->
                                 False
                     )
-                |> (List.length)
+                |> List.map
+                    (\{ coords, state } ->
+                        case state of
+                            Just ( _, Pill (Just dependent) ) ->
+                                coordsWithDirection coords dependent
+
+                            _ ->
+                                Debug.crash "Shouldn't have made it thru the preceding filter"
+                    )
+                |> Set.fromList
 
         swept =
             Grid.map
-                (\({ coords } as cell) ->
+                (\({ coords, state } as cell) ->
                     if isCleared coords contents then
                         { cell | state = Nothing }
+                    else if Set.member coords coordsLosingDependent then
+                        case state of
+                            Just ( color, _ ) ->
+                                { cell | state = Just ( color, Pill Nothing ) }
+
+                            Nothing ->
+                                cell
                     else
                         cell
                 )
                 contents
     in
         { model | contents = swept }
+
+
+coordsWithDirection : Grid.Coords -> Direction -> Grid.Coords
+coordsWithDirection ( x, y ) direction =
+    case direction of
+        Up ->
+            ( x, y - 1 )
+
+        Down ->
+            ( x, y + 1 )
+
+        Left ->
+            ( x - 1, y )
+
+        Right ->
+            ( x + 1, y )
 
 
 
@@ -368,15 +407,32 @@ canFall coords bottle =
                         Nothing ->
                             True
 
-                        Just ( _, Pill ) ->
+                        Just ( _, Pill Nothing ) ->
                             hasRoom tail
+
+                        Just ( _, Pill dependent ) ->
+                            canFall head.coords bottle
 
                         Just ( _, Virus ) ->
                             False
     in
         case cell.state of
-            Just ( _, Pill ) ->
+            Just ( _, Pill Nothing ) ->
                 (Grid.below coords bottle |> hasRoom)
+
+            Just ( _, Pill (Just Up) ) ->
+                (Grid.below coords bottle |> hasRoom)
+
+            Just ( _, Pill (Just Down) ) ->
+                canFall (coordsWithDirection coords Down) bottle
+
+            Just ( _, Pill (Just dependent) ) ->
+                -- Left or Right
+                (Grid.below coords bottle |> hasRoom)
+                    && (bottle
+                            |> Grid.below (coordsWithDirection coords dependent)
+                            |> hasRoom
+                       )
 
             _ ->
                 False
@@ -505,8 +561,8 @@ view { contents, mode } =
                                     Nothing ->
                                         div [ style cellStyle ] []
 
-                                    Just ( color, Pill ) ->
-                                        viewPill color
+                                    Just ( color, Pill dependent ) ->
+                                        viewPill dependent color
 
                                     Just ( color, Virus ) ->
                                         viewVirus color
@@ -525,18 +581,36 @@ view { contents, mode } =
         ]
 
 
-viewPill : Color -> Html msg
-viewPill color =
-    viewColor color 8 []
+viewPill : Maybe Dependent -> Color -> Html msg
+viewPill dependent color =
+    viewColor color
+        8
+        (case dependent of
+            Just Up ->
+                [ ( "border-top-left-radius", px 0 ), ( "border-top-right-radius", px 0 ) ]
+
+            Just Down ->
+                [ ( "border-bottom-left-radius", px 0 ), ( "border-bottom-right-radius", px 0 ) ]
+
+            Just Left ->
+                [ ( "border-top-left-radius", px 0 ), ( "border-bottom-left-radius", px 0 ) ]
+
+            Just Right ->
+                [ ( "border-top-right-radius", px 0 ), ( "border-bottom-right-radius", px 0 ) ]
+
+            Nothing ->
+                []
+        )
+        []
 
 
 viewVirus : Color -> Html msg
 viewVirus color =
-    viewColor color 3 [ text "◔̯◔" ]
+    viewColor color 3 [] [ text "◔̯◔" ]
 
 
-viewColor : Color -> Int -> List (Html msg) -> Html msg
-viewColor color radius =
+viewColor : Color -> Int -> List ( String, String ) -> List (Html msg) -> Html msg
+viewColor color radius extraStyle =
     let
         bg =
             case color of
@@ -552,9 +626,13 @@ viewColor color radius =
         div
             [ style
                 ([ ( "background-color", bg )
-                 , ( "border-radius", px radius )
+                 , ( "border-top-left-radius", px radius )
+                 , ( "border-top-right-radius", px radius )
+                 , ( "border-bottom-left-radius", px radius )
+                 , ( "border-bottom-right-radius", px radius )
                  ]
                     ++ cellStyle
+                    ++ extraStyle
                 )
             ]
 
