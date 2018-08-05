@@ -3,8 +3,8 @@ module Main exposing (..)
 import Html exposing (Html, h1, text, div, p)
 import Html.Attributes exposing (style)
 import Time exposing (Time, second)
-import Menu
-import Game
+import OnePlayer.Menu as Menu
+import OnePlayer.Game as Game
 import Component
 
 

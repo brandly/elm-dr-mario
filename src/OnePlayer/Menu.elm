@@ -1,4 +1,4 @@
-module Menu
+module OnePlayer.Menu
     exposing
         ( Msg(..)
         , State
@@ -12,7 +12,7 @@ import Html exposing (Html, h3, h4, div, text, p)
 import Html.Attributes exposing (style, type_)
 import Html.Events exposing (onSubmit)
 import Keyboard exposing (KeyCode)
-import Game exposing (Speed(..))
+import OnePlayer.Game exposing (Speed(..))
 import Element exposing (Element, styled, px)
 
 

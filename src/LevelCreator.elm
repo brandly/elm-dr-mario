@@ -72,10 +72,6 @@ update { onCreated } action ({ level, bottle } as model) =
                 )
 
 
-
--- GENERATORS
-
-
 randomNewVirus : Bottle -> Cmd Msg
 randomNewVirus bottle =
     Random.generate NewVirus <|

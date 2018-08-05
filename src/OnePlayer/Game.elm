@@ -1,4 +1,4 @@
-module Game exposing (..)
+module OnePlayer.Game exposing (..)
 
 import Grid exposing (Cell, Column, Grid)
 import Html exposing (Html, h1, h3, text, div, p)
