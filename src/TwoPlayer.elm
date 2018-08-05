@@ -2,6 +2,7 @@ module TwoPlayer exposing (..)
 
 import Html exposing (Html, text)
 import Time exposing (Time, second)
+import Controls
 
 
 --import TwoPlayer.Menu as Menu

@@ -11,6 +11,7 @@ import Element exposing (Element, px, styled, none)
 import Bottle exposing (Bottle, Color(..), Speed(..))
 import Component
 import LevelCreator
+import Controls
 
 
 type alias State =
@@ -52,25 +53,6 @@ type Msg
 init : Int -> Speed -> ( Model, Cmd Msg )
 init level speed =
     initWithScore level speed 0
-
-
-controls : Int -> Maybe Bottle.Direction
-controls keyCode =
-    case keyCode of
-        38 ->
-            Just Bottle.Up
-
-        37 ->
-            Just Bottle.Left
-
-        39 ->
-            Just Bottle.Right
-
-        40 ->
-            Just Bottle.Down
-
-        _ ->
-            Nothing
 
 
 initWithScore level speed score =
@@ -161,7 +143,7 @@ update { onLeave } action model =
 
         ( PrepareGame _, LevelReady state ) ->
             ( Playing
-                { state | bottle = Bottle.withControls controls state.bottle }
+                { state | bottle = Bottle.withControls Controls.arrows state.bottle }
             , Cmd.none
             , Nothing
             )

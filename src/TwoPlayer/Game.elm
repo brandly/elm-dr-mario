@@ -12,6 +12,7 @@ import Element exposing (Element, px, styled, none)
 import Bottle exposing (Bottle, Color(..), Speed(..))
 import Component
 import LevelCreator
+import Controls
 
 
 type alias Player =
@@ -59,7 +60,9 @@ type Msg
 
 
 type alias Options =
-    { level : Int, speed : Speed }
+    { level : Int
+    , speed : Speed
+    }
 
 
 init : Options -> Options -> ( Model, Cmd Msg )
@@ -82,25 +85,6 @@ init first second =
             creator
         , Cmd.map CreatorMsg cmd
         )
-
-
-controls : Int -> Maybe Bottle.Direction
-controls keyCode =
-    case keyCode of
-        38 ->
-            Just Bottle.Up
-
-        37 ->
-            Just Bottle.Left
-
-        39 ->
-            Just Bottle.Right
-
-        40 ->
-            Just Bottle.Down
-
-        _ ->
-            Nothing
 
 
 subscriptions : Model -> Sub Msg
@@ -135,7 +119,7 @@ update { onLeave } action model =
                         { onCreated =
                             (\{ level, bottle } ->
                                 LevelReady
-                                    { state | first = { first | bottle = bottle } }
+                                    { state | first = { first | bottle = Bottle.withControls Controls.wasd bottle } }
                             )
                         }
                         msg
@@ -177,7 +161,7 @@ update { onLeave } action model =
                         { onCreated =
                             (\{ level, bottle } ->
                                 LevelReady
-                                    { state | second = { second | bottle = bottle } }
+                                    { state | second = { second | bottle = Bottle.withControls Controls.arrows bottle } }
                             )
                         }
                         msg
