@@ -11,6 +11,7 @@ import Time exposing (Time)
 import Element exposing (Element, px, styled, none)
 import Bottle exposing (Bottle, Color(..))
 import Component
+import LevelCreator
 
 
 type Speed
@@ -28,7 +29,11 @@ type alias State =
 
 
 type Model
-    = PrepareGame State
+    = PrepareGame
+        { score : Int
+        , speed : Speed
+        , creator : LevelCreator.Model
+        }
     | Playing State
     | Paused State
     | Over
@@ -40,13 +45,13 @@ type Model
 type Msg
     = TickTock Time
     | BottleMsg Bottle.Msg
+    | CreatorMsg LevelCreator.Msg
+    | LevelReady State
     | Advance
         { level : Int
         , score : Int
         , speed : Speed
         }
-    | NewVirus ( Color, Grid.Coords )
-    | InitPill ( Color, Color )
     | Pause
     | Resume
     | Reset
@@ -78,16 +83,15 @@ controls keyCode =
 
 initWithScore level speed score =
     let
-        bottle =
-            Bottle.init controls
+        ( creator, cmd ) =
+            LevelCreator.init level
     in
         ( PrepareGame
-            { level = level
+            { creator = creator
             , score = score
-            , bottle = bottle
             , speed = speed
             }
-        , randomNewVirus bottle.contents
+        , Cmd.map CreatorMsg cmd
         )
 
 
@@ -107,11 +111,6 @@ subscriptions model =
 
 
 -- SETTINGS --
-
-
-virusesForLevel : Int -> Int
-virusesForLevel level =
-    min 84 (4 * level + 4)
 
 
 tickForSpeed : Speed -> Time
@@ -153,34 +152,38 @@ pointsForClearedViruses speed cleared =
 update : { onLeave : msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
 update { onLeave } action model =
     case ( model, action ) of
-        ( PrepareGame ({ level, score, bottle } as state), NewVirus ( color, coords ) ) ->
+        ( PrepareGame ({ score, creator, speed } as state), CreatorMsg msg ) ->
             let
-                newBottle =
-                    Bottle.withVirus color coords bottle
+                ( creator_, cmd, maybeMsg ) =
+                    LevelCreator.update
+                        { onCreated =
+                            (\{ level, bottle } ->
+                                LevelReady
+                                    { bottle = bottle
+                                    , level = level
+                                    , score = score
+                                    , speed = speed
+                                    }
+                            )
+                        }
+                        msg
+                        creator
             in
-                if Bottle.isCleared coords newBottle.contents then
-                    -- would create a 4-in-a-row, so let's try a new virus
-                    ( PrepareGame state, randomNewVirus bottle.contents, Nothing )
-                else if Bottle.totalViruses newBottle.contents >= virusesForLevel level then
-                    ( PrepareGame { state | bottle = newBottle }
-                    , Random.generate InitPill <|
-                        Bottle.generatePill
-                    , Nothing
-                    )
-                else
-                    ( PrepareGame { state | bottle = newBottle }
-                    , randomNewVirus newBottle.contents
-                    , Nothing
-                    )
+                case maybeMsg of
+                    Nothing ->
+                        ( PrepareGame { state | creator = creator_ }
+                        , Cmd.map CreatorMsg cmd
+                        , Nothing
+                        )
 
-        ( PrepareGame { level, bottle, score, speed }, InitPill colors ) ->
+                    Just msg2 ->
+                        update { onLeave = onLeave }
+                            msg2
+                            (PrepareGame { state | creator = creator_ })
+
+        ( PrepareGame _, LevelReady state ) ->
             ( Playing
-                { level = level
-                , bottle =
-                    bottle |> Bottle.withNext colors
-                , score = score
-                , speed = speed
-                }
+                { state | bottle = Bottle.withControls controls state.bottle }
             , Cmd.none
             , Nothing
             )
@@ -268,16 +271,6 @@ updatePlayState onLeave action ({ bottle, speed, score } as model) =
             _ ->
                 -- TODO: get rid of this
                 ( Playing model, Cmd.none, Nothing )
-
-
-
--- GENERATORS
-
-
-randomNewVirus : Bottle -> Cmd Msg
-randomNewVirus bottle =
-    Random.generate NewVirus <|
-        Random.pair Bottle.generateColor (Bottle.generateEmptyCoords bottle)
 
 
 

@@ -51,12 +51,12 @@ type alias Model =
     }
 
 
-init : (Int -> Maybe Direction) -> Model
-init controls =
+init : Model
+init =
     { contents = Grid.fromDimensions 8 16
     , mode = Falling
     , next = ( Red, Red )
-    , controls = controls
+    , controls = (\_ -> Nothing)
     }
 
 
@@ -73,6 +73,11 @@ withVirus color coords model =
                 coords
                 model.contents
     }
+
+
+withControls : (Int -> Maybe Direction) -> Model -> Model
+withControls controls model =
+    { model | controls = controls }
 
 
 type Msg
