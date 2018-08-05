@@ -5,26 +5,32 @@ import Time exposing (Time, second)
 
 
 --import TwoPlayer.Menu as Menu
---import TwoPlayer.Game as Game
 
+import TwoPlayer.Game as Game
 import Component
 
 
-init : ( Model, Cmd msg )
+init : ( Model, Cmd Msg )
 init =
     --( Init Menu.init, Cmd.none )
-    ( Init, Cmd.none )
+    --( Init, Cmd.none )
+    (Game.init
+        { level = 10, speed = Game.Med }
+        { level = 10, speed = Game.Med }
+    )
+        |> Tuple.mapFirst InGame
+        |> Tuple.mapSecond (Cmd.map GameMsg)
 
 
 type Model
     = Init --Menu.State
-    | InGame --Game.Model
+    | InGame Game.Model
 
 
 type Msg
     = Start --{ level : Int, speed : Game.Speed }
       --| MenuMsg Menu.Msg
-      --| GameMsg Game.Msg
+    | GameMsg Game.Msg
     | Reset
 
 
@@ -47,10 +53,11 @@ update action model =
         --            }
         --            msg
         --        |> Component.mapOutMsg update Init MenuMsg
-        --( InGame state, GameMsg msg ) ->
-        --    state
-        --        |> Game.update { onLeave = Reset } msg
-        --        |> Component.mapOutMsg update InGame GameMsg
+        ( InGame state, GameMsg msg ) ->
+            state
+                |> Game.update { onLeave = Reset } msg
+                |> Component.mapOutMsg update InGame GameMsg
+
         --( InGame state, Reset ) ->
         --    ( Init Menu.init, Cmd.none )
         ( _, _ ) ->
@@ -59,26 +66,22 @@ update action model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    case model of
+        Init ->
+            --Sub.map MenuMsg <| Menu.subscriptions state
+            Sub.none
 
-
-
---case model of
---    Init state ->
---        Sub.map MenuMsg <| Menu.subscriptions state
---    InGame state ->
---        Sub.map GameMsg <| Game.subscriptions state
+        InGame state ->
+            Sub.map GameMsg <| Game.subscriptions state
 
 
 view : Model -> Html Msg
 view model =
-    text "TODO: build it"
+    case model of
+        Init ->
+            --Menu.view state
+            text "TODO: build it"
 
-
-
---case model of
---    Init state ->
---        Menu.view state
---    InGame state ->
---        Game.view state
---            |> Html.map GameMsg
+        InGame state ->
+            Game.view state
+                |> Html.map GameMsg

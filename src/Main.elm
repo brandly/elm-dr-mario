@@ -59,6 +59,10 @@ update msg model =
             OnePlayer.update msg state
                 |> Component.mapSimple update One OneMsg
 
+        ( Two state, TwoMsg msg ) ->
+            TwoPlayer.update msg state
+                |> Component.mapSimple update Two TwoMsg
+
         ( _, _ ) ->
             ( model, Cmd.none )
 

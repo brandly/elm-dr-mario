@@ -144,25 +144,6 @@ tickForSpeed speed =
             Time.second
 
 
-pointsForClearedViruses : Speed -> Int -> Int
-pointsForClearedViruses speed cleared =
-    if cleared > 0 then
-        applyNtimes (cleared - 1)
-            ((*) 2)
-            (case speed of
-                Low ->
-                    100
-
-                Med ->
-                    200
-
-                High ->
-                    300
-            )
-    else
-        0
-
-
 
 -- UPDATE --
 
@@ -170,39 +151,76 @@ pointsForClearedViruses speed cleared =
 update : { onLeave : msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
 update { onLeave } action model =
     case ( model, action ) of
-        --( PrepareGame ({ score, creator, speed } as state), CreatorMsg msg ) ->
-        --    let
-        --        ( creator_, cmd, maybeMsg ) =
-        --            LevelCreator.update
-        --                { onCreated =
-        --                    (\{ level, bottle } ->
-        --                        LevelReady
-        --                            { bottle = bottle
-        --                            , level = level
-        --                            , score = score
-        --                            , speed = speed
-        --                            }
-        --                    )
-        --                }
-        --                msg
-        --                creator
-        --    in
-        --        case maybeMsg of
-        --            Nothing ->
-        --                ( PrepareGame { state | creator = creator_ }
-        --                , Cmd.map CreatorMsg cmd
-        --                , Nothing
-        --                )
-        --            Just msg2 ->
-        --                update { onLeave = onLeave }
-        --                    msg2
-        --                    (PrepareGame { state | creator = creator_ })
-        --( PrepareGame _, LevelReady state ) ->
-        --    ( Playing
-        --        { state | bottle = Bottle.withControls controls state.bottle }
-        --    , Cmd.none
-        --    , Nothing
-        --    )
+        ( PrepareFirst state creator, CreatorMsg msg ) ->
+            let
+                first =
+                    state.first
+
+                ( creator_, cmd, maybeMsg ) =
+                    LevelCreator.update
+                        { onCreated =
+                            (\{ level, bottle } ->
+                                LevelReady
+                                    { state | first = { first | bottle = bottle } }
+                            )
+                        }
+                        msg
+                        creator
+            in
+                case maybeMsg of
+                    Nothing ->
+                        ( PrepareFirst state creator_
+                        , Cmd.map CreatorMsg cmd
+                        , Nothing
+                        )
+
+                    Just msg2 ->
+                        update { onLeave = onLeave }
+                            msg2
+                            (PrepareFirst state creator_)
+
+        ( PrepareFirst _ creator, LevelReady state ) ->
+            let
+                ( creator, cmd ) =
+                    LevelCreator.init state.second.level
+            in
+                ( PrepareSecond state creator
+                , Cmd.map CreatorMsg cmd
+                , Nothing
+                )
+
+        ( PrepareSecond state creator, CreatorMsg msg ) ->
+            let
+                -- TODO: if you choose same levels, should have same bottles
+                second =
+                    state.second
+
+                ( creator_, cmd, maybeMsg ) =
+                    LevelCreator.update
+                        { onCreated =
+                            (\{ level, bottle } ->
+                                LevelReady
+                                    { state | second = { second | bottle = bottle } }
+                            )
+                        }
+                        msg
+                        creator
+            in
+                case maybeMsg of
+                    Nothing ->
+                        ( PrepareSecond state creator_
+                        , Cmd.map CreatorMsg cmd
+                        , Nothing
+                        )
+
+                    Just msg2 ->
+                        update { onLeave = onLeave }
+                            msg2
+                            (PrepareSecond state creator_)
+
+        ( PrepareSecond _ creator, LevelReady state ) ->
+            ( Playing state, Cmd.none, Nothing )
+
         --( PrepareGame _, _ ) ->
         --    ( model, Cmd.none, Nothing )
         --( Playing state, Pause ) ->
@@ -291,7 +309,12 @@ view model =
             div [] [ text "💊💊💊" ]
 
         Playing state ->
-            div []
+            div
+                [ style
+                    [ ( "display", "flex" )
+                    , ( "flex-direction", "row" )
+                    ]
+                ]
                 [ viewPlayer state.first
                 , viewPlayer state.second
                 ]
@@ -343,17 +366,3 @@ viewMessage message below =
         [ h3 [] [ text message ]
         , below
         ]
-
-
-
--- UTILS --
-
-
-applyNtimes : Int -> (a -> a) -> a -> a
-applyNtimes n f x =
-    if n <= 0 then
-        x
-    else if n == 1 then
-        f x
-    else
-        f (applyNtimes (n - 1) f x)

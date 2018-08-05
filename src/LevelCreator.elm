@@ -37,7 +37,7 @@ virusesForLevel level =
 
 update : { onCreated : Model -> msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
 update { onCreated } action ({ level, bottle } as model) =
-    case (action) of
+    case action of
         NewVirus ( color, coords ) ->
             let
                 newBottle =
