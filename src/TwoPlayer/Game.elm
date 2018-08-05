@@ -291,8 +291,7 @@ view model =
                         Second ->
                             "2p wins"
                     )
-                    -- TODO: add link to main menu
-                    none
+                    (div [] [ Html.button [ onClick Reset ] [ text "Main Menu" ] ])
                 , view (Playing state.game)
                 ]
 
