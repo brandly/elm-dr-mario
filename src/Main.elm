@@ -1,15 +1,10 @@
 module Main exposing (..)
 
-import Html exposing (Html, h1, h3, text, div, p)
-import Html.Attributes exposing (style, type_)
-import Html.Events exposing (onClick)
-import Grid
+import Html exposing (Html, h1, text, div, p)
+import Html.Attributes exposing (style)
 import Time exposing (Time, second)
-import Random exposing (Generator)
 import Menu
-import Bottle exposing (Color(..))
 import Game
-import Element exposing (none)
 import Component
 
 
