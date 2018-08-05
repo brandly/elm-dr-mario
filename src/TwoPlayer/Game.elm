@@ -189,25 +189,25 @@ update { onLeave } action model =
         ( Paused state, _ ) ->
             ( model, Cmd.none, Nothing )
 
-        ( Playing state, msg ) ->
-            --if Bottle.totalViruses state.bottle.contents == 0 then
-            --    ( Over
-            --        { won = True
-            --        , game = state
-            --        }
-            --    , Cmd.none
-            --    , Nothing
-            --    )
-            --else if Bottle.hasConflict state.bottle then
-            --    ( Over
-            --        { won = False
-            --        , game = state
-            --        }
-            --    , Cmd.none
-            --    , Nothing
-            --    )
-            --else
-            updatePlayState onLeave msg state
+        ( Playing ({ first, second } as state), msg ) ->
+            if Bottle.totalViruses first.bottle.contents == 0 || Bottle.hasConflict second.bottle then
+                ( Over
+                    { winner = First
+                    , game = state
+                    }
+                , Cmd.none
+                , Nothing
+                )
+            else if Bottle.totalViruses second.bottle.contents == 0 || Bottle.hasConflict first.bottle then
+                ( Over
+                    { winner = Second
+                    , game = state
+                    }
+                , Cmd.none
+                , Nothing
+                )
+            else
+                updatePlayState onLeave msg state
 
         ( Over _, Reset ) ->
             ( model, Cmd.none, Just onLeave )
@@ -281,7 +281,20 @@ view model =
                 ]
 
         Over state ->
-            div [] []
+            div []
+                -- TODO: make it obvious which bottle won
+                [ viewMessage
+                    (case state.winner of
+                        First ->
+                            "1p wins"
+
+                        Second ->
+                            "2p wins"
+                    )
+                    -- TODO: add link to main menu
+                    none
+                , view (Playing state.game)
+                ]
 
 
 viewPlayer : Player -> Html msg
