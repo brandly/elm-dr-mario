@@ -189,6 +189,9 @@ update { onLeave } action model =
                 , Nothing
                 )
 
+        ( PrepareFirst _ _, _ ) ->
+            ( model, Cmd.none, Nothing )
+
         ( PrepareSecond state creator, CreatorMsg msg ) ->
             let
                 -- TODO: if you choose same levels, should have same bottles
@@ -221,6 +224,9 @@ update { onLeave } action model =
         ( PrepareSecond _ creator, LevelReady state ) ->
             ( Playing state, Cmd.none, Nothing )
 
+        ( PrepareSecond _ _, _ ) ->
+            ( model, Cmd.none, Nothing )
+
         --( PrepareGame _, _ ) ->
         --    ( model, Cmd.none, Nothing )
         --( Playing state, Pause ) ->
@@ -229,25 +235,26 @@ update { onLeave } action model =
         --    ( Playing state, Cmd.none, Nothing )
         --( Paused state, _ ) ->
         --    ( model, Cmd.none, Nothing )
-        --( Playing state, msg ) ->
-        --    if Bottle.totalViruses state.bottle.contents == 0 then
-        --        ( Over
-        --            { won = True
-        --            , game = state
-        --            }
-        --        , Cmd.none
-        --        , Nothing
-        --        )
-        --    else if Bottle.hasConflict state.bottle then
-        --        ( Over
-        --            { won = False
-        --            , game = state
-        --            }
-        --        , Cmd.none
-        --        , Nothing
-        --        )
-        --    else
-        --        updatePlayState onLeave msg state
+        ( Playing state, msg ) ->
+            --if Bottle.totalViruses state.bottle.contents == 0 then
+            --    ( Over
+            --        { won = True
+            --        , game = state
+            --        }
+            --    , Cmd.none
+            --    , Nothing
+            --    )
+            --else if Bottle.hasConflict state.bottle then
+            --    ( Over
+            --        { won = False
+            --        , game = state
+            --        }
+            --    , Cmd.none
+            --    , Nothing
+            --    )
+            --else
+            updatePlayState onLeave msg state
+
         --( Over _, Advance { level, score, speed } ) ->
         --    let
         --        ( model, msg ) =
@@ -261,41 +268,47 @@ update { onLeave } action model =
             ( model, Cmd.none, Nothing )
 
 
+updatePlayState : msg -> Msg -> State -> ( Model, Cmd Msg, Maybe msg )
+updatePlayState onLeave action ({ first, second } as model) =
+    let
+        withBottle : Bottle.Model -> Player -> Player
+        withBottle newBottle player =
+            { player | bottle = newBottle }
+    in
+        case action of
+            -- TODO: bottles should advance themselves, own Speed,
+            --TickTock _ ->
+            --    let
+            --        ( a, b ) =
+            --            Bottle.advance model.bottle
+            --                |> Tuple.mapFirst withBottle
+            --                |> Tuple.mapSecond (Cmd.map BottleMsg)
+            --    in
+            --        ( a, b, Nothing )
+            FirstBottleMsg msg ->
+                Bottle.update msg first.bottle
+                    |> Component.raiseOutMsg (update { onLeave = onLeave })
+                        (\bottle ->
+                            Playing
+                                { model | first = withBottle bottle first }
+                        )
+                        FirstBottleMsg
 
---updatePlayState : msg -> Msg -> State -> ( Model, Cmd Msg, Maybe msg )
---updatePlayState onLeave action ({ bottle, speed, score } as model) =
---    let
---        withBottle : Bottle.Model -> Model
---        withBottle newBottle =
---            let
---                sweptViruses =
---                    (Bottle.totalViruses bottle.contents) - (Bottle.totalViruses newBottle.contents)
---                additionalPoints =
---                    pointsForClearedViruses speed sweptViruses
---            in
---                Playing
---                    { model
---                        | bottle = newBottle
---                        , score = score + additionalPoints
---                    }
---    in
---        case action of
---            TickTock _ ->
---                let
---                    ( a, b ) =
---                        Bottle.advance model.bottle
---                            |> Tuple.mapFirst withBottle
---                            |> Tuple.mapSecond (Cmd.map BottleMsg)
---                in
---                    ( a, b, Nothing )
---            BottleMsg msg ->
---                Bottle.update msg model.bottle
---                    |> Component.raiseOutMsg (update { onLeave = onLeave })
---                        withBottle
---                        BottleMsg
---            _ ->
---                -- TODO: get rid of this
---                ( Playing model, Cmd.none, Nothing )
+            SecondBottleMsg msg ->
+                Bottle.update msg second.bottle
+                    |> Component.raiseOutMsg (update { onLeave = onLeave })
+                        (\bottle ->
+                            Playing
+                                { model | second = withBottle bottle second }
+                        )
+                        SecondBottleMsg
+
+            _ ->
+                -- TODO: get rid of this
+                ( Playing model, Cmd.none, Nothing )
+
+
+
 -- VIEW --
 
 
