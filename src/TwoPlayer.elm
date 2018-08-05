@@ -6,6 +6,7 @@ import Time exposing (Time, second)
 
 --import TwoPlayer.Menu as Menu
 
+import Bottle exposing (Speed(..))
 import TwoPlayer.Game as Game
 import Component
 
@@ -13,10 +14,9 @@ import Component
 init : ( Model, Cmd Msg )
 init =
     --( Init Menu.init, Cmd.none )
-    --( Init, Cmd.none )
     (Game.init
-        { level = 10, speed = Game.Med }
-        { level = 10, speed = Game.Med }
+        { level = 10, speed = Med }
+        { level = 10, speed = Med }
     )
         |> Tuple.mapFirst InGame
         |> Tuple.mapSecond (Cmd.map GameMsg)

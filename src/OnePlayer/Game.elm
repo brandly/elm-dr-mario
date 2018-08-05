@@ -7,17 +7,10 @@ import Html.Events exposing (onClick)
 import Keyboard exposing (KeyCode)
 import Random exposing (Generator(..))
 import RandomExtra exposing (selectWithDefault)
-import Time exposing (Time)
 import Element exposing (Element, px, styled, none)
-import Bottle exposing (Bottle, Color(..))
+import Bottle exposing (Bottle, Color(..), Speed(..))
 import Component
 import LevelCreator
-
-
-type Speed
-    = Low
-    | Med
-    | High
 
 
 type alias State =
@@ -43,8 +36,7 @@ type Model
 
 
 type Msg
-    = TickTock Time
-    | BottleMsg Bottle.Msg
+    = BottleMsg Bottle.Msg
     | CreatorMsg LevelCreator.Msg
     | LevelReady State
     | Advance
@@ -100,8 +92,7 @@ subscriptions model =
     case model of
         Playing { speed, bottle } ->
             Sub.batch
-                [ Time.every (tickForSpeed speed) TickTock
-                , Bottle.subscriptions bottle
+                [ Bottle.subscriptions speed bottle
                     |> Sub.map BottleMsg
                 ]
 
@@ -111,19 +102,6 @@ subscriptions model =
 
 
 -- SETTINGS --
-
-
-tickForSpeed : Speed -> Time
-tickForSpeed speed =
-    case speed of
-        High ->
-            300 * Time.millisecond
-
-        Med ->
-            700 * Time.millisecond
-
-        Low ->
-            Time.second
 
 
 pointsForClearedViruses : Speed -> Int -> Int
@@ -253,15 +231,6 @@ updatePlayState onLeave action ({ bottle, speed, score } as model) =
                     }
     in
         case action of
-            TickTock _ ->
-                let
-                    ( a, b ) =
-                        Bottle.advance model.bottle
-                            |> Tuple.mapFirst withBottle
-                            |> Tuple.mapSecond (Cmd.map BottleMsg)
-                in
-                    ( a, b, Nothing )
-
             BottleMsg msg ->
                 Bottle.update msg model.bottle
                     |> Component.raiseOutMsg (update { onLeave = onLeave })

@@ -5,9 +5,16 @@ import Html.Attributes exposing (style)
 import Element exposing (Element, px, styled, none)
 import Keyboard exposing (KeyCode)
 import Set
+import Time exposing (Time)
 import Random exposing (Generator(..))
 import RandomExtra exposing (selectWithDefault)
 import Grid exposing (Cell, Column, Grid)
+
+
+type Speed
+    = Low
+    | Med
+    | High
 
 
 type Mode
@@ -83,6 +90,7 @@ withControls controls model =
 type Msg
     = NewPill ( Color, Color )
     | KeyDown (Maybe Direction)
+    | TickTock Time
 
 
 type Direction
@@ -92,9 +100,25 @@ type Direction
     | Right
 
 
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Keyboard.downs (model.controls >> KeyDown)
+subscriptions : Speed -> Model -> Sub Msg
+subscriptions speed model =
+    Sub.batch
+        [ Time.every (tickForSpeed speed) TickTock
+        , Keyboard.downs (model.controls >> KeyDown)
+        ]
+
+
+tickForSpeed : Speed -> Time
+tickForSpeed speed =
+    case speed of
+        High ->
+            300 * Time.millisecond
+
+        Med ->
+            700 * Time.millisecond
+
+        Low ->
+            Time.second
 
 
 
@@ -154,6 +178,9 @@ update msg model =
         ( _, KeyDown _ ) ->
             withNothing model
 
+        ( _, TickTock _ ) ->
+            advance model
+
         _ ->
             withNothing model
 
@@ -163,7 +190,7 @@ withNothing model =
     ( model, Cmd.none, Nothing )
 
 
-advance : Model -> ( Model, Cmd Msg )
+advance : Model -> ( Model, Cmd Msg, Maybe msg )
 advance model =
     case model.mode of
         PlacingPill pill ( x, y ) ->
@@ -189,12 +216,12 @@ advance model =
                                 , contents = newContents
                             }
             in
-                ( if isAvailable newCoords pill model.contents then
-                    { model | mode = PlacingPill pill newCoords }
-                  else
-                    afterPill pill ( x, y ) model
-                , Cmd.none
-                )
+                withNothing
+                    (if isAvailable newCoords pill model.contents then
+                        { model | mode = PlacingPill pill newCoords }
+                     else
+                        afterPill pill ( x, y ) model
+                    )
 
         Falling ->
             let
@@ -212,13 +239,15 @@ advance model =
                             fall model.contents
                       }
                     , Cmd.none
+                    , Nothing
                     )
                 else if canSweep model.contents then
-                    ( sweep model, Cmd.none )
+                    ( sweep model, Cmd.none, Nothing )
                 else
                     ( model
                     , Random.generate NewPill <|
                         generatePill
+                    , Nothing
                     )
 
 

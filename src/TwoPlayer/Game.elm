@@ -9,15 +9,9 @@ import Random exposing (Generator(..))
 import RandomExtra exposing (selectWithDefault)
 import Time exposing (Time)
 import Element exposing (Element, px, styled, none)
-import Bottle exposing (Bottle, Color(..))
+import Bottle exposing (Bottle, Color(..), Speed(..))
 import Component
 import LevelCreator
-
-
-type Speed
-    = Low
-    | Med
-    | High
 
 
 type alias Player =
@@ -50,8 +44,7 @@ type Model
 
 
 type Msg
-    = TickTock Time
-    | FirstBottleMsg Bottle.Msg
+    = FirstBottleMsg Bottle.Msg
     | SecondBottleMsg Bottle.Msg
     | CreatorMsg LevelCreator.Msg
     | LevelReady State
@@ -115,33 +108,14 @@ subscriptions model =
     case model of
         Playing { first, second } ->
             Sub.batch
-                [ Time.every (tickForSpeed first.speed) TickTock
-                , Time.every (tickForSpeed second.speed) TickTock
-                , Bottle.subscriptions first.bottle
+                [ Bottle.subscriptions first.speed first.bottle
                     |> Sub.map FirstBottleMsg
-                , Bottle.subscriptions second.bottle
+                , Bottle.subscriptions second.speed second.bottle
                     |> Sub.map SecondBottleMsg
                 ]
 
         _ ->
             Sub.none
-
-
-
--- SETTINGS --
-
-
-tickForSpeed : Speed -> Time
-tickForSpeed speed =
-    case speed of
-        High ->
-            300 * Time.millisecond
-
-        Med ->
-            700 * Time.millisecond
-
-        Low ->
-            Time.second
 
 
 
@@ -276,15 +250,6 @@ updatePlayState onLeave action ({ first, second } as model) =
             { player | bottle = newBottle }
     in
         case action of
-            -- TODO: bottles should advance themselves, own Speed,
-            --TickTock _ ->
-            --    let
-            --        ( a, b ) =
-            --            Bottle.advance model.bottle
-            --                |> Tuple.mapFirst withBottle
-            --                |> Tuple.mapSecond (Cmd.map BottleMsg)
-            --    in
-            --        ( a, b, Nothing )
             FirstBottleMsg msg ->
                 Bottle.update msg first.bottle
                     |> Component.raiseOutMsg (update { onLeave = onLeave })

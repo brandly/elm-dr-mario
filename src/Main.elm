@@ -38,6 +38,10 @@ subscriptions model =
             OnePlayer.subscriptions state
                 |> Sub.map OneMsg
 
+        Two state ->
+            TwoPlayer.subscriptions state
+                |> Sub.map TwoMsg
+
         _ ->
             Sub.none
 
