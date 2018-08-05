@@ -49,11 +49,6 @@ type Msg
     | SecondBottleMsg Bottle.Msg
     | CreatorMsg LevelCreator.Msg
     | LevelReady State
-    | Advance
-        { level : Int
-        , score : Int
-        , speed : Speed
-        }
     | Pause
     | Resume
     | Reset
@@ -185,14 +180,15 @@ update { onLeave } action model =
         ( PrepareSecond _ _, _ ) ->
             ( model, Cmd.none, Nothing )
 
-        --( PrepareGame _, _ ) ->
-        --    ( model, Cmd.none, Nothing )
-        --( Playing state, Pause ) ->
-        --    ( Paused state, Cmd.none, Nothing )
-        --( Paused state, Resume ) ->
-        --    ( Playing state, Cmd.none, Nothing )
-        --( Paused state, _ ) ->
-        --    ( model, Cmd.none, Nothing )
+        ( Playing state, Pause ) ->
+            ( Paused state, Cmd.none, Nothing )
+
+        ( Paused state, Resume ) ->
+            ( Playing state, Cmd.none, Nothing )
+
+        ( Paused state, _ ) ->
+            ( model, Cmd.none, Nothing )
+
         ( Playing state, msg ) ->
             --if Bottle.totalViruses state.bottle.contents == 0 then
             --    ( Over
@@ -213,16 +209,10 @@ update { onLeave } action model =
             --else
             updatePlayState onLeave msg state
 
-        --( Over _, Advance { level, score, speed } ) ->
-        --    let
-        --        ( model, msg ) =
-        --            initWithScore level speed score
-        --    in
-        --        ( model, msg, Nothing )
-        --( Over _, Reset ) ->
-        --    ( model, Cmd.none, Just onLeave )
-        --( Over _, _ ) ->
-        ( _, _ ) ->
+        ( Over _, Reset ) ->
+            ( model, Cmd.none, Just onLeave )
+
+        ( Over _, _ ) ->
             ( model, Cmd.none, Nothing )
 
 
