@@ -5,6 +5,7 @@ import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import Component
 import OnePlayer
+import TwoPlayer
 
 
 main : Program Never Model Msg
@@ -20,12 +21,12 @@ main =
 type Model
     = Selecting
     | One OnePlayer.Model
-    | Two
+    | Two TwoPlayer.Model
 
 
 type Msg
     = OneMsg OnePlayer.Msg
-    | TwoMsg
+    | TwoMsg TwoPlayer.Msg
     | PlayOne
     | PlayTwo
 
@@ -50,7 +51,9 @@ update msg model =
                 |> Tuple.mapSecond (Cmd.map OneMsg)
 
         ( Selecting, PlayTwo ) ->
-            ( Two, Cmd.none )
+            TwoPlayer.init
+                |> Tuple.mapFirst Two
+                |> Tuple.mapSecond (Cmd.map TwoMsg)
 
         ( One state, OneMsg msg ) ->
             OnePlayer.update msg state
@@ -78,9 +81,9 @@ view model =
                 OnePlayer.view state
                     |> Html.map OneMsg
 
-            Two ->
-                --TwoPlayer.view model
-                text "TODO: build it"
+            Two state ->
+                TwoPlayer.view state
+                    |> Html.map TwoMsg
         ]
 
 
