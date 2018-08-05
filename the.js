@@ -10109,6 +10109,12 @@ var _user$project$Bottle$coordsWithDirection = F2(
 var _user$project$Bottle$withNothing = function (model) {
 	return {ctor: '_Tuple3', _0: model, _1: _elm_lang$core$Platform_Cmd$none, _2: _elm_lang$core$Maybe$Nothing};
 };
+var _user$project$Bottle$withControls = F2(
+	function (controls, model) {
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{controls: controls});
+	});
 var _user$project$Bottle$withNext = F2(
 	function (next, model) {
 		return _elm_lang$core$Native_Utils.update(
@@ -10233,8 +10239,8 @@ var _user$project$Bottle$sweep = function (_p37) {
 					return _elm_lang$core$Native_Utils.crashCase(
 						'Bottle',
 						{
-							start: {line: 297, column: 25},
-							end: {line: 302, column: 95}
+							start: {line: 302, column: 25},
+							end: {line: 307, column: 95}
 						},
 						_p41)('Shouldn\'t have made it thru the preceding filter');
 				}
@@ -10304,13 +10310,13 @@ var _user$project$Bottle$withVirus = F3(
 var _user$project$Bottle$Yellow = {ctor: 'Yellow'};
 var _user$project$Bottle$Blue = {ctor: 'Blue'};
 var _user$project$Bottle$Red = {ctor: 'Red'};
-var _user$project$Bottle$init = function (controls) {
-	return {
-		contents: A2(_user$project$Grid$fromDimensions, 8, 16),
-		mode: _user$project$Bottle$Falling,
-		next: {ctor: '_Tuple2', _0: _user$project$Bottle$Red, _1: _user$project$Bottle$Red},
-		controls: controls
-	};
+var _user$project$Bottle$init = {
+	contents: A2(_user$project$Grid$fromDimensions, 8, 16),
+	mode: _user$project$Bottle$Falling,
+	next: {ctor: '_Tuple2', _0: _user$project$Bottle$Red, _1: _user$project$Bottle$Red},
+	controls: function (_p52) {
+		return _elm_lang$core$Maybe$Nothing;
+	}
 };
 var _user$project$Bottle$generateColor = A2(
 	_user$project$RandomExtra$selectWithDefault,
@@ -10334,9 +10340,9 @@ var _user$project$Bottle$KeyDown = function (a) {
 };
 var _user$project$Bottle$subscriptions = function (model) {
 	return _elm_lang$keyboard$Keyboard$downs(
-		function (_p52) {
+		function (_p53) {
 			return _user$project$Bottle$KeyDown(
-				model.controls(_p52));
+				model.controls(_p53));
 		});
 };
 var _user$project$Bottle$NewPill = function (a) {
@@ -10352,22 +10358,22 @@ var _user$project$Bottle$canFall = F2(
 			var hasRoom = function (cells) {
 				hasRoom:
 				while (true) {
-					var _p53 = cells;
-					if (_p53.ctor === '[]') {
+					var _p54 = cells;
+					if (_p54.ctor === '[]') {
 						return false;
 					} else {
-						var _p55 = _p53._0;
-						var _p54 = _p55.state;
-						if (_p54.ctor === 'Nothing') {
+						var _p56 = _p54._0;
+						var _p55 = _p56.state;
+						if (_p55.ctor === 'Nothing') {
 							return true;
 						} else {
-							if (_p54._0._1.ctor === 'Pill') {
-								if (_p54._0._1._0.ctor === 'Nothing') {
-									var _v27 = _p53._1;
+							if (_p55._0._1.ctor === 'Pill') {
+								if (_p55._0._1._0.ctor === 'Nothing') {
+									var _v27 = _p54._1;
 									cells = _v27;
 									continue hasRoom;
 								} else {
-									return A2(_user$project$Bottle$canFall, _p55.coords, bottle);
+									return A2(_user$project$Bottle$canFall, _p56.coords, bottle);
 								}
 							} else {
 								return false;
@@ -10377,13 +10383,13 @@ var _user$project$Bottle$canFall = F2(
 				}
 			};
 			var cell = A2(_user$project$Grid$findCellAtCoords, coords, bottle);
-			var _p56 = cell.state;
-			if (((_p56.ctor === 'Just') && (_p56._0.ctor === '_Tuple2')) && (_p56._0._1.ctor === 'Pill')) {
-				if (_p56._0._1._0.ctor === 'Nothing') {
+			var _p57 = cell.state;
+			if (((_p57.ctor === 'Just') && (_p57._0.ctor === '_Tuple2')) && (_p57._0._1.ctor === 'Pill')) {
+				if (_p57._0._1._0.ctor === 'Nothing') {
 					return hasRoom(
 						A2(_user$project$Grid$below, coords, bottle));
 				} else {
-					switch (_p56._0._1._0._0.ctor) {
+					switch (_p57._0._1._0._0.ctor) {
 						case 'Up':
 							return hasRoom(
 								A2(_user$project$Grid$below, coords, bottle));
@@ -10398,7 +10404,7 @@ var _user$project$Bottle$canFall = F2(
 								A2(_user$project$Grid$below, coords, bottle)) && hasRoom(
 								A2(
 									_user$project$Grid$below,
-									A2(_user$project$Bottle$coordsWithDirection, coords, _p56._0._1._0._0),
+									A2(_user$project$Bottle$coordsWithDirection, coords, _p57._0._1._0._0),
 									bottle));
 					}
 				}
@@ -10410,12 +10416,12 @@ var _user$project$Bottle$canFall = F2(
 var _user$project$Bottle$fall = function (bottle) {
 	return A2(
 		_user$project$Grid$map,
-		function (_p57) {
-			var _p58 = _p57;
-			var _p60 = _p58;
-			var _p59 = _p58.coords;
-			var x = _p59._0;
-			var y = _p59._1;
+		function (_p58) {
+			var _p59 = _p58;
+			var _p61 = _p59;
+			var _p60 = _p59.coords;
+			var x = _p60._0;
+			var y = _p60._1;
 			return A2(
 				_user$project$Bottle$canFall,
 				{ctor: '_Tuple2', _0: x, _1: y},
@@ -10423,7 +10429,7 @@ var _user$project$Bottle$fall = function (bottle) {
 				_user$project$Bottle$canFall,
 				{ctor: '_Tuple2', _0: x, _1: y - 1},
 				bottle) ? _elm_lang$core$Native_Utils.update(
-				_p60,
+				_p61,
 				{
 					state: function (_) {
 						return _.state;
@@ -10433,12 +10439,12 @@ var _user$project$Bottle$fall = function (bottle) {
 							{ctor: '_Tuple2', _0: x, _1: y - 1},
 							bottle))
 				}) : _elm_lang$core$Native_Utils.update(
-				_p60,
-				{state: _elm_lang$core$Maybe$Nothing})) : ((_elm_lang$core$Native_Utils.eq(_p58.state, _elm_lang$core$Maybe$Nothing) && A2(
+				_p61,
+				{state: _elm_lang$core$Maybe$Nothing})) : ((_elm_lang$core$Native_Utils.eq(_p59.state, _elm_lang$core$Maybe$Nothing) && A2(
 				_user$project$Bottle$canFall,
 				{ctor: '_Tuple2', _0: x, _1: y - 1},
 				bottle)) ? _elm_lang$core$Native_Utils.update(
-				_p60,
+				_p61,
 				{
 					state: function (_) {
 						return _.state;
@@ -10447,33 +10453,33 @@ var _user$project$Bottle$fall = function (bottle) {
 							_user$project$Grid$findCellAtCoords,
 							{ctor: '_Tuple2', _0: x, _1: y - 1},
 							bottle))
-				}) : _p60);
+				}) : _p61);
 		},
 		bottle);
 };
 var _user$project$Bottle$Up = {ctor: 'Up'};
 var _user$project$Bottle$colorCoords = F2(
 	function (pill, coords) {
-		var _p61 = function () {
-			var _p62 = pill;
-			if (_p62.ctor === 'Horizontal') {
-				return {ctor: '_Tuple4', _0: _p62._0, _1: _user$project$Bottle$Right, _2: _p62._1, _3: _user$project$Bottle$Left};
+		var _p62 = function () {
+			var _p63 = pill;
+			if (_p63.ctor === 'Horizontal') {
+				return {ctor: '_Tuple4', _0: _p63._0, _1: _user$project$Bottle$Right, _2: _p63._1, _3: _user$project$Bottle$Left};
 			} else {
-				return {ctor: '_Tuple4', _0: _p62._0, _1: _user$project$Bottle$Down, _2: _p62._1, _3: _user$project$Bottle$Up};
+				return {ctor: '_Tuple4', _0: _p63._0, _1: _user$project$Bottle$Down, _2: _p63._1, _3: _user$project$Bottle$Up};
 			}
 		}();
-		var a_color = _p61._0;
-		var a_dep = _p61._1;
-		var b_color = _p61._2;
-		var b_dep = _p61._3;
-		var _p63 = A2(_user$project$Bottle$pillCoordsPair, pill, coords);
-		if (((_p63.ctor === '::') && (_p63._1.ctor === '::')) && (_p63._1._1.ctor === '[]')) {
+		var a_color = _p62._0;
+		var a_dep = _p62._1;
+		var b_color = _p62._2;
+		var b_dep = _p62._3;
+		var _p64 = A2(_user$project$Bottle$pillCoordsPair, pill, coords);
+		if (((_p64.ctor === '::') && (_p64._1.ctor === '::')) && (_p64._1._1.ctor === '[]')) {
 			return {
 				ctor: '::',
-				_0: {ctor: '_Tuple3', _0: _p63._0, _1: a_color, _2: a_dep},
+				_0: {ctor: '_Tuple3', _0: _p64._0, _1: a_color, _2: a_dep},
 				_1: {
 					ctor: '::',
-					_0: {ctor: '_Tuple3', _0: _p63._1._0, _1: b_color, _2: b_dep},
+					_0: {ctor: '_Tuple3', _0: _p64._1._0, _1: b_color, _2: b_dep},
 					_1: {ctor: '[]'}
 				}
 			};
@@ -10486,28 +10492,28 @@ var _user$project$Bottle$addPill = F3(
 		return A3(
 			_elm_lang$core$List$foldl,
 			F2(
-				function (_p64, grid) {
-					var _p65 = _p64;
+				function (_p65, grid) {
+					var _p66 = _p65;
 					return A3(
 						_user$project$Grid$setState,
 						{
 							ctor: '_Tuple2',
-							_0: _p65._1,
+							_0: _p66._1,
 							_1: _user$project$Bottle$Pill(
-								_elm_lang$core$Maybe$Just(_p65._2))
+								_elm_lang$core$Maybe$Just(_p66._2))
 						},
-						_p65._0,
+						_p66._0,
 						grid);
 				}),
 			bottle,
 			A2(_user$project$Bottle$colorCoords, pill, coords));
 	});
 var _user$project$Bottle$advance = function (model) {
-	var _p66 = model.mode;
-	if (_p66.ctor === 'PlacingPill') {
-		var _p69 = _p66._1._1;
-		var _p68 = _p66._1._0;
-		var _p67 = _p66._0;
+	var _p67 = model.mode;
+	if (_p67.ctor === 'PlacingPill') {
+		var _p70 = _p67._1._1;
+		var _p69 = _p67._1._0;
+		var _p68 = _p67._0;
 		var afterPill = F3(
 			function (pill, coords, model) {
 				var newContents = A3(_user$project$Bottle$addPill, pill, coords, model.contents);
@@ -10523,29 +10529,29 @@ var _user$project$Bottle$advance = function (model) {
 						model,
 						{mode: _user$project$Bottle$Falling, contents: newContents}));
 			});
-		var newCoords = {ctor: '_Tuple2', _0: _p68, _1: _p69 + 1};
+		var newCoords = {ctor: '_Tuple2', _0: _p69, _1: _p70 + 1};
 		return {
 			ctor: '_Tuple2',
-			_0: A3(_user$project$Bottle$isAvailable, newCoords, _p67, model.contents) ? _elm_lang$core$Native_Utils.update(
+			_0: A3(_user$project$Bottle$isAvailable, newCoords, _p68, model.contents) ? _elm_lang$core$Native_Utils.update(
 				model,
 				{
-					mode: A2(_user$project$Bottle$PlacingPill, _p67, newCoords)
+					mode: A2(_user$project$Bottle$PlacingPill, _p68, newCoords)
 				}) : A3(
 				afterPill,
-				_p67,
-				{ctor: '_Tuple2', _0: _p68, _1: _p69},
+				_p68,
+				{ctor: '_Tuple2', _0: _p69, _1: _p70},
 				model),
 			_1: _elm_lang$core$Platform_Cmd$none
 		};
 	} else {
-		var timeToFall = function (_p70) {
-			return !_elm_lang$core$List$isEmpty(_p70);
+		var timeToFall = function (_p71) {
+			return !_elm_lang$core$List$isEmpty(_p71);
 		}(
 			A2(
 				_user$project$Grid$filter,
-				function (_p71) {
-					var _p72 = _p71;
-					return A2(_user$project$Bottle$canFall, _p72.coords, model.contents);
+				function (_p72) {
+					var _p73 = _p72;
+					return A2(_user$project$Bottle$canFall, _p73.coords, model.contents);
 				},
 				model.contents));
 		return timeToFall ? {
@@ -10568,9 +10574,9 @@ var _user$project$Bottle$advance = function (model) {
 		});
 	}
 };
-var _user$project$Bottle$view = function (_p73) {
-	var _p74 = _p73;
-	var _p77 = _p74.contents;
+var _user$project$Bottle$view = function (_p74) {
+	var _p75 = _p74;
+	var _p78 = _p75.contents;
 	return A2(
 		_elm_lang$html$Html$div,
 		{ctor: '[]'},
@@ -10622,8 +10628,8 @@ var _user$project$Bottle$view = function (_p73) {
 							A2(
 								_elm_lang$core$List$map,
 								function (cell) {
-									var _p75 = cell.state;
-									if (_p75.ctor === 'Nothing') {
+									var _p76 = cell.state;
+									if (_p76.ctor === 'Nothing') {
 										return A2(
 											_elm_lang$html$Html$div,
 											{
@@ -10633,21 +10639,21 @@ var _user$project$Bottle$view = function (_p73) {
 											},
 											{ctor: '[]'});
 									} else {
-										if (_p75._0._1.ctor === 'Pill') {
-											return A2(_user$project$Bottle$viewPill, _p75._0._1._0, _p75._0._0);
+										if (_p76._0._1.ctor === 'Pill') {
+											return A2(_user$project$Bottle$viewPill, _p76._0._1._0, _p76._0._0);
 										} else {
-											return _user$project$Bottle$viewVirus(_p75._0._0);
+											return _user$project$Bottle$viewVirus(_p76._0._0);
 										}
 									}
 								},
 								column));
 					},
 					function () {
-						var _p76 = _p74.mode;
-						if (_p76.ctor === 'PlacingPill') {
-							return A3(_user$project$Bottle$addPill, _p76._0, _p76._1, _p77);
+						var _p77 = _p75.mode;
+						if (_p77.ctor === 'PlacingPill') {
+							return A3(_user$project$Bottle$addPill, _p77._0, _p77._1, _p78);
 						} else {
-							return _p77;
+							return _p78;
 						}
 					}())),
 			_1: {ctor: '[]'}
@@ -10720,12 +10726,90 @@ var _user$project$Component$mapOutMsg = F4(
 		}
 	});
 
-var _user$project$Game$applyNtimes = F3(
+var _user$project$LevelCreator$virusesForLevel = function (level) {
+	return A2(_elm_lang$core$Basics$min, 84, (4 * level) + 4);
+};
+var _user$project$LevelCreator$Model = F2(
+	function (a, b) {
+		return {level: a, bottle: b};
+	});
+var _user$project$LevelCreator$NewPill = function (a) {
+	return {ctor: 'NewPill', _0: a};
+};
+var _user$project$LevelCreator$NewVirus = function (a) {
+	return {ctor: 'NewVirus', _0: a};
+};
+var _user$project$LevelCreator$randomNewVirus = function (bottle) {
+	return A2(
+		_elm_lang$core$Random$generate,
+		_user$project$LevelCreator$NewVirus,
+		A2(
+			_elm_lang$core$Random$pair,
+			_user$project$Bottle$generateColor,
+			_user$project$Bottle$generateEmptyCoords(bottle)));
+};
+var _user$project$LevelCreator$init = function (level) {
+	var bottle = _user$project$Bottle$init;
+	return {
+		ctor: '_Tuple2',
+		_0: {level: level, bottle: bottle},
+		_1: _user$project$LevelCreator$randomNewVirus(bottle.contents)
+	};
+};
+var _user$project$LevelCreator$update = F3(
+	function (_p1, action, _p0) {
+		var _p2 = _p1;
+		var _p3 = _p0;
+		var _p8 = _p3;
+		var _p7 = _p3.level;
+		var _p6 = _p3.bottle;
+		var _p4 = action;
+		if (_p4.ctor === 'NewVirus') {
+			var _p5 = _p4._0._1;
+			var newBottle = A3(_user$project$Bottle$withVirus, _p4._0._0, _p5, _p6);
+			return A2(_user$project$Bottle$isCleared, _p5, newBottle.contents) ? {
+				ctor: '_Tuple3',
+				_0: _p8,
+				_1: _user$project$LevelCreator$randomNewVirus(_p6.contents),
+				_2: _elm_lang$core$Maybe$Nothing
+			} : ((_elm_lang$core$Native_Utils.cmp(
+				_user$project$Bottle$totalViruses(newBottle.contents),
+				_user$project$LevelCreator$virusesForLevel(_p7)) > -1) ? {
+				ctor: '_Tuple3',
+				_0: _elm_lang$core$Native_Utils.update(
+					_p8,
+					{bottle: newBottle}),
+				_1: A2(_elm_lang$core$Random$generate, _user$project$LevelCreator$NewPill, _user$project$Bottle$generatePill),
+				_2: _elm_lang$core$Maybe$Nothing
+			} : {
+				ctor: '_Tuple3',
+				_0: _elm_lang$core$Native_Utils.update(
+					_p8,
+					{bottle: newBottle}),
+				_1: _user$project$LevelCreator$randomNewVirus(newBottle.contents),
+				_2: _elm_lang$core$Maybe$Nothing
+			});
+		} else {
+			var model_ = {
+				level: _p7,
+				bottle: A2(_user$project$Bottle$withNext, _p4._0, _p6)
+			};
+			return {
+				ctor: '_Tuple3',
+				_0: model_,
+				_1: _elm_lang$core$Platform_Cmd$none,
+				_2: _elm_lang$core$Maybe$Just(
+					_p2.onCreated(model_))
+			};
+		}
+	});
+
+var _user$project$OnePlayer_Game$applyNtimes = F3(
 	function (n, f, x) {
 		return (_elm_lang$core$Native_Utils.cmp(n, 0) < 1) ? x : (_elm_lang$core$Native_Utils.eq(n, 1) ? f(x) : f(
-			A3(_user$project$Game$applyNtimes, n - 1, f, x)));
+			A3(_user$project$OnePlayer_Game$applyNtimes, n - 1, f, x)));
 	});
-var _user$project$Game$viewMessage = F2(
+var _user$project$OnePlayer_Game$viewMessage = F2(
 	function (message, below) {
 		return A2(
 			_elm_lang$html$Html$div,
@@ -10760,7 +10844,7 @@ var _user$project$Game$viewMessage = F2(
 				}
 			});
 	});
-var _user$project$Game$columnEl = A2(
+var _user$project$OnePlayer_Game$columnEl = A2(
 	_user$project$Element$styled,
 	_elm_lang$html$Html$div,
 	{
@@ -10768,7 +10852,7 @@ var _user$project$Game$columnEl = A2(
 		_0: {ctor: '_Tuple2', _0: 'margin', _1: '0 16px'},
 		_1: {ctor: '[]'}
 	});
-var _user$project$Game$viewPlaying = F2(
+var _user$project$OnePlayer_Game$viewPlaying = F2(
 	function (pauseMsg, _p0) {
 		var _p1 = _p0;
 		var _p7 = _p1.bottle;
@@ -10787,7 +10871,7 @@ var _user$project$Game$viewPlaying = F2(
 			{
 				ctor: '::',
 				_0: A2(
-					_user$project$Game$columnEl,
+					_user$project$OnePlayer_Game$columnEl,
 					{ctor: '[]'},
 					{
 						ctor: '::',
@@ -10853,7 +10937,7 @@ var _user$project$Game$viewPlaying = F2(
 					_1: {
 						ctor: '::',
 						_0: A2(
-							_user$project$Game$columnEl,
+							_user$project$OnePlayer_Game$columnEl,
 							{ctor: '[]'},
 							{
 								ctor: '::',
@@ -10996,10 +11080,10 @@ var _user$project$Game$viewPlaying = F2(
 				}
 			});
 	});
-var _user$project$Game$pointsForClearedViruses = F2(
+var _user$project$OnePlayer_Game$pointsForClearedViruses = F2(
 	function (speed, cleared) {
 		return (_elm_lang$core$Native_Utils.cmp(cleared, 0) > 0) ? A3(
-			_user$project$Game$applyNtimes,
+			_user$project$OnePlayer_Game$applyNtimes,
 			cleared - 1,
 			F2(
 				function (x, y) {
@@ -11017,7 +11101,7 @@ var _user$project$Game$pointsForClearedViruses = F2(
 				}
 			}()) : 0;
 	});
-var _user$project$Game$tickForSpeed = function (speed) {
+var _user$project$OnePlayer_Game$tickForSpeed = function (speed) {
 	var _p9 = speed;
 	switch (_p9.ctor) {
 		case 'High':
@@ -11028,10 +11112,7 @@ var _user$project$Game$tickForSpeed = function (speed) {
 			return _elm_lang$core$Time$second;
 	}
 };
-var _user$project$Game$virusesForLevel = function (level) {
-	return A2(_elm_lang$core$Basics$min, 84, (4 * level) + 4);
-};
-var _user$project$Game$controls = function (keyCode) {
+var _user$project$OnePlayer_Game$controls = function (keyCode) {
 	var _p10 = keyCode;
 	switch (_p10) {
 		case 38:
@@ -11046,61 +11127,32 @@ var _user$project$Game$controls = function (keyCode) {
 			return _elm_lang$core$Maybe$Nothing;
 	}
 };
-var _user$project$Game$State = F4(
+var _user$project$OnePlayer_Game$State = F4(
 	function (a, b, c, d) {
 		return {bottle: a, level: b, score: c, speed: d};
 	});
-var _user$project$Game$High = {ctor: 'High'};
-var _user$project$Game$Med = {ctor: 'Med'};
-var _user$project$Game$Low = {ctor: 'Low'};
-var _user$project$Game$Over = function (a) {
+var _user$project$OnePlayer_Game$High = {ctor: 'High'};
+var _user$project$OnePlayer_Game$Med = {ctor: 'Med'};
+var _user$project$OnePlayer_Game$Low = {ctor: 'Low'};
+var _user$project$OnePlayer_Game$Over = function (a) {
 	return {ctor: 'Over', _0: a};
 };
-var _user$project$Game$Paused = function (a) {
+var _user$project$OnePlayer_Game$Paused = function (a) {
 	return {ctor: 'Paused', _0: a};
 };
-var _user$project$Game$Playing = function (a) {
+var _user$project$OnePlayer_Game$Playing = function (a) {
 	return {ctor: 'Playing', _0: a};
 };
-var _user$project$Game$PrepareGame = function (a) {
+var _user$project$OnePlayer_Game$PrepareGame = function (a) {
 	return {ctor: 'PrepareGame', _0: a};
 };
-var _user$project$Game$Reset = {ctor: 'Reset'};
-var _user$project$Game$Resume = {ctor: 'Resume'};
-var _user$project$Game$Pause = {ctor: 'Pause'};
-var _user$project$Game$InitPill = function (a) {
-	return {ctor: 'InitPill', _0: a};
-};
-var _user$project$Game$NewVirus = function (a) {
-	return {ctor: 'NewVirus', _0: a};
-};
-var _user$project$Game$randomNewVirus = function (bottle) {
-	return A2(
-		_elm_lang$core$Random$generate,
-		_user$project$Game$NewVirus,
-		A2(
-			_elm_lang$core$Random$pair,
-			_user$project$Bottle$generateColor,
-			_user$project$Bottle$generateEmptyCoords(bottle)));
-};
-var _user$project$Game$initWithScore = F3(
-	function (level, speed, score) {
-		var bottle = _user$project$Bottle$init(_user$project$Game$controls);
-		return {
-			ctor: '_Tuple2',
-			_0: _user$project$Game$PrepareGame(
-				{level: level, score: score, bottle: bottle, speed: speed}),
-			_1: _user$project$Game$randomNewVirus(bottle.contents)
-		};
-	});
-var _user$project$Game$init = F2(
-	function (level, speed) {
-		return A3(_user$project$Game$initWithScore, level, speed, 0);
-	});
-var _user$project$Game$Advance = function (a) {
+var _user$project$OnePlayer_Game$Reset = {ctor: 'Reset'};
+var _user$project$OnePlayer_Game$Resume = {ctor: 'Resume'};
+var _user$project$OnePlayer_Game$Pause = {ctor: 'Pause'};
+var _user$project$OnePlayer_Game$Advance = function (a) {
 	return {ctor: 'Advance', _0: a};
 };
-var _user$project$Game$view = function (model) {
+var _user$project$OnePlayer_Game$view = function (model) {
 	var _p11 = model;
 	switch (_p11.ctor) {
 		case 'PrepareGame':
@@ -11114,8 +11166,8 @@ var _user$project$Game$view = function (model) {
 				});
 		case 'Playing':
 			return A2(
-				_user$project$Game$viewPlaying,
-				_elm_lang$core$Maybe$Just(_user$project$Game$Pause),
+				_user$project$OnePlayer_Game$viewPlaying,
+				_elm_lang$core$Maybe$Just(_user$project$OnePlayer_Game$Pause),
 				_p11._0);
 		case 'Paused':
 			return A2(
@@ -11124,13 +11176,13 @@ var _user$project$Game$view = function (model) {
 				{
 					ctor: '::',
 					_0: A2(
-						_user$project$Game$viewMessage,
+						_user$project$OnePlayer_Game$viewMessage,
 						'Paused',
 						A2(
 							_elm_lang$html$Html$button,
 							{
 								ctor: '::',
-								_0: _elm_lang$html$Html_Events$onClick(_user$project$Game$Resume),
+								_0: _elm_lang$html$Html_Events$onClick(_user$project$OnePlayer_Game$Resume),
 								_1: {ctor: '[]'}
 							},
 							{
@@ -11148,7 +11200,7 @@ var _user$project$Game$view = function (model) {
 				{
 					ctor: '::',
 					_0: A2(
-						_user$project$Game$viewMessage,
+						_user$project$OnePlayer_Game$viewMessage,
 						_p12.won ? 'You Win!' : 'Game Over',
 						A2(
 							_elm_lang$html$Html$div,
@@ -11160,7 +11212,7 @@ var _user$project$Game$view = function (model) {
 									{
 										ctor: '::',
 										_0: _elm_lang$html$Html_Events$onClick(
-											_user$project$Game$Advance(
+											_user$project$OnePlayer_Game$Advance(
 												{speed: _p12.game.speed, level: _p12.game.level + 1, score: _p12.game.score})),
 										_1: {ctor: '[]'}
 									},
@@ -11175,7 +11227,7 @@ var _user$project$Game$view = function (model) {
 										_elm_lang$html$Html$button,
 										{
 											ctor: '::',
-											_0: _elm_lang$html$Html_Events$onClick(_user$project$Game$Reset),
+											_0: _elm_lang$html$Html_Events$onClick(_user$project$OnePlayer_Game$Reset),
 											_1: {ctor: '[]'}
 										},
 										{
@@ -11188,121 +11240,149 @@ var _user$project$Game$view = function (model) {
 							})),
 					_1: {
 						ctor: '::',
-						_0: A2(_user$project$Game$viewPlaying, _elm_lang$core$Maybe$Nothing, _p12.game),
+						_0: A2(_user$project$OnePlayer_Game$viewPlaying, _elm_lang$core$Maybe$Nothing, _p12.game),
 						_1: {ctor: '[]'}
 					}
 				});
 	}
 };
-var _user$project$Game$BottleMsg = function (a) {
+var _user$project$OnePlayer_Game$LevelReady = function (a) {
+	return {ctor: 'LevelReady', _0: a};
+};
+var _user$project$OnePlayer_Game$CreatorMsg = function (a) {
+	return {ctor: 'CreatorMsg', _0: a};
+};
+var _user$project$OnePlayer_Game$initWithScore = F3(
+	function (level, speed, score) {
+		var _p13 = _user$project$LevelCreator$init(level);
+		var creator = _p13._0;
+		var cmd = _p13._1;
+		return {
+			ctor: '_Tuple2',
+			_0: _user$project$OnePlayer_Game$PrepareGame(
+				{creator: creator, score: score, speed: speed}),
+			_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$OnePlayer_Game$CreatorMsg, cmd)
+		};
+	});
+var _user$project$OnePlayer_Game$init = F2(
+	function (level, speed) {
+		return A3(_user$project$OnePlayer_Game$initWithScore, level, speed, 0);
+	});
+var _user$project$OnePlayer_Game$BottleMsg = function (a) {
 	return {ctor: 'BottleMsg', _0: a};
 };
-var _user$project$Game$updatePlayState = F3(
-	function (onLeave, action, _p13) {
-		var _p14 = _p13;
-		var _p17 = _p14;
+var _user$project$OnePlayer_Game$updatePlayState = F3(
+	function (onLeave, action, _p14) {
+		var _p15 = _p14;
+		var _p18 = _p15;
 		var withBottle = function (newBottle) {
-			var sweptViruses = _user$project$Bottle$totalViruses(_p14.bottle.contents) - _user$project$Bottle$totalViruses(newBottle.contents);
-			var additionalPoints = A2(_user$project$Game$pointsForClearedViruses, _p14.speed, sweptViruses);
-			return _user$project$Game$Playing(
+			var sweptViruses = _user$project$Bottle$totalViruses(_p15.bottle.contents) - _user$project$Bottle$totalViruses(newBottle.contents);
+			var additionalPoints = A2(_user$project$OnePlayer_Game$pointsForClearedViruses, _p15.speed, sweptViruses);
+			return _user$project$OnePlayer_Game$Playing(
 				_elm_lang$core$Native_Utils.update(
-					_p17,
-					{bottle: newBottle, score: _p14.score + additionalPoints}));
+					_p18,
+					{bottle: newBottle, score: _p15.score + additionalPoints}));
 		};
-		var _p15 = action;
-		switch (_p15.ctor) {
+		var _p16 = action;
+		switch (_p16.ctor) {
 			case 'TickTock':
-				var _p16 = A2(
+				var _p17 = A2(
 					_elm_lang$core$Tuple$mapSecond,
-					_elm_lang$core$Platform_Cmd$map(_user$project$Game$BottleMsg),
+					_elm_lang$core$Platform_Cmd$map(_user$project$OnePlayer_Game$BottleMsg),
 					A2(
 						_elm_lang$core$Tuple$mapFirst,
 						withBottle,
-						_user$project$Bottle$advance(_p17.bottle)));
-				var a = _p16._0;
-				var b = _p16._1;
+						_user$project$Bottle$advance(_p18.bottle)));
+				var a = _p17._0;
+				var b = _p17._1;
 				return {ctor: '_Tuple3', _0: a, _1: b, _2: _elm_lang$core$Maybe$Nothing};
 			case 'BottleMsg':
 				return A4(
 					_user$project$Component$raiseOutMsg,
-					_user$project$Game$update(
+					_user$project$OnePlayer_Game$update(
 						{onLeave: onLeave}),
 					withBottle,
-					_user$project$Game$BottleMsg,
-					A2(_user$project$Bottle$update, _p15._0, _p17.bottle));
+					_user$project$OnePlayer_Game$BottleMsg,
+					A2(_user$project$Bottle$update, _p16._0, _p18.bottle));
 			default:
 				return {
 					ctor: '_Tuple3',
-					_0: _user$project$Game$Playing(_p17),
+					_0: _user$project$OnePlayer_Game$Playing(_p18),
 					_1: _elm_lang$core$Platform_Cmd$none,
 					_2: _elm_lang$core$Maybe$Nothing
 				};
 		}
 	});
-var _user$project$Game$update = F3(
-	function (_p18, action, model) {
-		var _p19 = _p18;
-		var _p26 = _p19.onLeave;
-		var _p20 = {ctor: '_Tuple2', _0: model, _1: action};
-		_v8_2:
-		do {
-			switch (_p20._0.ctor) {
+var _user$project$OnePlayer_Game$update = F3(
+	function (_p19, action, model) {
+		update:
+		while (true) {
+			var _p20 = _p19;
+			var _p30 = _p20.onLeave;
+			var _p21 = {ctor: '_Tuple2', _0: model, _1: action};
+			switch (_p21._0.ctor) {
 				case 'PrepareGame':
-					switch (_p20._1.ctor) {
-						case 'NewVirus':
-							if (_p20._1._0.ctor === '_Tuple2') {
-								var _p23 = _p20._0._0;
-								var _p22 = _p20._1._0._1;
-								var _p21 = _p20._0._0.bottle;
-								var newBottle = A3(_user$project$Bottle$withVirus, _p20._1._0._0, _p22, _p21);
-								return A2(_user$project$Bottle$isCleared, _p22, newBottle.contents) ? {
+					switch (_p21._1.ctor) {
+						case 'CreatorMsg':
+							var _p26 = _p21._0._0;
+							var _p22 = A3(
+								_user$project$LevelCreator$update,
+								{
+									onCreated: function (_p23) {
+										var _p24 = _p23;
+										return _user$project$OnePlayer_Game$LevelReady(
+											{bottle: _p24.bottle, level: _p24.level, score: _p21._0._0.score, speed: _p21._0._0.speed});
+									}
+								},
+								_p21._1._0,
+								_p21._0._0.creator);
+							var creator_ = _p22._0;
+							var cmd = _p22._1;
+							var maybeMsg = _p22._2;
+							var _p25 = maybeMsg;
+							if (_p25.ctor === 'Nothing') {
+								return {
 									ctor: '_Tuple3',
-									_0: _user$project$Game$PrepareGame(_p23),
-									_1: _user$project$Game$randomNewVirus(_p21.contents),
-									_2: _elm_lang$core$Maybe$Nothing
-								} : ((_elm_lang$core$Native_Utils.cmp(
-									_user$project$Bottle$totalViruses(newBottle.contents),
-									_user$project$Game$virusesForLevel(_p20._0._0.level)) > -1) ? {
-									ctor: '_Tuple3',
-									_0: _user$project$Game$PrepareGame(
+									_0: _user$project$OnePlayer_Game$PrepareGame(
 										_elm_lang$core$Native_Utils.update(
-											_p23,
-											{bottle: newBottle})),
-									_1: A2(_elm_lang$core$Random$generate, _user$project$Game$InitPill, _user$project$Bottle$generatePill),
+											_p26,
+											{creator: creator_})),
+									_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$OnePlayer_Game$CreatorMsg, cmd),
 									_2: _elm_lang$core$Maybe$Nothing
-								} : {
-									ctor: '_Tuple3',
-									_0: _user$project$Game$PrepareGame(
-										_elm_lang$core$Native_Utils.update(
-											_p23,
-											{bottle: newBottle})),
-									_1: _user$project$Game$randomNewVirus(newBottle.contents),
-									_2: _elm_lang$core$Maybe$Nothing
-								});
+								};
 							} else {
-								break _v8_2;
+								var _v11 = {onLeave: _p30},
+									_v12 = _p25._0,
+									_v13 = _user$project$OnePlayer_Game$PrepareGame(
+									_elm_lang$core$Native_Utils.update(
+										_p26,
+										{creator: creator_}));
+								_p19 = _v11;
+								action = _v12;
+								model = _v13;
+								continue update;
 							}
-						case 'InitPill':
+						case 'LevelReady':
+							var _p27 = _p21._1._0;
 							return {
 								ctor: '_Tuple3',
-								_0: _user$project$Game$Playing(
-									{
-										level: _p20._0._0.level,
-										bottle: A2(_user$project$Bottle$withNext, _p20._1._0, _p20._0._0.bottle),
-										score: _p20._0._0.score,
-										speed: _p20._0._0.speed
-									}),
+								_0: _user$project$OnePlayer_Game$Playing(
+									_elm_lang$core$Native_Utils.update(
+										_p27,
+										{
+											bottle: A2(_user$project$Bottle$withControls, _user$project$OnePlayer_Game$controls, _p27.bottle)
+										})),
 								_1: _elm_lang$core$Platform_Cmd$none,
 								_2: _elm_lang$core$Maybe$Nothing
 							};
 						default:
-							break _v8_2;
+							return {ctor: '_Tuple3', _0: model, _1: _elm_lang$core$Platform_Cmd$none, _2: _elm_lang$core$Maybe$Nothing};
 					}
 				case 'Paused':
-					if (_p20._1.ctor === 'Resume') {
+					if (_p21._1.ctor === 'Resume') {
 						return {
 							ctor: '_Tuple3',
-							_0: _user$project$Game$Playing(_p20._0._0),
+							_0: _user$project$OnePlayer_Game$Playing(_p21._0._0),
 							_1: _elm_lang$core$Platform_Cmd$none,
 							_2: _elm_lang$core$Maybe$Nothing
 						};
@@ -11310,71 +11390,70 @@ var _user$project$Game$update = F3(
 						return {ctor: '_Tuple3', _0: model, _1: _elm_lang$core$Platform_Cmd$none, _2: _elm_lang$core$Maybe$Nothing};
 					}
 				case 'Playing':
-					if (_p20._1.ctor === 'Pause') {
+					if (_p21._1.ctor === 'Pause') {
 						return {
 							ctor: '_Tuple3',
-							_0: _user$project$Game$Paused(_p20._0._0),
+							_0: _user$project$OnePlayer_Game$Paused(_p21._0._0),
 							_1: _elm_lang$core$Platform_Cmd$none,
 							_2: _elm_lang$core$Maybe$Nothing
 						};
 					} else {
-						var _p24 = _p20._0._0;
+						var _p28 = _p21._0._0;
 						return _elm_lang$core$Native_Utils.eq(
-							_user$project$Bottle$totalViruses(_p24.bottle.contents),
+							_user$project$Bottle$totalViruses(_p28.bottle.contents),
 							0) ? {
 							ctor: '_Tuple3',
-							_0: _user$project$Game$Over(
-								{won: true, game: _p24}),
+							_0: _user$project$OnePlayer_Game$Over(
+								{won: true, game: _p28}),
 							_1: _elm_lang$core$Platform_Cmd$none,
 							_2: _elm_lang$core$Maybe$Nothing
-						} : (_user$project$Bottle$hasConflict(_p24.bottle) ? {
+						} : (_user$project$Bottle$hasConflict(_p28.bottle) ? {
 							ctor: '_Tuple3',
-							_0: _user$project$Game$Over(
-								{won: false, game: _p24}),
+							_0: _user$project$OnePlayer_Game$Over(
+								{won: false, game: _p28}),
 							_1: _elm_lang$core$Platform_Cmd$none,
 							_2: _elm_lang$core$Maybe$Nothing
-						} : A3(_user$project$Game$updatePlayState, _p26, _p20._1, _p24));
+						} : A3(_user$project$OnePlayer_Game$updatePlayState, _p30, _p21._1, _p28));
 					}
 				default:
-					switch (_p20._1.ctor) {
+					switch (_p21._1.ctor) {
 						case 'Advance':
-							var _p25 = A3(_user$project$Game$initWithScore, _p20._1._0.level, _p20._1._0.speed, _p20._1._0.score);
-							var model = _p25._0;
-							var msg = _p25._1;
+							var _p29 = A3(_user$project$OnePlayer_Game$initWithScore, _p21._1._0.level, _p21._1._0.speed, _p21._1._0.score);
+							var model = _p29._0;
+							var msg = _p29._1;
 							return {ctor: '_Tuple3', _0: model, _1: msg, _2: _elm_lang$core$Maybe$Nothing};
 						case 'Reset':
 							return {
 								ctor: '_Tuple3',
 								_0: model,
 								_1: _elm_lang$core$Platform_Cmd$none,
-								_2: _elm_lang$core$Maybe$Just(_p26)
+								_2: _elm_lang$core$Maybe$Just(_p30)
 							};
 						default:
 							return {ctor: '_Tuple3', _0: model, _1: _elm_lang$core$Platform_Cmd$none, _2: _elm_lang$core$Maybe$Nothing};
 					}
 			}
-		} while(false);
-		return {ctor: '_Tuple3', _0: model, _1: _elm_lang$core$Platform_Cmd$none, _2: _elm_lang$core$Maybe$Nothing};
+		}
 	});
-var _user$project$Game$TickTock = function (a) {
+var _user$project$OnePlayer_Game$TickTock = function (a) {
 	return {ctor: 'TickTock', _0: a};
 };
-var _user$project$Game$subscriptions = function (model) {
-	var _p27 = model;
-	if (_p27.ctor === 'Playing') {
+var _user$project$OnePlayer_Game$subscriptions = function (model) {
+	var _p31 = model;
+	if (_p31.ctor === 'Playing') {
 		return _elm_lang$core$Platform_Sub$batch(
 			{
 				ctor: '::',
 				_0: A2(
 					_elm_lang$core$Time$every,
-					_user$project$Game$tickForSpeed(_p27._0.speed),
-					_user$project$Game$TickTock),
+					_user$project$OnePlayer_Game$tickForSpeed(_p31._0.speed),
+					_user$project$OnePlayer_Game$TickTock),
 				_1: {
 					ctor: '::',
 					_0: A2(
 						_elm_lang$core$Platform_Sub$map,
-						_user$project$Game$BottleMsg,
-						_user$project$Bottle$subscriptions(_p27._0.bottle)),
+						_user$project$OnePlayer_Game$BottleMsg,
+						_user$project$Bottle$subscriptions(_p31._0.bottle)),
 					_1: {ctor: '[]'}
 				}
 			});
@@ -11383,7 +11462,7 @@ var _user$project$Game$subscriptions = function (model) {
 	}
 };
 
-var _user$project$Menu$viewSpeed = F2(
+var _user$project$OnePlayer_Menu$viewSpeed = F2(
 	function (ideal, real) {
 		return A2(
 			_elm_lang$html$Html$h4,
@@ -11413,7 +11492,7 @@ var _user$project$Menu$viewSpeed = F2(
 				_1: {ctor: '[]'}
 			});
 	});
-var _user$project$Menu$row = A2(
+var _user$project$OnePlayer_Menu$row = A2(
 	_user$project$Element$styled,
 	_elm_lang$html$Html$div,
 	{
@@ -11421,7 +11500,7 @@ var _user$project$Menu$row = A2(
 		_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '48px'},
 		_1: {ctor: '[]'}
 	});
-var _user$project$Menu$heading = F2(
+var _user$project$OnePlayer_Menu$heading = F2(
 	function (selected, str) {
 		return A2(
 			_elm_lang$html$Html$h3,
@@ -11436,7 +11515,7 @@ var _user$project$Menu$heading = F2(
 				_1: {ctor: '[]'}
 			});
 	});
-var _user$project$Menu$btw = A2(
+var _user$project$OnePlayer_Menu$btw = A2(
 	_user$project$Element$styled,
 	_elm_lang$html$Html$p,
 	{
@@ -11448,7 +11527,7 @@ var _user$project$Menu$btw = A2(
 			_1: {ctor: '[]'}
 		}
 	});
-var _user$project$Menu$viewLevelSlider = function (level) {
+var _user$project$OnePlayer_Menu$viewLevelSlider = function (level) {
 	return A2(
 		_elm_lang$html$Html$div,
 		{
@@ -11507,7 +11586,7 @@ var _user$project$Menu$viewLevelSlider = function (level) {
 			},
 			A2(_elm_lang$core$List$range, 0, 20)));
 };
-var _user$project$Menu$viewLevel = function (level) {
+var _user$project$OnePlayer_Menu$viewLevel = function (level) {
 	return A2(
 		_elm_lang$html$Html$div,
 		{
@@ -11544,45 +11623,45 @@ var _user$project$Menu$viewLevel = function (level) {
 				}),
 			_1: {
 				ctor: '::',
-				_0: _user$project$Menu$viewLevelSlider(level),
+				_0: _user$project$OnePlayer_Menu$viewLevelSlider(level),
 				_1: {ctor: '[]'}
 			}
 		});
 };
-var _user$project$Menu$State = F3(
+var _user$project$OnePlayer_Menu$State = F3(
 	function (a, b, c) {
 		return {level: a, speed: b, selecting: c};
 	});
-var _user$project$Menu$Noop = {ctor: 'Noop'};
-var _user$project$Menu$Enter = {ctor: 'Enter'};
-var _user$project$Menu$Down = {ctor: 'Down'};
-var _user$project$Menu$Right = {ctor: 'Right'};
-var _user$project$Menu$Left = {ctor: 'Left'};
-var _user$project$Menu$Up = {ctor: 'Up'};
-var _user$project$Menu$subscriptions = function (_p2) {
+var _user$project$OnePlayer_Menu$Noop = {ctor: 'Noop'};
+var _user$project$OnePlayer_Menu$Enter = {ctor: 'Enter'};
+var _user$project$OnePlayer_Menu$Down = {ctor: 'Down'};
+var _user$project$OnePlayer_Menu$Right = {ctor: 'Right'};
+var _user$project$OnePlayer_Menu$Left = {ctor: 'Left'};
+var _user$project$OnePlayer_Menu$Up = {ctor: 'Up'};
+var _user$project$OnePlayer_Menu$subscriptions = function (_p2) {
 	return _elm_lang$keyboard$Keyboard$downs(
 		function (keyCode) {
 			var _p3 = keyCode;
 			switch (_p3) {
 				case 13:
-					return _user$project$Menu$Enter;
+					return _user$project$OnePlayer_Menu$Enter;
 				case 38:
-					return _user$project$Menu$Up;
+					return _user$project$OnePlayer_Menu$Up;
 				case 37:
-					return _user$project$Menu$Left;
+					return _user$project$OnePlayer_Menu$Left;
 				case 39:
-					return _user$project$Menu$Right;
+					return _user$project$OnePlayer_Menu$Right;
 				case 40:
-					return _user$project$Menu$Down;
+					return _user$project$OnePlayer_Menu$Down;
 				default:
-					return _user$project$Menu$Noop;
+					return _user$project$OnePlayer_Menu$Noop;
 			}
 		});
 };
-var _user$project$Menu$Level = {ctor: 'Level'};
-var _user$project$Menu$init = {level: 10, speed: _user$project$Game$Med, selecting: _user$project$Menu$Level};
-var _user$project$Menu$Speed = {ctor: 'Speed'};
-var _user$project$Menu$update = F3(
+var _user$project$OnePlayer_Menu$Level = {ctor: 'Level'};
+var _user$project$OnePlayer_Menu$init = {level: 10, speed: _user$project$OnePlayer_Game$Med, selecting: _user$project$OnePlayer_Menu$Level};
+var _user$project$OnePlayer_Menu$Speed = {ctor: 'Speed'};
+var _user$project$OnePlayer_Menu$update = F3(
 	function (events, msg, _p4) {
 		var _p5 = _p4;
 		var _p12 = _p5;
@@ -11594,9 +11673,9 @@ var _user$project$Menu$update = F3(
 		var other = function () {
 			var _p6 = _p10;
 			if (_p6.ctor === 'Speed') {
-				return _user$project$Menu$Level;
+				return _user$project$OnePlayer_Menu$Level;
 			} else {
-				return _user$project$Menu$Speed;
+				return _user$project$OnePlayer_Menu$Speed;
 			}
 		}();
 		var _p7 = msg;
@@ -11626,11 +11705,11 @@ var _user$project$Menu$update = F3(
 								case 'High':
 									return _elm_lang$core$Native_Utils.update(
 										_p12,
-										{speed: _user$project$Game$Med});
+										{speed: _user$project$OnePlayer_Game$Med});
 								case 'Med':
 									return _elm_lang$core$Native_Utils.update(
 										_p12,
-										{speed: _user$project$Game$Low});
+										{speed: _user$project$OnePlayer_Game$Low});
 								default:
 									return _p12;
 							}
@@ -11651,11 +11730,11 @@ var _user$project$Menu$update = F3(
 								case 'Low':
 									return _elm_lang$core$Native_Utils.update(
 										_p12,
-										{speed: _user$project$Game$Med});
+										{speed: _user$project$OnePlayer_Game$Med});
 								case 'Med':
 									return _elm_lang$core$Native_Utils.update(
 										_p12,
-										{speed: _user$project$Game$High});
+										{speed: _user$project$OnePlayer_Game$High});
 								default:
 									return _p12;
 							}
@@ -11674,7 +11753,7 @@ var _user$project$Menu$update = F3(
 				return withNothing(_p12);
 		}
 	});
-var _user$project$Menu$view = function (_p13) {
+var _user$project$OnePlayer_Menu$view = function (_p13) {
 	var _p14 = _p13;
 	var _p15 = _p14.selecting;
 	return A2(
@@ -11696,30 +11775,30 @@ var _user$project$Menu$view = function (_p13) {
 		{
 			ctor: '::',
 			_0: A2(
-				_user$project$Menu$row,
+				_user$project$OnePlayer_Menu$row,
 				{ctor: '[]'},
 				{
 					ctor: '::',
 					_0: A2(
-						_user$project$Menu$heading,
-						_elm_lang$core$Native_Utils.eq(_p15, _user$project$Menu$Level),
+						_user$project$OnePlayer_Menu$heading,
+						_elm_lang$core$Native_Utils.eq(_p15, _user$project$OnePlayer_Menu$Level),
 						'virus level'),
 					_1: {
 						ctor: '::',
-						_0: _user$project$Menu$viewLevel(_p14.level),
+						_0: _user$project$OnePlayer_Menu$viewLevel(_p14.level),
 						_1: {ctor: '[]'}
 					}
 				}),
 			_1: {
 				ctor: '::',
 				_0: A2(
-					_user$project$Menu$row,
+					_user$project$OnePlayer_Menu$row,
 					{ctor: '[]'},
 					{
 						ctor: '::',
 						_0: A2(
-							_user$project$Menu$heading,
-							_elm_lang$core$Native_Utils.eq(_p15, _user$project$Menu$Speed),
+							_user$project$OnePlayer_Menu$heading,
+							_elm_lang$core$Native_Utils.eq(_p15, _user$project$OnePlayer_Menu$Speed),
 							'speed'),
 						_1: {
 							ctor: '::',
@@ -11745,16 +11824,16 @@ var _user$project$Menu$view = function (_p13) {
 								},
 								A2(
 									_elm_lang$core$List$map,
-									_user$project$Menu$viewSpeed(_p14.speed),
+									_user$project$OnePlayer_Menu$viewSpeed(_p14.speed),
 									{
 										ctor: '::',
-										_0: _user$project$Game$Low,
+										_0: _user$project$OnePlayer_Game$Low,
 										_1: {
 											ctor: '::',
-											_0: _user$project$Game$Med,
+											_0: _user$project$OnePlayer_Game$Med,
 											_1: {
 												ctor: '::',
-												_0: _user$project$Game$High,
+												_0: _user$project$OnePlayer_Game$High,
 												_1: {ctor: '[]'}
 											}
 										}
@@ -11765,7 +11844,7 @@ var _user$project$Menu$view = function (_p13) {
 				_1: {
 					ctor: '::',
 					_0: A2(
-						_user$project$Menu$btw,
+						_user$project$OnePlayer_Menu$btw,
 						{ctor: '[]'},
 						{
 							ctor: '::',
@@ -11778,16 +11857,117 @@ var _user$project$Menu$view = function (_p13) {
 		});
 };
 
-var _user$project$Main$InGame = function (a) {
+var _user$project$OnePlayer$InGame = function (a) {
 	return {ctor: 'InGame', _0: a};
 };
-var _user$project$Main$Init = function (a) {
+var _user$project$OnePlayer$Init = function (a) {
 	return {ctor: 'Init', _0: a};
 };
-var _user$project$Main$Reset = {ctor: 'Reset'};
-var _user$project$Main$GameMsg = function (a) {
+var _user$project$OnePlayer$init = {
+	ctor: '_Tuple2',
+	_0: _user$project$OnePlayer$Init(_user$project$OnePlayer_Menu$init),
+	_1: _elm_lang$core$Platform_Cmd$none
+};
+var _user$project$OnePlayer$Reset = {ctor: 'Reset'};
+var _user$project$OnePlayer$GameMsg = function (a) {
 	return {ctor: 'GameMsg', _0: a};
 };
+var _user$project$OnePlayer$view = function (model) {
+	var _p0 = model;
+	if (_p0.ctor === 'Init') {
+		return _user$project$OnePlayer_Menu$view(_p0._0);
+	} else {
+		return A2(
+			_elm_lang$html$Html$map,
+			_user$project$OnePlayer$GameMsg,
+			_user$project$OnePlayer_Game$view(_p0._0));
+	}
+};
+var _user$project$OnePlayer$Start = function (a) {
+	return {ctor: 'Start', _0: a};
+};
+var _user$project$OnePlayer$MenuMsg = function (a) {
+	return {ctor: 'MenuMsg', _0: a};
+};
+var _user$project$OnePlayer$update = F2(
+	function (action, model) {
+		var _p1 = {ctor: '_Tuple2', _0: model, _1: action};
+		_v1_4:
+		do {
+			switch (_p1._1.ctor) {
+				case 'Start':
+					return A2(
+						_elm_lang$core$Tuple$mapSecond,
+						_elm_lang$core$Platform_Cmd$map(_user$project$OnePlayer$GameMsg),
+						A2(
+							_elm_lang$core$Tuple$mapFirst,
+							_user$project$OnePlayer$InGame,
+							A2(_user$project$OnePlayer_Game$init, _p1._1._0.level, _p1._1._0.speed)));
+				case 'MenuMsg':
+					if (_p1._0.ctor === 'Init') {
+						return A4(
+							_user$project$Component$mapOutMsg,
+							_user$project$OnePlayer$update,
+							_user$project$OnePlayer$Init,
+							_user$project$OnePlayer$MenuMsg,
+							A3(
+								_user$project$OnePlayer_Menu$update,
+								{
+									onSubmit: function (_p2) {
+										var _p3 = _p2;
+										return _user$project$OnePlayer$Start(
+											{level: _p3.level, speed: _p3.speed});
+									}
+								},
+								_p1._1._0,
+								_p1._0._0));
+					} else {
+						break _v1_4;
+					}
+				case 'GameMsg':
+					if (_p1._0.ctor === 'InGame') {
+						return A4(
+							_user$project$Component$mapOutMsg,
+							_user$project$OnePlayer$update,
+							_user$project$OnePlayer$InGame,
+							_user$project$OnePlayer$GameMsg,
+							A3(
+								_user$project$OnePlayer_Game$update,
+								{onLeave: _user$project$OnePlayer$Reset},
+								_p1._1._0,
+								_p1._0._0));
+					} else {
+						break _v1_4;
+					}
+				default:
+					if (_p1._0.ctor === 'InGame') {
+						return {
+							ctor: '_Tuple2',
+							_0: _user$project$OnePlayer$Init(_user$project$OnePlayer_Menu$init),
+							_1: _elm_lang$core$Platform_Cmd$none
+						};
+					} else {
+						break _v1_4;
+					}
+			}
+		} while(false);
+		return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+	});
+var _user$project$OnePlayer$subscriptions = function (model) {
+	var _p4 = model;
+	if (_p4.ctor === 'Init') {
+		return A2(
+			_elm_lang$core$Platform_Sub$map,
+			_user$project$OnePlayer$MenuMsg,
+			_user$project$OnePlayer_Menu$subscriptions(_p4._0));
+	} else {
+		return A2(
+			_elm_lang$core$Platform_Sub$map,
+			_user$project$OnePlayer$GameMsg,
+			_user$project$OnePlayer_Game$subscriptions(_p4._0));
+	}
+};
+
 var _user$project$Main$view = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -11821,116 +12001,13 @@ var _user$project$Main$view = function (model) {
 				}),
 			_1: {
 				ctor: '::',
-				_0: function () {
-					var _p0 = model;
-					if (_p0.ctor === 'Init') {
-						return _user$project$Menu$view(_p0._0);
-					} else {
-						return A2(
-							_elm_lang$html$Html$map,
-							_user$project$Main$GameMsg,
-							_user$project$Game$view(_p0._0));
-					}
-				}(),
+				_0: _user$project$OnePlayer$view(model),
 				_1: {ctor: '[]'}
 			}
 		});
 };
-var _user$project$Main$Start = function (a) {
-	return {ctor: 'Start', _0: a};
-};
-var _user$project$Main$MenuMsg = function (a) {
-	return {ctor: 'MenuMsg', _0: a};
-};
-var _user$project$Main$update = F2(
-	function (action, model) {
-		var _p1 = {ctor: '_Tuple2', _0: model, _1: action};
-		_v1_4:
-		do {
-			switch (_p1._1.ctor) {
-				case 'Start':
-					return A2(
-						_elm_lang$core$Tuple$mapSecond,
-						_elm_lang$core$Platform_Cmd$map(_user$project$Main$GameMsg),
-						A2(
-							_elm_lang$core$Tuple$mapFirst,
-							_user$project$Main$InGame,
-							A2(_user$project$Game$init, _p1._1._0.level, _p1._1._0.speed)));
-				case 'MenuMsg':
-					if (_p1._0.ctor === 'Init') {
-						return A4(
-							_user$project$Component$mapOutMsg,
-							_user$project$Main$update,
-							_user$project$Main$Init,
-							_user$project$Main$MenuMsg,
-							A3(
-								_user$project$Menu$update,
-								{
-									onSubmit: function (_p2) {
-										var _p3 = _p2;
-										return _user$project$Main$Start(
-											{level: _p3.level, speed: _p3.speed});
-									}
-								},
-								_p1._1._0,
-								_p1._0._0));
-					} else {
-						break _v1_4;
-					}
-				case 'GameMsg':
-					if (_p1._0.ctor === 'InGame') {
-						return A4(
-							_user$project$Component$mapOutMsg,
-							_user$project$Main$update,
-							_user$project$Main$InGame,
-							_user$project$Main$GameMsg,
-							A3(
-								_user$project$Game$update,
-								{onLeave: _user$project$Main$Reset},
-								_p1._1._0,
-								_p1._0._0));
-					} else {
-						break _v1_4;
-					}
-				default:
-					if (_p1._0.ctor === 'InGame') {
-						return {
-							ctor: '_Tuple2',
-							_0: _user$project$Main$Init(_user$project$Menu$init),
-							_1: _elm_lang$core$Platform_Cmd$none
-						};
-					} else {
-						break _v1_4;
-					}
-			}
-		} while(false);
-		return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-	});
-var _user$project$Main$subscriptions = function (model) {
-	var _p4 = model;
-	if (_p4.ctor === 'Init') {
-		return A2(
-			_elm_lang$core$Platform_Sub$map,
-			_user$project$Main$MenuMsg,
-			_user$project$Menu$subscriptions(_p4._0));
-	} else {
-		return A2(
-			_elm_lang$core$Platform_Sub$map,
-			_user$project$Main$GameMsg,
-			_user$project$Game$subscriptions(_p4._0));
-	}
-};
 var _user$project$Main$main = _elm_lang$html$Html$program(
-	{
-		init: {
-			ctor: '_Tuple2',
-			_0: _user$project$Main$Init(_user$project$Menu$init),
-			_1: _elm_lang$core$Platform_Cmd$none
-		},
-		update: _user$project$Main$update,
-		view: _user$project$Main$view,
-		subscriptions: _user$project$Main$subscriptions
-	})();
+	{init: _user$project$OnePlayer$init, update: _user$project$OnePlayer$update, view: _user$project$Main$view, subscriptions: _user$project$OnePlayer$subscriptions})();
 
 var Elm = {};
 Elm['Main'] = Elm['Main'] || {};
