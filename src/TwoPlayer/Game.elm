@@ -1,13 +1,8 @@
 module TwoPlayer.Game exposing (..)
 
-import Grid exposing (Cell, Column, Grid)
 import Html exposing (Html, h1, h3, text, div, p)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
-import Keyboard exposing (KeyCode)
-import Random exposing (Generator(..))
-import RandomExtra exposing (selectWithDefault)
-import Time exposing (Time)
 import Element exposing (Element, px, styled, none)
 import Bottle exposing (Bottle, Color(..), Speed(..))
 import Component
