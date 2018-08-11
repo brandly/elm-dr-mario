@@ -1,7 +1,6 @@
 module OnePlayer exposing (..)
 
 import Html exposing (Html)
-import Time exposing (Time, second)
 import Bottle exposing (Speed(..))
 import OnePlayer.Menu as Menu
 import OnePlayer.Game as Game

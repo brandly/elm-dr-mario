@@ -9,6 +9,7 @@ module Grid
         , setState
         , map
         , filter
+        , difference
         , height
         , width
         , findCellAtCoords
@@ -69,6 +70,37 @@ toList grid =
 filter : (Cell val -> Bool) -> Grid val -> List (Cell val)
 filter filter grid =
     toList grid |> List.filter filter
+
+
+difference : (Maybe val -> Maybe val -> Bool) -> Grid val -> Grid val -> List (Cell val)
+difference diff a b =
+    zip (toList a) (toList b)
+        |> List.filterMap
+            (\( y, z ) ->
+                if diff y.state z.state then
+                    Just z
+                else
+                    Nothing
+            )
+
+
+{-| The zip function takes in two lists and returns a combined
+list. It combines the elements of each list pairwise until one
+of the lists runs out of elements.
+
+    zip [1,2,3] ['a','b','c'] == [(1,'a'), (2,'b'), (3,'c')]
+
+<http://elm-lang.org/examples/zip>
+
+-}
+zip : List a -> List b -> List ( a, b )
+zip xs ys =
+    case ( xs, ys ) of
+        ( x :: xBack, y :: yBack ) ->
+            ( x, y ) :: zip xBack yBack
+
+        ( _, _ ) ->
+            []
 
 
 findCellAtCoords : Coords -> Grid val -> Cell val

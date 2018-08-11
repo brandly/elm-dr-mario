@@ -44,6 +44,8 @@ type Msg
     | SecondBottleMsg Bottle.Msg
     | CreatorMsg LevelCreator.Msg
     | LevelReady State
+    | FirstBomb
+    | SecondBomb
     | Pause
     | Resume
     | Reset
@@ -220,7 +222,7 @@ updatePlayState onLeave action ({ first, second } as model) =
     in
         case action of
             FirstBottleMsg msg ->
-                Bottle.update msg first.bottle
+                Bottle.update { onBomb = Just FirstBomb } msg first.bottle
                     |> Component.raiseOutMsg (update { onLeave = onLeave })
                         (\bottle ->
                             Playing
@@ -229,7 +231,7 @@ updatePlayState onLeave action ({ first, second } as model) =
                         FirstBottleMsg
 
             SecondBottleMsg msg ->
-                Bottle.update msg second.bottle
+                Bottle.update { onBomb = Just SecondBomb } msg second.bottle
                     |> Component.raiseOutMsg (update { onLeave = onLeave })
                         (\bottle ->
                             Playing

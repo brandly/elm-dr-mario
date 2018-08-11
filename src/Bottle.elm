@@ -19,7 +19,7 @@ type Speed
 
 type Mode
     = PlacingPill Pill Grid.Coords
-    | Falling
+    | Falling Int
 
 
 type Pill
@@ -61,7 +61,7 @@ type alias Model =
 init : Model
 init =
     { contents = Grid.fromDimensions 8 16
-    , mode = Falling
+    , mode = Falling 0
     , next = ( Red, Red )
     , controls = (\_ -> Nothing)
     }
@@ -125,19 +125,24 @@ tickForSpeed speed =
 -- UPDATE
 
 
-update : Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
-update msg model =
+update : { onBomb : Maybe msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
+update { onBomb } msg model =
     case ( model.mode, msg ) of
-        ( Falling, NewPill next ) ->
+        ( Falling cleared, NewPill next ) ->
             let
                 ( a, b ) =
                     model.next
             in
-                withNothing
-                    { model
-                        | mode = PlacingPill (Horizontal a b) ( 4, 0 )
-                        , next = next
-                    }
+                ( { model
+                    | mode = PlacingPill (Horizontal a b) ( 4, 0 )
+                    , next = next
+                  }
+                , Cmd.none
+                , if cleared > 1 then
+                    onBomb
+                  else
+                    Nothing
+                )
 
         ( PlacingPill pill ( x, y ), KeyDown key ) ->
             let
@@ -212,7 +217,7 @@ advance model =
                     in
                         modify
                             { model
-                                | mode = Falling
+                                | mode = Falling 0
                                 , contents = newContents
                             }
             in
@@ -223,7 +228,7 @@ advance model =
                         afterPill pill ( x, y ) model
                     )
 
-        Falling ->
+        Falling _ ->
             let
                 timeToFall : Bool
                 timeToFall =
@@ -233,11 +238,7 @@ advance model =
                         |> (List.isEmpty >> not)
             in
                 if timeToFall then
-                    ( { model
-                        | mode = Falling
-                        , contents =
-                            fall model.contents
-                      }
+                    ( { model | contents = fall model.contents }
                     , Cmd.none
                     , Nothing
                     )
@@ -353,8 +354,36 @@ sweep ({ contents } as model) =
                         cell
                 )
                 contents
+
+        diff =
+            Grid.difference
+                (\a b ->
+                    case ( a, b ) of
+                        ( Just _, Nothing ) ->
+                            True
+
+                        _ ->
+                            False
+                )
+                contents
+                swept
+                |> List.map (\cell -> cell.coords)
+
+        clearedLines : Int
+        clearedLines =
+            min (Set.size <| Set.fromList <| List.map (\( x, _ ) -> x) diff)
+                (Set.size <| Set.fromList <| List.map (\( _, y ) -> y) diff)
+
+        alreadyCleared =
+            case model.mode of
+                Falling cleared ->
+                    cleared
+
+                _ ->
+                    -- should always be in Falling. can types enforce this?
+                    0
     in
-        { model | contents = swept }
+        { model | contents = swept, mode = Falling (alreadyCleared + clearedLines) }
 
 
 coordsWithDirection : Grid.Coords -> Direction -> Grid.Coords
