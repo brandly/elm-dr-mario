@@ -1,4 +1,4 @@
-module Component exposing (..)
+module Component exposing (mapOutMsg, mapSimple, raiseOutMsg)
 
 
 mapOutMsg :

@@ -1,4 +1,4 @@
-module Controls exposing (..)
+module Controls exposing (arrows, wasd)
 
 import Bottle exposing (Direction(..))
 

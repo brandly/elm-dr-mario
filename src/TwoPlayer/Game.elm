@@ -1,13 +1,21 @@
-module TwoPlayer.Game exposing (..)
+module TwoPlayer.Game
+    exposing
+        ( Model(..)
+        , Msg(..)
+        , init
+        , subscriptions
+        , update
+        , view
+        )
 
-import Html exposing (Html, h1, h3, text, div, p)
-import Html.Attributes exposing (style)
-import Html.Events exposing (onClick)
-import Element exposing (Element, px, styled, none)
 import Bottle exposing (Bottle, Color(..), Speed(..))
 import Component
-import LevelCreator
 import Controls
+import Element exposing (Element, none, px, styled)
+import Html exposing (Html, div, h1, h3, p, text)
+import Html.Attributes exposing (style)
+import Html.Events exposing (onClick)
+import LevelCreator
 
 
 type alias Player =
@@ -109,10 +117,9 @@ update { onLeave } action model =
                 ( creator_, cmd, maybeMsg ) =
                     LevelCreator.update
                         { onCreated =
-                            (\{ level, bottle } ->
+                            \{ level, bottle } ->
                                 LevelReady
                                     { state | first = { first | bottle = Bottle.withControls Controls.wasd bottle } }
-                            )
                         }
                         msg
                         creator
@@ -131,10 +138,10 @@ update { onLeave } action model =
 
         ( PrepareFirst _ creator, LevelReady state ) ->
             let
-                ( creator, cmd ) =
+                ( creator_, cmd ) =
                     LevelCreator.init state.second.level
             in
-                ( PrepareSecond state creator
+                ( PrepareSecond state creator_
                 , Cmd.map CreatorMsg cmd
                 , Nothing
                 )
@@ -151,10 +158,9 @@ update { onLeave } action model =
                 ( creator_, cmd, maybeMsg ) =
                     LevelCreator.update
                         { onCreated =
-                            (\{ level, bottle } ->
+                            \{ level, bottle } ->
                                 LevelReady
                                     { state | second = { second | bottle = Bottle.withControls Controls.arrows bottle } }
-                            )
                         }
                         msg
                         creator
@@ -259,10 +265,8 @@ view model =
 
         Playing state ->
             div
-                [ style
-                    [ ( "display", "flex" )
-                    , ( "flex-direction", "row" )
-                    ]
+                [ style "display" "flex"
+                , style "flex-direction" "row"
                 ]
                 [ viewPlayer state.first
                 , viewPlayer state.second
@@ -295,22 +299,22 @@ view model =
 
 viewPlayer : Player -> Html msg
 viewPlayer { bottle, level, speed } =
-    div [ style [ ( "display", "flex" ) ] ]
+    div [ style "display" "flex" ]
         [ Bottle.view bottle
         , columnEl []
             [ h3 [] [ text "next" ]
-            , div [ style [ ( "display", "flex" ) ] ]
+            , div [ style "display" "flex" ]
                 -- TODO: there should be a nicer fn that hides the Just Left/Right
                 [ (Tuple.first >> Bottle.viewPill (Just Bottle.Right)) bottle.next
                 , (Tuple.second >> Bottle.viewPill (Just Bottle.Left)) bottle.next
                 ]
-            , div [ style [ ( "margin", "72px 0" ) ] ]
+            , div [ style "margin" "72px 0" ]
                 [ h3 [] [ text "level" ]
-                , p [] [ (toString >> text) level ]
+                , p [] [ (String.fromInt >> text) level ]
                 , h3 [] [ text "speed" ]
-                , p [] [ (toString >> text) speed ]
+                , p [] [ (Bottle.speedToString >> text) speed ]
                 , h3 [] [ text "virus" ]
-                , p [] [ text <| toString (Bottle.totalViruses bottle.contents) ]
+                , p [] [ text <| String.fromInt (Bottle.totalViruses bottle.contents) ]
                 ]
             ]
         ]
@@ -323,7 +327,7 @@ columnEl =
 
 viewMessage : String -> Html msg -> Html msg
 viewMessage message below =
-    div [ style [ ( "text-align", "center" ), ( "margin", "16px 0" ) ] ]
+    div [ style "text-align" "center", style "margin" "16px 0" ]
         [ h3 [] [ text message ]
         , below
         ]

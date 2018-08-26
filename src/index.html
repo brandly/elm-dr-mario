@@ -20,6 +20,7 @@
     </style>
   </head>
   <body>
+    <div id="elm"></div>
     <!-- one for dev, one for prod  -->
     <script src="/_compile/src/Main.elm"></script>
     <script src="the.js"></script>
@@ -27,7 +28,10 @@
       if (window.runElmProgram) {
         runElmProgram();
       } else {
-        Elm.Main.fullscreen();
+        Elm.Main.init({
+          node: document.getElementById('elm'),
+          flags: ''
+        });
       }
     </script>
   </body>

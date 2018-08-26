@@ -1,17 +1,18 @@
-module Main exposing (..)
+module Main exposing (Model(..), Msg(..), main, subscriptions, update, view, viewSelecting)
 
-import Html exposing (Html, h1, text, div, button)
+import Component
+import Browser
+import Html exposing (Html, button, div, h1, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
-import Component
 import OnePlayer
 import TwoPlayer
 
 
-main : Program Never Model Msg
+main : Program String Model Msg
 main =
-    Html.program
-        { init = ( Selecting, Cmd.none )
+    Browser.element
+        { init = \_ -> ( Selecting, Cmd.none )
         , update = update
         , view = view
         , subscriptions = subscriptions
@@ -59,12 +60,12 @@ update msg model =
                 |> Tuple.mapFirst Two
                 |> Tuple.mapSecond (Cmd.map TwoMsg)
 
-        ( One state, OneMsg msg ) ->
-            OnePlayer.update msg state
+        ( One state, OneMsg msg_ ) ->
+            OnePlayer.update msg_ state
                 |> Component.mapSimple update One OneMsg
 
-        ( Two state, TwoMsg msg ) ->
-            TwoPlayer.update msg state
+        ( Two state, TwoMsg msg_ ) ->
+            TwoPlayer.update msg_ state
                 |> Component.mapSimple update Two TwoMsg
 
         ( _, _ ) ->
@@ -74,11 +75,9 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div
-        [ style
-            [ ( "display", "flex" )
-            , ( "flex-direction", "column" )
-            , ( "align-items", "center" )
-            ]
+        [ style "display" "flex"
+        , style "flex-direction" "column"
+        , style "align-items" "center"
         ]
         [ h1 [] [ text "dr. mario 💊" ]
         , case model of

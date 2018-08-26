@@ -2,18 +2,18 @@ module Grid
     exposing
         ( Cell
         , Column
-        , Grid
         , Coords
-        , fromDimensions
-        , isEmpty
-        , setState
-        , map
-        , filter
-        , difference
-        , height
-        , width
-        , findCellAtCoords
+        , Grid
         , below
+        , difference
+        , filter
+        , findCellAtCoords
+        , fromDimensions
+        , height
+        , isEmpty
+        , map
+        , setState
+        , width
         )
 
 
@@ -36,14 +36,14 @@ type alias Coords =
 
 
 fromDimensions : Int -> Int -> Grid val
-fromDimensions width height =
+fromDimensions width_ height_ =
     let
         makeColumn : Int -> Column val
         makeColumn x =
-            List.range 1 height
+            List.range 1 height_
                 |> List.map (\y -> Cell ( x, y ) Nothing)
     in
-        List.range 1 width
+        List.range 1 width_
             |> List.map makeColumn
 
 
@@ -68,8 +68,8 @@ toList grid =
 
 
 filter : (Cell val -> Bool) -> Grid val -> List (Cell val)
-filter filter grid =
-    toList grid |> List.filter filter
+filter predicate grid =
+    toList grid |> List.filter predicate
 
 
 difference : (Maybe val -> Maybe val -> Bool) -> Grid val -> Grid val -> List (Cell val)
@@ -88,7 +88,7 @@ difference diff a b =
 list. It combines the elements of each list pairwise until one
 of the lists runs out of elements.
 
-    zip [1,2,3] ['a','b','c'] == [(1,'a'), (2,'b'), (3,'c')]
+    zip [ 1, 2, 3 ] [ 'a', 'b', 'c' ] == [ ( 1, 'a' ), ( 2, 'b' ), ( 3, 'c' ) ]
 
 <http://elm-lang.org/examples/zip>
 

@@ -1,12 +1,11 @@
-module TwoPlayer exposing (..)
+module TwoPlayer exposing (Model(..), Msg(..), init, subscriptions, update, view)
 
-import Html exposing (Html, text)
-import Time exposing (Time, second)
-import Controls
 import Bottle exposing (Speed(..))
+import Component
+import Controls
+import Html exposing (Html, text)
 import OnePlayer.Menu as Menu
 import TwoPlayer.Game as Game
-import Component
 
 
 init : ( Model, Cmd Msg )
@@ -30,10 +29,9 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
     case ( model, action ) of
         ( Init _, Start { level, speed } ) ->
-            (Game.init
+            Game.init
                 { level = level, speed = speed }
                 { level = level, speed = speed }
-            )
                 |> Tuple.mapFirst InGame
                 |> Tuple.mapSecond (Cmd.map GameMsg)
 

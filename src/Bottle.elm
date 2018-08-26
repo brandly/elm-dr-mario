@@ -1,20 +1,58 @@
-module Bottle exposing (..)
+module Bottle
+    exposing
+        ( Bottle
+        , Color(..)
+        , Direction(..)
+        , Model
+        , Msg(..)
+        , Speed(..)
+        , generateColor
+        , generateEmptyCoords
+        , generatePill
+        , hasConflict
+        , init
+        , isCleared
+        , subscriptions
+        , totalViruses
+        , update
+        , view
+        , viewPill
+        , withControls
+        , withNext
+        , withVirus
+        , speedToString
+        )
 
-import Html exposing (Html, h1, h3, text, div, p)
+import Element exposing (Element, none, px, styled)
+import Grid exposing (Cell, Column, Grid)
+import Html exposing (Html, div, h1, h3, p, text)
 import Html.Attributes exposing (style)
-import Element exposing (Element, px, styled, none)
-import Keyboard exposing (KeyCode)
-import Set
-import Time exposing (Time)
+import Html.Events exposing (keyCode)
+import Browser.Events exposing (onKeyDown)
 import Random exposing (Generator(..))
 import RandomExtra exposing (selectWithDefault)
-import Grid exposing (Cell, Column, Grid)
+import Set
+import Time exposing (Posix)
+import Json.Decode as Decode
 
 
 type Speed
     = Low
     | Med
     | High
+
+
+speedToString : Speed -> String
+speedToString s =
+    case s of
+        Low ->
+            "Low"
+
+        Med ->
+            "Med"
+
+        High ->
+            "High"
 
 
 type Mode
@@ -63,7 +101,7 @@ init =
     { contents = Grid.fromDimensions 8 16
     , mode = Falling 0
     , next = ( Red, Red )
-    , controls = (\_ -> Nothing)
+    , controls = \_ -> Nothing
     }
 
 
@@ -90,7 +128,7 @@ withControls controls model =
 type Msg
     = NewPill ( Color, Color )
     | KeyDown (Maybe Direction)
-    | TickTock Time
+    | TickTock Posix
 
 
 type Direction
@@ -104,21 +142,21 @@ subscriptions : Speed -> Model -> Sub Msg
 subscriptions speed model =
     Sub.batch
         [ Time.every (tickForSpeed speed) TickTock
-        , Keyboard.downs (model.controls >> KeyDown)
+        , onKeyDown (Decode.map (model.controls >> KeyDown) keyCode)
         ]
 
 
-tickForSpeed : Speed -> Time
+tickForSpeed : Speed -> Float
 tickForSpeed speed =
     case speed of
         High ->
-            300 * Time.millisecond
+            300
 
         Med ->
-            700 * Time.millisecond
+            700
 
         Low ->
-            Time.second
+            1000
 
 
 
@@ -147,10 +185,10 @@ update { onBomb } msg model =
         ( PlacingPill pill ( x, y ), KeyDown key ) ->
             let
                 moveIfAvailable : Pill -> Grid.Coords -> ( Model, Cmd Msg, Maybe msg )
-                moveIfAvailable pill coords =
+                moveIfAvailable pill_ coords =
                     withNothing
-                        (if isAvailable coords pill model.contents then
-                            { model | mode = PlacingPill pill coords }
+                        (if isAvailable coords pill_ model.contents then
+                            { model | mode = PlacingPill pill_ coords }
                          else
                             model
                         )
@@ -203,17 +241,17 @@ advance model =
                 newCoords =
                     ( x, y + 1 )
 
-                afterPill : Pill -> Grid.Coords -> Model -> Model
-                afterPill pill coords model =
+                afterPill : Pill -> Grid.Coords -> Model
+                afterPill pill_ coords =
                     let
                         newContents =
-                            addPill pill coords model.contents
+                            addPill pill_ coords model.contents
 
                         modify =
                             if canSweep newContents then
                                 sweep
                             else
-                                (\m -> { m | contents = fall newContents })
+                                \m -> { m | contents = fall newContents }
                     in
                         modify
                             { model
@@ -225,7 +263,7 @@ advance model =
                     (if isAvailable newCoords pill model.contents then
                         { model | mode = PlacingPill pill newCoords }
                      else
-                        afterPill pill ( x, y ) model
+                        afterPill pill ( x, y )
                     )
 
         Falling _ ->
@@ -256,8 +294,8 @@ addPill : Pill -> Grid.Coords -> Bottle -> Bottle
 addPill pill coords bottle =
     colorCoords pill coords
         |> List.foldl
-            (\( coords, color, dependent ) grid ->
-                Grid.setState (( color, Pill (Just dependent) )) coords grid
+            (\( coords_, color, dependent ) grid ->
+                Grid.setState ( color, Pill (Just dependent) ) coords_ grid
             )
             bottle
 
@@ -265,13 +303,13 @@ addPill pill coords bottle =
 colorCoords : Pill -> Grid.Coords -> List ( Grid.Coords, Color, Dependent )
 colorCoords pill coords =
     let
-        ( a_color, a_dep, b_color, b_dep ) =
+        ( ( a_color, a_dep ), ( b_color, b_dep ) ) =
             case pill of
                 Horizontal a b ->
-                    ( a, Right, b, Left )
+                    ( ( a, Right ), ( b, Left ) )
 
                 Vertical a b ->
-                    ( a, Down, b, Up )
+                    ( ( a, Down ), ( b, Up ) )
     in
         case pillCoordsPair pill coords of
             first :: second :: [] ->
@@ -334,7 +372,8 @@ sweep ({ contents } as model) =
                                 coordsWithDirection coords dependent
 
                             _ ->
-                                Debug.crash "Shouldn't have made it thru the preceding filter"
+                                -- Shouldn't have made it thru the preceding filter
+                                ( -1, -1 )
                     )
                 |> Set.fromList
 
@@ -481,10 +520,10 @@ canFall coords bottle =
     in
         case cell.state of
             Just ( _, Pill Nothing ) ->
-                (Grid.below coords bottle |> hasRoom)
+                Grid.below coords bottle |> hasRoom
 
             Just ( _, Pill (Just Up) ) ->
-                (Grid.below coords bottle |> hasRoom)
+                Grid.below coords bottle |> hasRoom
 
             Just ( _, Pill (Just Down) ) ->
                 canFall (coordsWithDirection coords Down) bottle
@@ -531,8 +570,8 @@ isCleared ( x, y ) grid =
             Just ( color, _ ) ->
                 List.any
                     (List.all
-                        (\cell ->
-                            case cell.state of
+                        (\cell_ ->
+                            case cell_.state of
                                 Just ( c, _ ) ->
                                     c == color
 
@@ -564,7 +603,7 @@ hasConflict { mode, contents } =
         PlacingPill pill coords ->
             pillCoordsPair pill coords
                 |> List.map (\p -> Grid.isEmpty p contents)
-                |> (List.any not)
+                |> List.any not
 
         _ ->
             False
@@ -582,7 +621,7 @@ generateEmptyCoords grid =
             grid
                 |> Grid.filter
                     (\{ coords } ->
-                        Tuple.second coords >= 5 && (Grid.isEmpty coords grid)
+                        Tuple.second coords >= 5 && Grid.isEmpty coords grid
                     )
                 |> List.map .coords
     in
@@ -607,22 +646,20 @@ view : Model -> Html msg
 view { contents, mode } =
     div []
         [ div
-            [ style
-                [ ( "display", "inline-block" )
-                , ( "border", "3px solid #CCC" )
-                , ( "border-radius", "3px" )
-                , ( "background", "#000" )
-                ]
+            [ style "display" "inline-block"
+            , style "border" "3px solid #CCC"
+            , style "border-radius" "3px"
+            , style "background" "#000"
             ]
             (List.map
                 (\column ->
                     div
-                        [ style [ ( "display", "inline-block" ), ( "vertical-align", "top" ) ] ]
+                        [ style "display" "inline-block", style "vertical-align" "top" ]
                         (List.map
                             (\cell ->
                                 case cell.state of
                                     Nothing ->
-                                        div [ style cellStyle ] []
+                                        div cellStyle []
 
                                     Just ( color, Pill dependent ) ->
                                         viewPill dependent color
@@ -650,16 +687,16 @@ viewPill dependent color =
         8
         (case dependent of
             Just Up ->
-                [ ( "border-top-left-radius", px 0 ), ( "border-top-right-radius", px 0 ) ]
+                [ (style "border-top-left-radius" (px 0)), (style "border-top-right-radius" (px 0)) ]
 
             Just Down ->
-                [ ( "border-bottom-left-radius", px 0 ), ( "border-bottom-right-radius", px 0 ) ]
+                [ (style "border-bottom-left-radius" (px 0)), (style "border-bottom-right-radius" (px 0)) ]
 
             Just Left ->
-                [ ( "border-top-left-radius", px 0 ), ( "border-bottom-left-radius", px 0 ) ]
+                [ (style "border-top-left-radius" (px 0)), (style "border-bottom-left-radius" (px 0)) ]
 
             Just Right ->
-                [ ( "border-top-right-radius", px 0 ), ( "border-bottom-right-radius", px 0 ) ]
+                [ (style "border-top-right-radius" (px 0)), (style "border-bottom-right-radius" (px 0)) ]
 
             Nothing ->
                 []
@@ -672,7 +709,7 @@ viewVirus color =
     viewColor color 3 [] [ text "◔̯◔" ]
 
 
-viewColor : Color -> Int -> List ( String, String ) -> List (Html msg) -> Html msg
+viewColor : Color -> Int -> List (Html.Attribute msg) -> List (Html msg) -> Html msg
 viewColor color radius extraStyle =
     let
         bg =
@@ -687,24 +724,22 @@ viewColor color radius extraStyle =
                     "#ffbd03"
     in
         div
-            [ style
-                ([ ( "background-color", bg )
-                 , ( "border-top-left-radius", px radius )
-                 , ( "border-top-right-radius", px radius )
-                 , ( "border-bottom-left-radius", px radius )
-                 , ( "border-bottom-right-radius", px radius )
-                 ]
-                    ++ cellStyle
-                    ++ extraStyle
-                )
-            ]
+            ([ style "background-color" bg
+             , style "border-top-left-radius" (px radius)
+             , style "border-top-right-radius" (px radius)
+             , style "border-bottom-left-radius" (px radius)
+             , style "border-bottom-right-radius" (px radius)
+             ]
+                ++ cellStyle
+                ++ extraStyle
+            )
 
 
-cellStyle : List ( String, String )
+cellStyle : List (Html.Attribute msg)
 cellStyle =
-    [ ( "width", px cellSize )
-    , ( "height", px cellSize )
-    , ( "border", "1px solid black" )
+    [ style "width" (px cellSize)
+    , style "height" (px cellSize)
+    , style "border" "1px solid black"
     ]
 
 
@@ -722,4 +757,4 @@ subLists len list =
     if List.length list < len then
         []
     else
-        (List.take len list) :: subLists len (List.drop 1 list)
+        List.take len list :: subLists len (List.drop 1 list)
