@@ -12,7 +12,7 @@ import Bottle exposing (Bottle, Color(..), Speed(..))
 import Component
 import Controls
 import Element exposing (Element, none, px, styled)
-import Html exposing (Html, div, h1, h3, p, text)
+import Html exposing (Html, div, h1, h3, p, text, span)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import LevelCreator
@@ -264,12 +264,32 @@ view model =
             div [] [ text "💊💊💊" ]
 
         Playing state ->
-            div
-                [ style "display" "flex"
-                , style "flex-direction" "row"
-                ]
-                [ viewPlayer state.first
-                , viewPlayer state.second
+            div []
+                [ div
+                    [ style "display" "flex"
+                    , style "flex-direction" "row"
+                    ]
+                    [ viewPlayer state.first
+                    , div [ style "margin" "0 12px" ]
+                        -- TODO: displays win count
+                        [ h3 [] [ text "level" ]
+                        , spaceBetween []
+                            [ span [] [ (String.fromInt >> text) state.first.level ]
+                            , span [] [ (String.fromInt >> text) state.second.level ]
+                            ]
+                        , h3 [] [ text "speed" ]
+                        , spaceBetween []
+                            [ span [] [ (Bottle.speedToString >> text) state.first.speed ]
+                            , span [] [ (Bottle.speedToString >> text) state.second.speed ]
+                            ]
+                        , h3 [] [ text "virus" ]
+                        , spaceBetween []
+                            [ span [] [ text <| displayViruses state.first ]
+                            , span [] [ text <| displayViruses state.second ]
+                            ]
+                        ]
+                    , viewPlayer state.second
+                    ]
                 ]
 
         Paused state ->
@@ -297,32 +317,34 @@ view model =
                 ]
 
 
+displayViruses : Player -> String
+displayViruses player =
+    String.fromInt (Bottle.totalViruses player.bottle.contents)
+
+
 viewPlayer : Player -> Html msg
 viewPlayer { bottle, level, speed } =
-    div [ style "display" "flex" ]
-        [ Bottle.view bottle
-        , columnEl []
-            [ h3 [] [ text "next" ]
-            , div [ style "display" "flex" ]
-                -- TODO: there should be a nicer fn that hides the Just Left/Right
-                [ (Tuple.first >> Bottle.viewPill (Just Bottle.Right)) bottle.next
-                , (Tuple.second >> Bottle.viewPill (Just Bottle.Left)) bottle.next
-                ]
-            , div [ style "margin" "72px 0" ]
-                [ h3 [] [ text "level" ]
-                , p [] [ (String.fromInt >> text) level ]
-                , h3 [] [ text "speed" ]
-                , p [] [ (Bottle.speedToString >> text) speed ]
-                , h3 [] [ text "virus" ]
-                , p [] [ text <| String.fromInt (Bottle.totalViruses bottle.contents) ]
-                ]
+    div
+        [ style "display" "flex"
+        , style "flex-direction" "column"
+        , style "align-items" "center"
+        ]
+        [ div [ style "display" "flex", style "margin-bottom" "18px" ]
+            [ (Tuple.first >> Bottle.viewPill (Just Bottle.Right)) bottle.next
+            , (Tuple.second >> Bottle.viewPill (Just Bottle.Left)) bottle.next
             ]
+        , Bottle.view bottle
         ]
 
 
 columnEl : Element msg
 columnEl =
     styled div [ ( "margin", "0 16px" ) ]
+
+
+spaceBetween : Element msg
+spaceBetween =
+    styled p [ ( "display", "flex" ), ( "justify-content", "space-between" ) ]
 
 
 viewMessage : String -> Html msg -> Html msg
