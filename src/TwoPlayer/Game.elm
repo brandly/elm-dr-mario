@@ -151,7 +151,6 @@ update { onLeave } action model =
 
         ( PrepareSecond state creator, CreatorMsg msg ) ->
             let
-                -- TODO: if you choose same levels, should have same bottles
                 second =
                     state.second
 
@@ -165,17 +164,24 @@ update { onLeave } action model =
                         msg
                         creator
             in
-                case maybeMsg of
-                    Nothing ->
-                        ( PrepareSecond state creator_
-                        , Cmd.map CreatorMsg cmd
-                        , Nothing
-                        )
+                if state.first.level == state.second.level then
+                    ( Playing
+                        { state | second = { second | bottle = Bottle.withControls Controls.arrows state.first.bottle } }
+                    , Cmd.none
+                    , Nothing
+                    )
+                else
+                    case maybeMsg of
+                        Nothing ->
+                            ( PrepareSecond state creator_
+                            , Cmd.map CreatorMsg cmd
+                            , Nothing
+                            )
 
-                    Just msg2 ->
-                        update { onLeave = onLeave }
-                            msg2
-                            (PrepareSecond state creator_)
+                        Just msg2 ->
+                            update { onLeave = onLeave }
+                                msg2
+                                (PrepareSecond state creator_)
 
         ( PrepareSecond _ creator, LevelReady state ) ->
             ( Playing state, Cmd.none, Nothing )
