@@ -57,7 +57,7 @@ speedToString s =
 
 type Mode
     = PlacingPill Pill Grid.Coords
-    | Falling Int
+    | Falling (List Color)
 
 
 type Pill
@@ -99,7 +99,7 @@ type alias Model =
 init : Model
 init =
     { contents = Grid.fromDimensions 8 16
-    , mode = Falling 0
+    , mode = Falling []
     , next = ( Red, Red )
     , controls = \_ -> Nothing
     }
@@ -163,7 +163,7 @@ tickForSpeed speed =
 -- UPDATE
 
 
-update : { onBomb : Maybe msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
+update : { onBomb : List Color -> Maybe msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
 update { onBomb } msg model =
     case ( model.mode, msg ) of
         ( Falling cleared, NewPill next ) ->
@@ -176,8 +176,8 @@ update { onBomb } msg model =
                     , next = next
                   }
                 , Cmd.none
-                , if cleared > 1 then
-                    onBomb
+                , if (List.length cleared) > 1 then
+                    onBomb cleared
                   else
                     Nothing
                 )
@@ -255,7 +255,7 @@ advance model =
                     in
                         modify
                             { model
-                                | mode = Falling 0
+                                | mode = Falling []
                                 , contents = newContents
                             }
             in
@@ -394,6 +394,7 @@ sweep ({ contents } as model) =
                 )
                 contents
 
+        diff : List (Cell Contents)
         diff =
             Grid.difference
                 (\a b ->
@@ -406,12 +407,29 @@ sweep ({ contents } as model) =
                 )
                 contents
                 swept
-                |> List.map (\cell -> cell.coords)
 
-        clearedLines : Int
-        clearedLines =
-            min (Set.size <| Set.fromList <| List.map (\( x, _ ) -> x) diff)
-                (Set.size <| Set.fromList <| List.map (\( _, y ) -> y) diff)
+        clearedLines : List (Cell Contents) -> List Color
+        clearedLines cells =
+            case cells of
+                [] ->
+                    []
+
+                x :: xs ->
+                    case x.state of
+                        Just ( color, _ ) ->
+                            color
+                                :: (xs
+                                        |> List.filter
+                                            (\c ->
+                                                case ( x.coords, c.coords ) of
+                                                    ( ( xx, xy ), ( cx, cy ) ) ->
+                                                        cx /= xx && cy /= xy
+                                            )
+                                        |> clearedLines
+                                   )
+
+                        Nothing ->
+                            []
 
         alreadyCleared =
             case model.mode of
@@ -420,9 +438,9 @@ sweep ({ contents } as model) =
 
                 _ ->
                     -- should always be in Falling. can types enforce this?
-                    0
+                    []
     in
-        { model | contents = swept, mode = Falling (alreadyCleared + clearedLines) }
+        { model | contents = swept, mode = Falling (alreadyCleared ++ (clearedLines diff)) }
 
 
 coordsWithDirection : Grid.Coords -> Direction -> Grid.Coords

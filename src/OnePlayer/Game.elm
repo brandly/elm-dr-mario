@@ -217,7 +217,7 @@ updatePlayState onLeave action ({ bottle, speed, score } as model) =
     in
         case action of
             BottleMsg msg ->
-                Bottle.update { onBomb = Nothing } msg model.bottle
+                Bottle.update { onBomb = \_ -> Nothing } msg model.bottle
                     |> Component.raiseOutMsg (update { onLeave = onLeave })
                         withBottle
                         BottleMsg

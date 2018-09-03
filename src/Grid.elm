@@ -78,7 +78,7 @@ difference diff a b =
         |> List.filterMap
             (\( y, z ) ->
                 if diff y.state z.state then
-                    Just z
+                    Just y
                 else
                     Nothing
             )
