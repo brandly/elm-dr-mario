@@ -17,6 +17,7 @@ module Bottle
         , update
         , view
         , viewPill
+        , withBombs
         , withControls
         , withNext
         , withVirus
@@ -93,6 +94,7 @@ type alias Model =
     , mode : Mode
     , next : ( Color, Color )
     , controls : Int -> Maybe Direction
+    , bombs : List Color
     }
 
 
@@ -102,6 +104,7 @@ init =
     , mode = Falling []
     , next = ( Red, Red )
     , controls = \_ -> Nothing
+    , bombs = []
     }
 
 
@@ -123,6 +126,11 @@ withVirus color coords model =
 withControls : (Int -> Maybe Direction) -> Model -> Model
 withControls controls model =
     { model | controls = controls }
+
+
+withBombs : List Color -> Model -> Model
+withBombs colors model =
+    { model | bombs = model.bombs ++ colors }
 
 
 type Msg
@@ -276,12 +284,11 @@ advance model =
                         |> (List.isEmpty >> not)
             in
                 if timeToFall then
-                    ( { model | contents = fall model.contents }
-                    , Cmd.none
-                    , Nothing
-                    )
+                    withNothing { model | contents = fall model.contents }
                 else if canSweep model.contents then
                     ( sweep model, Cmd.none, Nothing )
+                else if List.length model.bombs > 0 then
+                    Debug.todo "map bombs in cmd msgs, generate random columns"
                 else
                     ( model
                     , Random.generate NewPill <|

@@ -25,6 +25,11 @@ type alias Player =
     }
 
 
+withBottle : Bottle.Model -> Player -> Player
+withBottle newBottle player =
+    { player | bottle = newBottle }
+
+
 type alias State =
     { first : Player
     , second : Player
@@ -198,6 +203,28 @@ update { onLeave } action model =
         ( Paused state, _ ) ->
             ( model, Cmd.none, Nothing )
 
+        ( Playing state, FirstBomb colors ) ->
+            ( Playing
+                { state
+                    | second =
+                        state.second
+                            |> withBottle (Bottle.withBombs colors state.second.bottle)
+                }
+            , Cmd.none
+            , Nothing
+            )
+
+        ( Playing state, SecondBomb colors ) ->
+            ( Playing
+                { state
+                    | first =
+                        state.first
+                            |> withBottle (Bottle.withBombs colors state.first.bottle)
+                }
+            , Cmd.none
+            , Nothing
+            )
+
         ( Playing ({ first, second } as state), msg ) ->
             if Bottle.totalViruses first.bottle.contents == 0 || Bottle.hasConflict second.bottle then
                 ( Over
@@ -227,33 +254,28 @@ update { onLeave } action model =
 
 updatePlayState : msg -> Msg -> State -> ( Model, Cmd Msg, Maybe msg )
 updatePlayState onLeave action ({ first, second } as model) =
-    let
-        withBottle : Bottle.Model -> Player -> Player
-        withBottle newBottle player =
-            { player | bottle = newBottle }
-    in
-        case action of
-            FirstBottleMsg msg ->
-                Bottle.update { onBomb = (FirstBomb >> Just) } msg first.bottle
-                    |> Component.raiseOutMsg (update { onLeave = onLeave })
-                        (\bottle ->
-                            Playing
-                                { model | first = withBottle bottle first }
-                        )
-                        FirstBottleMsg
+    case action of
+        FirstBottleMsg msg ->
+            Bottle.update { onBomb = (FirstBomb >> Just) } msg first.bottle
+                |> Component.raiseOutMsg (update { onLeave = onLeave })
+                    (\bottle ->
+                        Playing
+                            { model | first = withBottle bottle first }
+                    )
+                    FirstBottleMsg
 
-            SecondBottleMsg msg ->
-                Bottle.update { onBomb = (SecondBomb >> Just) } msg second.bottle
-                    |> Component.raiseOutMsg (update { onLeave = onLeave })
-                        (\bottle ->
-                            Playing
-                                { model | second = withBottle bottle second }
-                        )
-                        SecondBottleMsg
+        SecondBottleMsg msg ->
+            Bottle.update { onBomb = (SecondBomb >> Just) } msg second.bottle
+                |> Component.raiseOutMsg (update { onLeave = onLeave })
+                    (\bottle ->
+                        Playing
+                            { model | second = withBottle bottle second }
+                    )
+                    SecondBottleMsg
 
-            _ ->
-                -- TODO: get rid of this
-                ( Playing model, Cmd.none, Nothing )
+        _ ->
+            -- TODO: get rid of this
+            ( Playing model, Cmd.none, Nothing )
 
 
 
