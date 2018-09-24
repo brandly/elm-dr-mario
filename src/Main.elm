@@ -9,7 +9,7 @@ import OnePlayer
 import TwoPlayer
 
 
-main : Program String Model Msg
+main : Program () Model Msg
 main =
     Browser.element
         { init = \_ -> ( Selecting, Cmd.none )
