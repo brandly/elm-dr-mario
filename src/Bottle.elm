@@ -59,6 +59,7 @@ speedToString s =
 type Mode
     = PlacingPill Pill Grid.Coords
     | Falling (List Color)
+    | Bombing
 
 
 type Pill
@@ -137,6 +138,7 @@ type Msg
     = NewPill ( Color, Color )
     | KeyDown (Maybe Direction)
     | TickTock Posix
+    | Bomb Color Int
 
 
 type Direction
@@ -232,6 +234,28 @@ update { onBomb } msg model =
         ( _, TickTock _ ) ->
             advance model
 
+        ( Bombing, Bomb color x ) ->
+            let
+                contents =
+                    Grid.setState
+                        ( color, Pill Nothing )
+                        ( x, 1 )
+                        model.contents
+
+                model_ =
+                    { model | contents = contents }
+            in
+                case model.bombs of
+                    head :: tail ->
+                        ( { model_ | bombs = tail }
+                        , Random.generate (Bomb head) <|
+                            generateBomb model_.contents
+                        , Nothing
+                        )
+
+                    _ ->
+                        ( { model_ | mode = Falling [] }, Cmd.none, Nothing )
+
         _ ->
             withNothing model
 
@@ -287,14 +311,29 @@ advance model =
                     withNothing { model | contents = fall model.contents }
                 else if canSweep model.contents then
                     ( sweep model, Cmd.none, Nothing )
-                else if List.length model.bombs > 0 then
-                    Debug.todo "map bombs in cmd msgs, generate random columns"
                 else
-                    ( model
-                    , Random.generate NewPill <|
-                        generatePill
+                    case List.head model.bombs of
+                        Just _ ->
+                            advance { model | mode = Bombing }
+
+                        Nothing ->
+                            ( model
+                            , Random.generate NewPill <|
+                                generatePill
+                            , Nothing
+                            )
+
+        Bombing ->
+            case model.bombs of
+                head :: tail ->
+                    ( { model | bombs = tail }
+                    , Random.generate (Bomb head) <|
+                        generateBomb model.contents
                     , Nothing
                     )
+
+                _ ->
+                    ( model, Cmd.none, Nothing )
 
 
 addPill : Pill -> Grid.Coords -> Bottle -> Bottle
@@ -661,6 +700,23 @@ generatePill =
 generateColor : Generator Color
 generateColor =
     selectWithDefault Blue [ Red, Yellow, Blue ]
+
+
+generateBomb : Bottle -> Generator Int
+generateBomb bottle =
+    selectWithDefault -1
+        (Grid.topRow bottle
+            |> List.filter
+                (\c ->
+                    case c.state of
+                        Just _ ->
+                            False
+
+                        Nothing ->
+                            True
+                )
+            |> List.map (.coords >> Tuple.first)
+        )
 
 
 

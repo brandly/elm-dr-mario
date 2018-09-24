@@ -13,6 +13,7 @@ module Grid
         , isEmpty
         , map
         , setState
+        , topRow
         , width
         )
 
@@ -153,3 +154,22 @@ below ( x, y ) grid =
 
         Just column ->
             List.drop y column
+
+
+topRow : Grid val -> List (Cell val)
+topRow grid =
+    let
+        go result grid_ =
+            case grid_ of
+                head :: tail ->
+                    case head of
+                        Just cell ->
+                            go (cell :: result) tail
+
+                        Nothing ->
+                            go result tail
+
+                _ ->
+                    result
+    in
+        go [] (List.map List.head grid)
