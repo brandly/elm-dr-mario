@@ -3,17 +3,18 @@ module OnePlayer.Menu
         ( Msg(..)
         , State
         , init
-        , view
-        , update
         , subscriptions
+        , update
+        , view
         )
 
-import Html exposing (Html, h3, h4, div, text, p)
+import Bottle exposing (Speed(..))
+import Element exposing (Element, px, styled)
+import Html exposing (Html, div, h3, h4, p, text)
 import Html.Attributes exposing (style, type_)
-import Html.Events exposing (onSubmit)
-import Keyboard exposing (KeyCode)
-import OnePlayer.Game exposing (Speed(..))
-import Element exposing (Element, styled, px)
+import Html.Events exposing (onSubmit, keyCode)
+import Browser.Events exposing (onKeyDown)
+import Json.Decode as Decode
 
 
 type Msg
@@ -41,26 +42,29 @@ init =
 
 subscriptions : State -> Sub Msg
 subscriptions _ =
-    Keyboard.downs
-        (\keyCode ->
-            case keyCode of
-                13 ->
-                    Enter
+    onKeyDown
+        (Decode.map
+            (\key ->
+                case key of
+                    13 ->
+                        Enter
 
-                38 ->
-                    Up
+                    38 ->
+                        Up
 
-                37 ->
-                    Left
+                    37 ->
+                        Left
 
-                39 ->
-                    Right
+                    39 ->
+                        Right
 
-                40 ->
-                    Down
+                    40 ->
+                        Down
 
-                _ ->
-                    Noop
+                    _ ->
+                        Noop
+            )
+            keyCode
         )
 
 
@@ -135,7 +139,7 @@ update events msg ({ selecting, speed } as state) =
 view : State -> Html msg
 view { level, speed, selecting } =
     div
-        [ style [ ( "width", "420px" ), ( "max-width", "100%" ) ] ]
+        [ style "width" "420px", style "max-width" "100%" ]
         [ row []
             [ heading (selecting == Level) "virus level"
             , viewLevel level
@@ -143,11 +147,9 @@ view { level, speed, selecting } =
         , row []
             [ heading (selecting == Speed) "speed"
             , div
-                [ style
-                    [ ( "width", "100%" )
-                    , ( "display", "flex" )
-                    , ( "justify-content", "space-around" )
-                    ]
+                [ style "width" "100%"
+                , style "display" "flex"
+                , style "justify-content" "space-around"
                 ]
                 ([ Low, Med, High ]
                     |> List.map (viewSpeed speed)
@@ -158,42 +160,37 @@ view { level, speed, selecting } =
 
 
 viewLevel level =
-    div [ style [ ( "padding", "0 24px" ) ] ]
-        [ h4 [ style [ ( "text-align", "right" ) ] ] [ (toString >> text) level ]
+    div [ style "padding" "0 24px" ]
+        [ h4 [ style "text-align" "right" ] [ (String.fromInt >> text) level ]
         , viewLevelSlider level
         ]
 
 
 viewLevelSlider level =
     div
-        [ style
-            [ ( "display", "flex" )
-            , ( "justify-content", "space-between" )
-            , ( "align-items", "center" )
-            ]
+        [ style "display" "flex"
+        , style "justify-content" "space-between"
+        , style "align-items" "center"
         ]
         (List.range 0 20
             |> List.map
                 (\n ->
                     div
-                        [ style
-                            [ ( "height"
-                              , px
-                                    (if n % 5 == 0 then
-                                        16
-                                     else
-                                        8
-                                    )
-                              )
-                            , ( "width", "4px" )
-                            , ( "background"
-                              , (if n == level then
-                                    "#fb7c54"
+                        [ style "height"
+                            (px
+                                (if modBy 5 n == 0 then
+                                    16
                                  else
-                                    "#000"
+                                    8
                                 )
-                              )
-                            ]
+                            )
+                        , style "width" "4px"
+                        , style "background"
+                            (if n == level then
+                                "#fb7c54"
+                             else
+                                "#000"
+                            )
                         ]
                         []
                 )
@@ -225,15 +222,14 @@ row =
     styled div [ ( "margin-bottom", "48px" ) ]
 
 
-viewSpeed : a -> a -> Html msg
+viewSpeed : Speed -> Speed -> Html msg
 viewSpeed ideal real =
     h4
-        [ style <|
-            [ ( "padding", "4px 8px" ) ]
-                ++ (if real == ideal then
-                        [ ( "border", "3px solid #fb7c54" ) ]
-                    else
-                        []
-                   )
+        [ (style "padding" "4px 8px")
+        , (if real == ideal then
+            style "border" "3px solid #fb7c54"
+           else
+            style "" ""
+          )
         ]
-        [ (toString >> text) real ]
+        [ (Bottle.speedToString >> text) real ]

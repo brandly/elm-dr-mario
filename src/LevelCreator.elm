@@ -1,9 +1,15 @@
-module LevelCreator exposing (..)
+module LevelCreator
+    exposing
+        ( Model
+        , Msg(..)
+        , init
+        , update
+        )
 
+import Bottle exposing (Bottle, Color(..))
 import Grid exposing (Cell, Column, Grid)
 import Random exposing (Generator(..))
 import RandomExtra exposing (selectWithDefault)
-import Bottle exposing (Bottle, Color(..))
 
 
 type alias Model =
@@ -37,7 +43,7 @@ virusesForLevel level =
 
 update : { onCreated : Model -> msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
 update { onCreated } action ({ level, bottle } as model) =
-    case (action) of
+    case action of
         NewVirus ( color, coords ) ->
             let
                 newBottle =

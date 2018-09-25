@@ -1,10 +1,10 @@
-module RandomExtra exposing (..)
+module RandomExtra exposing (selectWithDefault)
 
 import Random exposing (Generator)
 
 
 selectWithDefault : a -> List a -> Generator a
-selectWithDefault defaultValue list =
+selectWithDefault defaultValue options =
     let
         get : Int -> List a -> Maybe a
         get index list =
@@ -23,4 +23,4 @@ selectWithDefault defaultValue list =
             Random.map (\index -> get index list)
                 (Random.int 0 (List.length list - 1))
     in
-        Random.map (Maybe.withDefault defaultValue) (select list)
+        Random.map (Maybe.withDefault defaultValue) (select options)

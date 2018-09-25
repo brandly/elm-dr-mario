@@ -1,23 +1,21 @@
-module OnePlayer.Game exposing (..)
+module OnePlayer.Game
+    exposing
+        ( Model(..)
+        , Msg(..)
+        , init
+        , subscriptions
+        , update
+        , view
+        )
 
-import Grid exposing (Cell, Column, Grid)
-import Html exposing (Html, h1, h3, text, div, p)
+import Bottle exposing (Bottle, Color(..), Speed(..))
+import Component
+import Controls
+import Element exposing (Element, none, px, styled)
+import Html exposing (Html, div, h1, h3, p, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
-import Keyboard exposing (KeyCode)
-import Random exposing (Generator(..))
-import RandomExtra exposing (selectWithDefault)
-import Time exposing (Time)
-import Element exposing (Element, px, styled, none)
-import Bottle exposing (Bottle, Color(..))
-import Component
 import LevelCreator
-
-
-type Speed
-    = Low
-    | Med
-    | High
 
 
 type alias State =
@@ -43,8 +41,7 @@ type Model
 
 
 type Msg
-    = TickTock Time
-    | BottleMsg Bottle.Msg
+    = BottleMsg Bottle.Msg
     | CreatorMsg LevelCreator.Msg
     | LevelReady State
     | Advance
@@ -60,25 +57,6 @@ type Msg
 init : Int -> Speed -> ( Model, Cmd Msg )
 init level speed =
     initWithScore level speed 0
-
-
-controls : Int -> Maybe Bottle.Direction
-controls keyCode =
-    case keyCode of
-        38 ->
-            Just Bottle.Up
-
-        37 ->
-            Just Bottle.Left
-
-        39 ->
-            Just Bottle.Right
-
-        40 ->
-            Just Bottle.Down
-
-        _ ->
-            Nothing
 
 
 initWithScore level speed score =
@@ -100,8 +78,7 @@ subscriptions model =
     case model of
         Playing { speed, bottle } ->
             Sub.batch
-                [ Time.every (tickForSpeed speed) TickTock
-                , Bottle.subscriptions bottle
+                [ Bottle.subscriptions speed bottle
                     |> Sub.map BottleMsg
                 ]
 
@@ -111,19 +88,6 @@ subscriptions model =
 
 
 -- SETTINGS --
-
-
-tickForSpeed : Speed -> Time
-tickForSpeed speed =
-    case speed of
-        High ->
-            300 * Time.millisecond
-
-        Med ->
-            700 * Time.millisecond
-
-        Low ->
-            Time.second
 
 
 pointsForClearedViruses : Speed -> Int -> Int
@@ -157,14 +121,13 @@ update { onLeave } action model =
                 ( creator_, cmd, maybeMsg ) =
                     LevelCreator.update
                         { onCreated =
-                            (\{ level, bottle } ->
+                            \{ level, bottle } ->
                                 LevelReady
                                     { bottle = bottle
                                     , level = level
                                     , score = score
                                     , speed = speed
                                     }
-                            )
                         }
                         msg
                         creator
@@ -183,7 +146,7 @@ update { onLeave } action model =
 
         ( PrepareGame _, LevelReady state ) ->
             ( Playing
-                { state | bottle = Bottle.withControls controls state.bottle }
+                { state | bottle = Bottle.withControls Controls.arrows state.bottle }
             , Cmd.none
             , Nothing
             )
@@ -222,10 +185,10 @@ update { onLeave } action model =
 
         ( Over _, Advance { level, score, speed } ) ->
             let
-                ( model, msg ) =
+                ( model_, msg ) =
                     initWithScore level speed score
             in
-                ( model, msg, Nothing )
+                ( model_, msg, Nothing )
 
         ( Over _, Reset ) ->
             ( model, Cmd.none, Just onLeave )
@@ -241,7 +204,7 @@ updatePlayState onLeave action ({ bottle, speed, score } as model) =
         withBottle newBottle =
             let
                 sweptViruses =
-                    (Bottle.totalViruses bottle.contents) - (Bottle.totalViruses newBottle.contents)
+                    Bottle.totalViruses bottle.contents - Bottle.totalViruses newBottle.contents
 
                 additionalPoints =
                     pointsForClearedViruses speed sweptViruses
@@ -253,17 +216,8 @@ updatePlayState onLeave action ({ bottle, speed, score } as model) =
                     }
     in
         case action of
-            TickTock _ ->
-                let
-                    ( a, b ) =
-                        Bottle.advance model.bottle
-                            |> Tuple.mapFirst withBottle
-                            |> Tuple.mapSecond (Cmd.map BottleMsg)
-                in
-                    ( a, b, Nothing )
-
             BottleMsg msg ->
-                Bottle.update msg model.bottle
+                Bottle.update { onBomb = \_ -> Nothing } msg model.bottle
                     |> Component.raiseOutMsg (update { onLeave = onLeave })
                         withBottle
                         BottleMsg
@@ -304,20 +258,19 @@ view model =
                         "Game Over"
                     )
                     (div []
-                        [ (if state.won then
+                        [ if state.won then
                             Html.button
                                 [ onClick
                                     (Advance
                                         { speed = state.game.speed
-                                        , level = (state.game.level + 1)
+                                        , level = state.game.level + 1
                                         , score = state.game.score
                                         }
                                     )
                                 ]
                                 [ text "Next Level" ]
-                           else
+                          else
                             none
-                          )
                         , Html.button [ onClick Reset ] [ text "Main Menu" ]
                         ]
                     )
@@ -327,11 +280,11 @@ view model =
 
 viewPlaying : Maybe msg -> State -> Html msg
 viewPlaying pauseMsg { score, bottle, level, speed } =
-    div [ style [ ( "display", "flex" ) ] ]
+    div [ style "display" "flex" ]
         [ columnEl []
             [ h3 [] [ text "score" ]
-            , p [ style [ ( "text-align", "right" ) ] ]
-                [ (toString >> text) score ]
+            , p [ style "text-align" "right" ]
+                [ (String.fromInt >> text) score ]
             , pauseMsg
                 |> Maybe.map (\msg -> Html.button [ onClick msg ] [ text "pause" ])
                 |> Maybe.withDefault none
@@ -339,18 +292,18 @@ viewPlaying pauseMsg { score, bottle, level, speed } =
         , Bottle.view bottle
         , columnEl []
             [ h3 [] [ text "next" ]
-            , div [ style [ ( "display", "flex" ) ] ]
+            , div [ style "display" "flex" ]
                 -- TODO: there should be a nicer fn that hides the Just Left/Right
                 [ (Tuple.first >> Bottle.viewPill (Just Bottle.Right)) bottle.next
                 , (Tuple.second >> Bottle.viewPill (Just Bottle.Left)) bottle.next
                 ]
-            , div [ style [ ( "margin", "72px 0" ) ] ]
+            , div [ style "margin" "72px 0" ]
                 [ h3 [] [ text "level" ]
-                , p [] [ (toString >> text) level ]
+                , p [] [ (String.fromInt >> text) level ]
                 , h3 [] [ text "speed" ]
-                , p [] [ (toString >> text) speed ]
+                , p [] [ (Bottle.speedToString >> text) speed ]
                 , h3 [] [ text "virus" ]
-                , p [] [ text <| toString (Bottle.totalViruses bottle.contents) ]
+                , p [] [ text <| String.fromInt (Bottle.totalViruses bottle.contents) ]
                 ]
             ]
         ]
@@ -363,7 +316,7 @@ columnEl =
 
 viewMessage : String -> Html msg -> Html msg
 viewMessage message below =
-    div [ style [ ( "text-align", "center" ), ( "margin", "16px 0" ) ] ]
+    div [ style "text-align" "center", style "margin" "16px 0" ]
         [ h3 [] [ text message ]
         , below
         ]

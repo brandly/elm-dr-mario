@@ -1,13 +1,14 @@
-module OnePlayer exposing (Model(..), Msg(..), init, subscriptions, update, view)
+module TwoPlayer exposing (Model(..), Msg(..), init, subscriptions, update, view)
 
 import Bottle exposing (Speed(..))
 import Component
-import Html exposing (Html)
-import OnePlayer.Game as Game
+import Controls
+import Html exposing (Html, text)
 import OnePlayer.Menu as Menu
+import TwoPlayer.Game as Game
 
 
-init : ( Model, Cmd msg )
+init : ( Model, Cmd Msg )
 init =
     ( Init Menu.init, Cmd.none )
 
@@ -18,8 +19,8 @@ type Model
 
 
 type Msg
-    = MenuMsg Menu.Msg
-    | Start { level : Int, speed : Speed }
+    = Start { level : Int, speed : Speed }
+    | MenuMsg Menu.Msg
     | GameMsg Game.Msg
     | Reset
 
@@ -27,8 +28,10 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
     case ( model, action ) of
-        ( _, Start { level, speed } ) ->
-            Game.init level speed
+        ( Init _, Start { level, speed } ) ->
+            Game.init
+                { level = level, speed = speed }
+                { level = level, speed = speed }
                 |> Tuple.mapFirst InGame
                 |> Tuple.mapSecond (Cmd.map GameMsg)
 

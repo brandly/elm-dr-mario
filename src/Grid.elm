@@ -2,17 +2,19 @@ module Grid
     exposing
         ( Cell
         , Column
-        , Grid
         , Coords
-        , fromDimensions
-        , isEmpty
-        , setState
-        , map
-        , filter
-        , height
-        , width
-        , findCellAtCoords
+        , Grid
         , below
+        , difference
+        , filter
+        , findCellAtCoords
+        , fromDimensions
+        , height
+        , isEmpty
+        , map
+        , setState
+        , topRow
+        , width
         )
 
 
@@ -35,14 +37,14 @@ type alias Coords =
 
 
 fromDimensions : Int -> Int -> Grid val
-fromDimensions width height =
+fromDimensions width_ height_ =
     let
         makeColumn : Int -> Column val
         makeColumn x =
-            List.range 1 height
+            List.range 1 height_
                 |> List.map (\y -> Cell ( x, y ) Nothing)
     in
-        List.range 1 width
+        List.range 1 width_
             |> List.map makeColumn
 
 
@@ -67,8 +69,39 @@ toList grid =
 
 
 filter : (Cell val -> Bool) -> Grid val -> List (Cell val)
-filter filter grid =
-    toList grid |> List.filter filter
+filter predicate grid =
+    toList grid |> List.filter predicate
+
+
+difference : (Maybe val -> Maybe val -> Bool) -> Grid val -> Grid val -> List (Cell val)
+difference diff a b =
+    zip (toList a) (toList b)
+        |> List.filterMap
+            (\( y, z ) ->
+                if diff y.state z.state then
+                    Just y
+                else
+                    Nothing
+            )
+
+
+{-| The zip function takes in two lists and returns a combined
+list. It combines the elements of each list pairwise until one
+of the lists runs out of elements.
+
+    zip [ 1, 2, 3 ] [ 'a', 'b', 'c' ] == [ ( 1, 'a' ), ( 2, 'b' ), ( 3, 'c' ) ]
+
+<http://elm-lang.org/examples/zip>
+
+-}
+zip : List a -> List b -> List ( a, b )
+zip xs ys =
+    case ( xs, ys ) of
+        ( x :: xBack, y :: yBack ) ->
+            ( x, y ) :: zip xBack yBack
+
+        ( _, _ ) ->
+            []
 
 
 findCellAtCoords : Coords -> Grid val -> Cell val
@@ -121,3 +154,22 @@ below ( x, y ) grid =
 
         Just column ->
             List.drop y column
+
+
+topRow : Grid val -> List (Cell val)
+topRow grid =
+    let
+        go result grid_ =
+            case grid_ of
+                head :: tail ->
+                    case head of
+                        Just cell ->
+                            go (cell :: result) tail
+
+                        Nothing ->
+                            go result tail
+
+                _ ->
+                    result
+    in
+        go [] (List.map List.head grid)
