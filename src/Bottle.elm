@@ -56,6 +56,11 @@ speedToString s =
             "High"
 
 
+type Controls
+    = Keyboard (Int -> Maybe Direction)
+    | Bot (Bottle -> Mode -> Maybe Direction)
+
+
 type Mode
     = PlacingPill Pill Grid.Coords
     | Falling (List Color)
@@ -94,7 +99,7 @@ type alias Model =
     { contents : Bottle
     , mode : Mode
     , next : ( Color, Color )
-    , controls : Int -> Maybe Direction
+    , controls : Controls
     , bombs : List Color
     }
 
@@ -104,9 +109,101 @@ init =
     { contents = Grid.fromDimensions 8 16
     , mode = Falling []
     , next = ( Red, Red )
-    , controls = \_ -> Nothing
+    , controls = Bot trashBot
     , bombs = []
     }
+
+
+trashBot : Bottle -> Mode -> Maybe Direction
+trashBot bottle mode =
+    case mode of
+        Falling _ ->
+            Nothing
+
+        Bombing ->
+            Nothing
+
+        PlacingPill pill coords ->
+            let
+                flip : Maybe Direction
+                flip =
+                    -- if colors are different, go horizontal
+                    -- otherwise, vertical
+                    case pill of
+                        Horizontal a b ->
+                            if a == b then
+                                Just Up
+                            else
+                                Nothing
+
+                        Vertical a b ->
+                            if a == b then
+                                Nothing
+                            else
+                                Just Up
+            in
+                case flip of
+                    Just _ ->
+                        flip
+
+                    Nothing ->
+                        let
+                            -- paying no attention to secondary color
+                            ( color_a, color_b ) =
+                                case pill of
+                                    Vertical a b ->
+                                        ( a, b )
+
+                                    Horizontal a b ->
+                                        ( a, b )
+
+                            peaks : List (Grid.Cell Contents)
+                            peaks =
+                                bottle
+                                    |> List.map
+                                        (\column ->
+                                            column
+                                                |> List.filter
+                                                    (\cell ->
+                                                        case cell.state of
+                                                            Just _ ->
+                                                                True
+
+                                                            Nothing ->
+                                                                False
+                                                    )
+                                                |> List.head
+                                        )
+                                    |> List.filterMap identity
+
+                            firstMatch : Color -> Maybe ( Int, Int )
+                            firstMatch color =
+                                peaks
+                                    |> List.filterMap
+                                        (\cell ->
+                                            case cell.state of
+                                                Just ( color_, _ ) ->
+                                                    if color == color_ then
+                                                        Just cell.coords
+                                                    else
+                                                        Nothing
+
+                                                Nothing ->
+                                                    Nothing
+                                        )
+                                    |> List.head
+                        in
+                            case ( firstMatch color_a, coords ) of
+                                ( Just ( matchX, _ ), ( x, _ ) ) ->
+                                    if matchX > x then
+                                        Just Right
+                                    else if matchX < x then
+                                        Just Left
+                                    else
+                                        Nothing
+
+                                _ ->
+                                    Just Left
 
 
 withNext : ( Color, Color ) -> Model -> Model
@@ -126,7 +223,7 @@ withVirus color coords model =
 
 withControls : (Int -> Maybe Direction) -> Model -> Model
 withControls controls model =
-    { model | controls = controls }
+    { model | controls = Keyboard controls }
 
 
 withBombs : List Color -> Model -> Model
@@ -152,7 +249,16 @@ subscriptions : Speed -> Model -> Sub Msg
 subscriptions speed model =
     Sub.batch
         [ Time.every (tickForSpeed speed) TickTock
-        , onKeyDown (Decode.map (model.controls >> KeyDown) keyCode)
+        , case model.controls of
+            Keyboard controls ->
+                onKeyDown (Decode.map (controls >> KeyDown) keyCode)
+
+            Bot controls ->
+                let
+                    direction =
+                        controls model.contents model.mode
+                in
+                    Time.every (tickForSpeed speed / 2) (\_ -> KeyDown direction)
         ]
 
 
