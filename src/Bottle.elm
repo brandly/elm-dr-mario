@@ -193,14 +193,22 @@ trashBot bottle mode =
                                         )
                                     |> List.head
                         in
-                            case ( firstMatch color_a, coords ) of
-                                ( Just ( matchX, _ ), ( x, _ ) ) ->
+                            case ( firstMatch color_a, firstMatch color_b, coords ) of
+                                ( Just ( matchX, _ ), _, ( x, _ ) ) ->
                                     if matchX > x then
                                         Just Right
                                     else if matchX < x then
                                         Just Left
                                     else
-                                        Nothing
+                                        Just Down
+
+                                ( _, Just ( matchX, _ ), ( x, _ ) ) ->
+                                    if matchX > x then
+                                        Just Right
+                                    else if matchX < x then
+                                        Just Left
+                                    else
+                                        Just Down
 
                                 _ ->
                                     Just Left
