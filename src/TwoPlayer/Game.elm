@@ -322,11 +322,10 @@ view model =
 
         Paused state ->
             div []
-                [ viewMessage "Paused"
-                    (Html.button
+                [ viewMessage "Paused" <|
+                    Html.button
                         [ onClick Resume ]
                         [ text "resume" ]
-                    )
                 ]
 
         Over state ->

@@ -213,7 +213,10 @@ trashBot bottle mode =
                             orientationBonus orientation
                                 + (case orientation of
                                     Horizontal a b ->
-                                        (colorIndexScore a x) + (colorIndexScore b (x + 1))
+                                        if x == 8 then
+                                            -5
+                                        else
+                                            (colorIndexScore a x) + (colorIndexScore b (x + 1))
 
                                     Vertical a b ->
                                         if a == b then
@@ -227,8 +230,7 @@ trashBot bottle mode =
                 choice : Maybe ( Int, Pill )
                 choice =
                     Grid.zip scores options
-                        |> List.sortBy Tuple.first
-                        |> List.reverse
+                        |> List.sortBy (Tuple.first >> (\a -> -a))
                         |> List.map Tuple.second
                         |> List.head
             in

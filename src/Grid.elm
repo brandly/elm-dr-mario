@@ -96,13 +96,8 @@ of the lists runs out of elements.
 
 -}
 zip : List a -> List b -> List ( a, b )
-zip xs ys =
-    case ( xs, ys ) of
-        ( x :: xBack, y :: yBack ) ->
-            ( x, y ) :: zip xBack yBack
-
-        ( _, _ ) ->
-            []
+zip =
+    List.map2 Tuple.pair
 
 
 findCellAtCoords : Coords -> Grid val -> Cell val
