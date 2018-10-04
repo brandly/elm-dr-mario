@@ -24,6 +24,7 @@ module Bottle
         , speedToString
         )
 
+import Array
 import Element exposing (Element, none, px, styled)
 import Grid exposing (Cell, Column, Grid)
 import Html exposing (Html, div, h1, h3, p, text)
@@ -125,101 +126,114 @@ trashBot bottle mode =
 
         PlacingPill pill coords ->
             let
-                flip : Maybe Direction
-                flip =
-                    -- if colors are different, go horizontal
-                    -- otherwise, vertical
+                ( color_a, color_b ) =
                     case pill of
-                        Horizontal a b ->
-                            if a == b then
-                                Just Up
-                            else
-                                Nothing
-
                         Vertical a b ->
-                            if a == b then
-                                Nothing
+                            ( a, b )
+
+                        Horizontal a b ->
+                            ( a, b )
+
+                options : List ( Int, Pill )
+                options =
+                    -- TODO: should "flood" out/down to find options
+                    -- aim for a realistic (x, y)
+                    (List.range 1 7
+                        |> List.map (\x -> ( x, Horizontal color_a color_b ))
+                    )
+                        ++ (if color_a == color_b then
+                                []
                             else
-                                Just Up
-            in
-                case flip of
-                    Just _ ->
-                        flip
+                                List.range 1 7
+                                    |> List.map (\x -> ( x, Horizontal color_b color_a ))
+                           )
+                        ++ (List.range 1 8
+                                |> List.map
+                                    (\x ->
+                                        ( x, Vertical color_a color_b )
+                                    )
+                           )
 
-                    Nothing ->
-                        let
-                            -- paying no attention to secondary color
-                            ( color_a, color_b ) =
-                                case pill of
-                                    Vertical a b ->
-                                        ( a, b )
-
-                                    Horizontal a b ->
-                                        ( a, b )
-
-                            peaks : List (Grid.Cell Contents)
-                            peaks =
-                                bottle
-                                    |> List.map
-                                        (\column ->
-                                            column
-                                                |> List.filter
-                                                    (\cell ->
-                                                        case cell.state of
-                                                            Just _ ->
-                                                                True
-
-                                                            Nothing ->
-                                                                False
-                                                    )
-                                                |> List.head
-                                        )
-                                    |> List.filterMap identity
+                peaks : List (Grid.Cell Contents)
+                peaks =
+                    bottle
+                        |> List.map
+                            (\column ->
+                                column
                                     |> List.filter
                                         (\cell ->
-                                            Tuple.second cell.coords > Tuple.second coords
-                                        )
-
-                            firstMatch : Color -> Maybe ( Int, Int )
-                            firstMatch color =
-                                peaks
-                                    |> List.filterMap
-                                        (\cell ->
                                             case cell.state of
-                                                Just ( color_, _ ) ->
-                                                    if color == color_ then
-                                                        Just cell.coords
-                                                    else
-                                                        Nothing
+                                                Just _ ->
+                                                    Tuple.second cell.coords >= Tuple.second coords
 
                                                 Nothing ->
-                                                    Nothing
+                                                    False
                                         )
                                     |> List.head
-                        in
-                            case ( firstMatch color_a, firstMatch color_b, coords ) of
-                                ( Just ( matchX, _ ), _, ( x, _ ) ) ->
-                                    if matchX == List.length bottle then
-                                        Just Up
-                                    else if matchX > x then
-                                        Just Right
-                                    else if matchX < x then
-                                        Just Left
-                                    else
-                                        Just Down
+                            )
+                        |> List.filterMap identity
 
-                                ( _, Just ( matchX, _ ), ( x, _ ) ) ->
-                                    if matchX == 1 then
-                                        Just Up
-                                    else if matchX > (x + 1) then
-                                        Just Right
-                                    else if matchX < (x + 1) then
-                                        Just Left
-                                    else
-                                        Just Down
+                colorIndexScore : Color -> Int -> Int
+                colorIndexScore color index =
+                    let
+                        scoring =
+                            { match = 12
+                            , hole = 5
+                            , conflict = 0
+                            }
 
-                                _ ->
-                                    Just Up
+                        colorAtIndex : Maybe Color
+                        colorAtIndex =
+                            Array.fromList peaks
+                                |> Array.get (index - 1)
+                                |> Maybe.andThen (\cell -> cell.state)
+                                |> Maybe.map (\state -> Tuple.first state)
+                    in
+                        case colorAtIndex of
+                            Nothing ->
+                                scoring.hole
+
+                            Just aColor ->
+                                if aColor == color then
+                                    scoring.match
+                                else
+                                    scoring.conflict
+
+                scores : List Int
+                scores =
+                    List.map
+                        (\( x, orientation ) ->
+                            case orientation of
+                                Horizontal a b ->
+                                    (colorIndexScore a x) + (colorIndexScore b (x + 1))
+
+                                Vertical a b ->
+                                    if a == b then
+                                        (colorIndexScore a x) + (colorIndexScore b x)
+                                    else
+                                        colorIndexScore b x
+                        )
+                        options
+
+                choice : ( Int, Pill )
+                choice =
+                    Grid.zip scores options
+                        |> List.sortBy Tuple.first
+                        |> List.reverse
+                        |> List.map Tuple.second
+                        |> List.head
+                        |> Maybe.withDefault ( 1, Horizontal color_a color_b )
+            in
+                case ( choice, coords ) of
+                    ( ( aimX, pill_ ), ( x, _ ) ) ->
+                        if pill_ /= pill then
+                            Just Up
+                        else if aimX > x then
+                            Just Right
+                        else if aimX < x then
+                            Just Left
+                        else
+                            Just Down
 
 
 withNext : ( Color, Color ) -> Model -> Model

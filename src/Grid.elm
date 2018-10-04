@@ -15,6 +15,7 @@ module Grid
         , setState
         , topRow
         , width
+        , zip
         )
 
 
