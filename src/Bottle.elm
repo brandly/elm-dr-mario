@@ -138,8 +138,11 @@ trashBot bottle mode =
                 options =
                     -- TODO: should "flood" out/down to find options
                     -- aim for a realistic (x, y)
-                    (List.range 1 7
-                        |> List.map (\x -> ( x, Horizontal color_a color_b ))
+                    (List.range 1 8
+                        |> List.map
+                            (\x ->
+                                ( x, Vertical color_a color_b )
+                            )
                     )
                         ++ (if color_a == color_b then
                                 []
@@ -147,11 +150,8 @@ trashBot bottle mode =
                                 List.range 1 7
                                     |> List.map (\x -> ( x, Horizontal color_b color_a ))
                            )
-                        ++ (List.range 1 8
-                                |> List.map
-                                    (\x ->
-                                        ( x, Vertical color_a color_b )
-                                    )
+                        ++ (List.range 1 7
+                                |> List.map (\x -> ( x, Horizontal color_a color_b ))
                            )
 
                 peaks : List (Grid.Cell Contents)
@@ -199,33 +199,41 @@ trashBot bottle mode =
                                 else
                                     scoring.conflict
 
+                orientationBonus : Pill -> Int
+                orientationBonus o =
+                    if o == pill then
+                        2
+                    else
+                        0
+
                 scores : List Int
                 scores =
                     List.map
                         (\( x, orientation ) ->
-                            case orientation of
-                                Horizontal a b ->
-                                    (colorIndexScore a x) + (colorIndexScore b (x + 1))
+                            orientationBonus orientation
+                                + (case orientation of
+                                    Horizontal a b ->
+                                        (colorIndexScore a x) + (colorIndexScore b (x + 1))
 
-                                Vertical a b ->
-                                    if a == b then
-                                        (colorIndexScore a x) + (colorIndexScore b x)
-                                    else
-                                        colorIndexScore b x
+                                    Vertical a b ->
+                                        if a == b then
+                                            (colorIndexScore a x) + (colorIndexScore b x)
+                                        else
+                                            colorIndexScore b x
+                                  )
                         )
                         options
 
-                choice : ( Int, Pill )
+                choice : Maybe ( Int, Pill )
                 choice =
                     Grid.zip scores options
                         |> List.sortBy Tuple.first
                         |> List.reverse
                         |> List.map Tuple.second
                         |> List.head
-                        |> Maybe.withDefault ( 1, Horizontal color_a color_b )
             in
                 case ( choice, coords ) of
-                    ( ( aimX, pill_ ), ( x, _ ) ) ->
+                    ( Just ( aimX, pill_ ), ( x, _ ) ) ->
                         if pill_ /= pill then
                             Just Up
                         else if aimX > x then
@@ -234,6 +242,9 @@ trashBot bottle mode =
                             Just Left
                         else
                             Just Down
+
+                    ( Nothing, _ ) ->
+                        Nothing
 
 
 withNext : ( Color, Color ) -> Model -> Model
