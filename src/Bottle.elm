@@ -175,6 +175,10 @@ trashBot bottle mode =
                                                 |> List.head
                                         )
                                     |> List.filterMap identity
+                                    |> List.filter
+                                        (\cell ->
+                                            Tuple.second cell.coords > Tuple.second coords
+                                        )
 
                             firstMatch : Color -> Maybe ( Int, Int )
                             firstMatch color =
@@ -195,7 +199,9 @@ trashBot bottle mode =
                         in
                             case ( firstMatch color_a, firstMatch color_b, coords ) of
                                 ( Just ( matchX, _ ), _, ( x, _ ) ) ->
-                                    if matchX > x then
+                                    if matchX == List.length bottle then
+                                        Just Up
+                                    else if matchX > x then
                                         Just Right
                                     else if matchX < x then
                                         Just Left
@@ -203,15 +209,17 @@ trashBot bottle mode =
                                         Just Down
 
                                 ( _, Just ( matchX, _ ), ( x, _ ) ) ->
-                                    if matchX > x then
+                                    if matchX == 1 then
+                                        Just Up
+                                    else if matchX > (x + 1) then
                                         Just Right
-                                    else if matchX < x then
+                                    else if matchX < (x + 1) then
                                         Just Left
                                     else
                                         Just Down
 
                                 _ ->
-                                    Just Left
+                                    Just Up
 
 
 withNext : ( Color, Color ) -> Model -> Model
