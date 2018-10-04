@@ -36,6 +36,7 @@ import RandomExtra exposing (selectWithDefault)
 import Set
 import Time exposing (Posix)
 import Json.Decode as Decode
+import List.Extra
 
 
 type Speed
@@ -138,23 +139,57 @@ trashBot bottle mode =
 
                 options : List ( Int, Pill )
                 options =
-                    -- TODO: should "flood" out/down to find options
-                    -- aim for a realistic (x, y)
-                    (List.range 1 8
-                        |> List.map
-                            (\x ->
-                                ( x, Vertical color_a color_b )
+                    let
+                        heads : List (Cell Contents)
+                        heads =
+                            bottle
+                                |> List.map (\column -> List.drop (Tuple.second coords - 1) column)
+                                |> List.map
+                                    (\column ->
+                                        List.head column
+                                            |> Maybe.withDefault
+                                                { state = Nothing, coords = ( -1, -1 ) }
+                                    )
+
+                        getOpenings : List (Cell Contents) -> List (Cell Contents)
+                        getOpenings =
+                            List.Extra.takeWhile (\cell -> cell.state == Nothing)
+
+                        ( before, after ) =
+                            ( getOpenings (List.reverse (List.take (Tuple.first coords) heads))
+                            , getOpenings (List.drop (Tuple.first coords) heads)
                             )
-                    )
-                        ++ (if color_a == color_b then
-                                []
-                            else
-                                List.range 1 7
-                                    |> List.map (\x -> ( x, Horizontal color_b color_a ))
-                           )
-                        ++ (List.range 1 7
-                                |> List.map (\x -> ( x, Horizontal color_a color_b ))
-                           )
+
+                        openCells : List (Cell Contents)
+                        openCells =
+                            before ++ after
+
+                        ( minX, maxX ) =
+                            ( openCells
+                                |> List.Extra.minimumBy (\cell -> Tuple.first cell.coords)
+                                |> Maybe.map (.coords >> Tuple.first)
+                                |> Maybe.withDefault (Tuple.first coords)
+                            , openCells
+                                |> (List.Extra.maximumBy (\cell -> Tuple.first cell.coords))
+                                |> (Maybe.map (.coords >> Tuple.first))
+                                |> Maybe.withDefault (Tuple.first coords)
+                            )
+                    in
+                        (List.range minX maxX
+                            |> List.map
+                                (\x ->
+                                    ( x, Vertical color_a color_b )
+                                )
+                        )
+                            ++ (if color_a == color_b then
+                                    []
+                                else
+                                    List.range minX (maxX - 1)
+                                        |> List.map (\x -> ( x, Horizontal color_b color_a ))
+                               )
+                            ++ (List.range minX (maxX - 1)
+                                    |> List.map (\x -> ( x, Horizontal color_a color_b ))
+                               )
 
                 peaks : List (Grid.Cell Contents)
                 peaks =
@@ -206,7 +241,12 @@ trashBot bottle mode =
                     if o == pill then
                         2
                     else
-                        0
+                        case pill of
+                            Horizontal _ _ ->
+                                0
+
+                            Vertical _ _ ->
+                                1
 
                 scores : List Int
                 scores =
