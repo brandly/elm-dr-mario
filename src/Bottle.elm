@@ -59,7 +59,7 @@ speedToString s =
 
 type Controls
     = Keyboard (Int -> Maybe Direction)
-    | Bot (Bottle -> Mode -> Maybe Direction)
+    | Bot (Bottle -> Mode -> ( Maybe Direction, Maybe ( Int, Pill ) ))
 
 
 type Mode
@@ -102,6 +102,7 @@ type alias Model =
     , next : ( Color, Color )
     , controls : Controls
     , bombs : List Color
+    , goal : Maybe ( Int, Pill )
     }
 
 
@@ -112,17 +113,18 @@ init =
     , next = ( Red, Red )
     , controls = Bot trashBot
     , bombs = []
+    , goal = Nothing
     }
 
 
-trashBot : Bottle -> Mode -> Maybe Direction
+trashBot : Bottle -> Mode -> ( Maybe Direction, Maybe ( Int, Pill ) )
 trashBot bottle mode =
     case mode of
         Falling _ ->
-            Nothing
+            ( Nothing, Nothing )
 
         Bombing ->
-            Nothing
+            ( Nothing, Nothing )
 
         PlacingPill pill coords ->
             let
@@ -233,20 +235,24 @@ trashBot bottle mode =
                         |> List.sortBy (Tuple.first >> (\a -> -a))
                         |> List.map Tuple.second
                         |> List.head
+
+                withGoal : Maybe Direction -> ( Maybe Direction, Maybe ( Int, Pill ) )
+                withGoal dir =
+                    ( dir, choice )
             in
                 case ( choice, coords ) of
                     ( Just ( aimX, pill_ ), ( x, _ ) ) ->
                         if pill_ /= pill then
-                            Just Up
+                            withGoal <| Just Up
                         else if aimX > x then
-                            Just Right
+                            withGoal <| Just Right
                         else if aimX < x then
-                            Just Left
+                            withGoal <| Just Left
                         else
-                            Just Down
+                            withGoal <| Just Down
 
                     ( Nothing, _ ) ->
-                        Nothing
+                        withGoal <| Nothing
 
 
 withNext : ( Color, Color ) -> Model -> Model
@@ -279,6 +285,7 @@ type Msg
     | KeyDown (Maybe Direction)
     | TickTock Posix
     | Bomb Color Int
+    | SetGoal ( Maybe Direction, Maybe ( Int, Pill ) )
 
 
 type Direction
@@ -296,12 +303,12 @@ subscriptions speed model =
             Keyboard controls ->
                 onKeyDown (Decode.map (controls >> KeyDown) keyCode)
 
-            Bot controls ->
+            Bot bot ->
                 let
                     direction =
-                        controls model.contents model.mode
+                        bot model.contents model.mode
                 in
-                    Time.every (tickForSpeed speed / 2) (\_ -> KeyDown direction)
+                    Time.every (tickForSpeed speed / 4) (\_ -> SetGoal direction)
         ]
 
 
@@ -379,6 +386,9 @@ update { onBomb } msg model =
 
         ( _, KeyDown _ ) ->
             withNothing model
+
+        ( _, SetGoal ( key, goal ) ) ->
+            update { onBomb = onBomb } (KeyDown key) { model | goal = goal }
 
         ( _, TickTock _ ) ->
             advance model
@@ -873,7 +883,7 @@ generateBomb bottle =
 
 
 view : Model -> Html msg
-view { contents, mode } =
+view { contents, mode, goal } =
     div []
         [ div
             [ style "display" "inline-block"
@@ -902,7 +912,16 @@ view { contents, mode } =
                 )
                 (case mode of
                     PlacingPill pill coords ->
-                        addPill pill coords contents
+                        let
+                            withGoal =
+                                case goal of
+                                    Nothing ->
+                                        contents
+
+                                    Just ( x, p ) ->
+                                        addPill p ( x, 0 ) contents
+                        in
+                            addPill pill coords withGoal
 
                     _ ->
                         contents
