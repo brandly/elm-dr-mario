@@ -124,7 +124,7 @@ update { onLeave } action model =
                         { onCreated =
                             \{ level, bottle } ->
                                 LevelReady
-                                    { state | first = { first | bottle = Bottle.withControls Controls.wasd bottle } }
+                                    { state | first = { first | bottle = bottle } }
                         }
                         msg
                         creator
