@@ -961,7 +961,7 @@ view { contents, mode, goal } =
                                     Just ( x, p ) ->
                                         addPill p ( x, 0 ) contents
                         in
-                            addPill pill coords withGoal
+                            addPill pill coords contents
 
                     _ ->
                         contents
