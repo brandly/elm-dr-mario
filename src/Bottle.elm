@@ -214,8 +214,8 @@ trashBot bottle mode =
                 colorIndexScore color index =
                     let
                         scoring =
-                            { match = 12
-                            , hole = 5
+                            { match = 120
+                            , hole = 50
                             , conflict = 0
                             }
 
@@ -245,8 +245,11 @@ trashBot bottle mode =
                             Horizontal _ _ ->
                                 0
 
-                            Vertical _ _ ->
-                                1
+                            Vertical a b ->
+                                if a == b then
+                                    1
+                                else
+                                    0
 
                 scores : List Int
                 scores =
@@ -255,10 +258,7 @@ trashBot bottle mode =
                             orientationBonus orientation
                                 + (case orientation of
                                     Horizontal a b ->
-                                        if x == 8 then
-                                            -5
-                                        else
-                                            (colorIndexScore a x) + (colorIndexScore b (x + 1))
+                                        (colorIndexScore a x) + (colorIndexScore b (x + 1))
 
                                     Vertical a b ->
                                         if a == b then
