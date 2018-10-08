@@ -3,11 +3,13 @@
     "start": "elm reactor",
     "build": "elm make src/Main.elm --output dist/the.js",
     "html": "cp src/index.html dist",
-    "deploy": "npm run build -- --optimize && npm run html && gh-pages --dist dist/"
+    "deploy": "npm run build -- --optimize && npm run compress && npm run html && gh-pages --dist dist/",
+    "compress": "uglifyjs dist/the.js -o dist/the.js -c"
   },
   "devDependencies": {
     "elm": "0.19.0",
-    "gh-pages": "1.2.0"
+    "gh-pages": "1.2.0",
+    "uglify-js": "3.4.9"
   },
   "dependencies": {}
 }
