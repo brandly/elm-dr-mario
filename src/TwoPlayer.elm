@@ -2,7 +2,6 @@ module TwoPlayer exposing (Model(..), Msg(..), init, subscriptions, update, view
 
 import Bottle exposing (Speed(..))
 import Component
-import Controls
 import Html exposing (Html, text)
 import OnePlayer.Menu as Menu
 import TwoPlayer.Game as Game

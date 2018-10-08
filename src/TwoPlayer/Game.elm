@@ -124,7 +124,7 @@ update { onLeave } action model =
                         { onCreated =
                             \{ level, bottle } ->
                                 LevelReady
-                                    { state | first = { first | bottle = Bottle.withControls Controls.wasd bottle } }
+                                    { state | first = { first | bottle = bottle } }
                         }
                         msg
                         creator
@@ -322,11 +322,10 @@ view model =
 
         Paused state ->
             div []
-                [ viewMessage "Paused"
-                    (Html.button
+                [ viewMessage "Paused" <|
+                    Html.button
                         [ onClick Resume ]
                         [ text "resume" ]
-                    )
                 ]
 
         Over state ->
