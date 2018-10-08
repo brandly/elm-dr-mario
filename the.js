@@ -586,11 +586,11 @@ function _Debug_crash_UNUSED(identifier, fact1, fact2, fact3, fact4)
 
 function _Debug_regionToString(region)
 {
-	if (region.aa.K === region.ag.K)
+	if (region.ab.K === region.ai.K)
 	{
-		return 'on line ' + region.aa.K;
+		return 'on line ' + region.ab.K;
 	}
-	return 'on lines ' + region.aa.K + ' through ' + region.ag.K;
+	return 'on lines ' + region.ab.K + ' through ' + region.ai.K;
 }
 
 
@@ -1841,9 +1841,9 @@ var _Platform_worker = F4(function(impl, flagDecoder, debugMetadata, args)
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.aJ,
-		impl.aV,
-		impl.aT,
+		impl.aO,
+		impl.aZ,
+		impl.aX,
 		function() { return function() {} }
 	);
 });
@@ -2644,8 +2644,8 @@ var _VirtualDom_mapEventRecord = F2(function(func, record)
 {
 	return {
 		r: func(record.r),
-		ab: record.ab,
-		Z: record.Z
+		ac: record.ac,
+		_: record._
 	}
 });
 
@@ -2914,10 +2914,10 @@ function _VirtualDom_makeCallback(eventNode, initialHandler)
 
 		var value = result.a;
 		var message = !tag ? value : tag < 3 ? value.a : value.r;
-		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.ab;
+		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.ac;
 		var currentEventNode = (
 			stopPropagation && event.stopPropagation(),
-			(tag == 2 ? value.b : tag == 3 && value.Z) && event.preventDefault(),
+			(tag == 2 ? value.b : tag == 3 && value._) && event.preventDefault(),
 			eventNode
 		);
 		var tagger;
@@ -3863,11 +3863,11 @@ var _Browser_element = _Debugger_element || F4(function(impl, flagDecoder, debug
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.aJ,
-		impl.aV,
-		impl.aT,
+		impl.aO,
+		impl.aZ,
+		impl.aX,
 		function(sendToApp, initialModel) {
-			var view = impl.aX;
+			var view = impl.a$;
 			/**/
 			var domNode = args['node'];
 			//*/
@@ -3899,12 +3899,12 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.aJ,
-		impl.aV,
-		impl.aT,
+		impl.aO,
+		impl.aZ,
+		impl.aX,
 		function(sendToApp, initialModel) {
 			var divertHrefToApp = impl.M && impl.M(sendToApp)
-			var view = impl.aX;
+			var view = impl.a$;
 			var title = _VirtualDom_doc.title;
 			var bodyNode = _VirtualDom_doc.body;
 			var currNode = _VirtualDom_virtualize(bodyNode);
@@ -3912,12 +3912,12 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 			{
 				_VirtualDom_divertHrefToApp = divertHrefToApp;
 				var doc = view(model);
-				var nextNode = _VirtualDom_node('body')(_List_Nil)(doc.aC);
+				var nextNode = _VirtualDom_node('body')(_List_Nil)(doc.aH);
 				var patches = _VirtualDom_diff(currNode, nextNode);
 				bodyNode = _VirtualDom_applyPatches(bodyNode, currNode, patches, sendToApp);
 				currNode = nextNode;
 				_VirtualDom_divertHrefToApp = 0;
-				(title !== doc.aU) && (_VirtualDom_doc.title = title = doc.aU);
+				(title !== doc.aY) && (_VirtualDom_doc.title = title = doc.aY);
 			});
 		}
 	);
@@ -3968,8 +3968,8 @@ function _Browser_makeAnimator(model, draw)
 
 function _Browser_application(impl)
 {
-	var onUrlChange = impl.aP;
-	var onUrlRequest = impl.aQ;
+	var onUrlChange = impl.aT;
+	var onUrlRequest = impl.aU;
 	var key = function() { key.a(onUrlChange(_Browser_getUrl())); };
 
 	return _Browser_document({
@@ -3989,9 +3989,9 @@ function _Browser_application(impl)
 					var next = elm$url$Url$fromString(href).a;
 					sendToApp(onUrlRequest(
 						(next
-							&& curr.as === next.as
-							&& curr.aj === next.aj
-							&& curr.ap.a === next.ap.a
+							&& curr.ax === next.ax
+							&& curr.am === next.am
+							&& curr.au.a === next.au.a
 						)
 							? elm$browser$Browser$Internal(next)
 							: elm$browser$Browser$External(href)
@@ -3999,13 +3999,13 @@ function _Browser_application(impl)
 				}
 			});
 		},
-		aJ: function(flags)
+		aO: function(flags)
 		{
-			return A3(impl.aJ, flags, _Browser_getUrl(), key);
+			return A3(impl.aO, flags, _Browser_getUrl(), key);
 		},
-		aX: impl.aX,
-		aV: impl.aV,
-		aT: impl.aT
+		a$: impl.a$,
+		aZ: impl.aZ,
+		aX: impl.aX
 	});
 }
 
@@ -4071,17 +4071,17 @@ var _Browser_decodeEvent = F2(function(decoder, event)
 function _Browser_visibilityInfo()
 {
 	return (typeof _VirtualDom_doc.hidden !== 'undefined')
-		? { aH: 'hidden', J: 'visibilitychange' }
+		? { aM: 'hidden', J: 'visibilitychange' }
 		:
 	(typeof _VirtualDom_doc.mozHidden !== 'undefined')
-		? { aH: 'mozHidden', J: 'mozvisibilitychange' }
+		? { aM: 'mozHidden', J: 'mozvisibilitychange' }
 		:
 	(typeof _VirtualDom_doc.msHidden !== 'undefined')
-		? { aH: 'msHidden', J: 'msvisibilitychange' }
+		? { aM: 'msHidden', J: 'msvisibilitychange' }
 		:
 	(typeof _VirtualDom_doc.webkitHidden !== 'undefined')
-		? { aH: 'webkitHidden', J: 'webkitvisibilitychange' }
-		: { aH: 'hidden', J: 'visibilitychange' };
+		? { aM: 'webkitHidden', J: 'webkitvisibilitychange' }
+		: { aM: 'hidden', J: 'visibilitychange' };
 }
 
 
@@ -4162,10 +4162,10 @@ var _Browser_call = F2(function(functionName, id)
 function _Browser_getViewport()
 {
 	return {
-		aw: _Browser_getScene(),
-		az: {
-			V: _Browser_window.pageXOffset,
-			W: _Browser_window.pageYOffset,
+		aB: _Browser_getScene(),
+		aE: {
+			W: _Browser_window.pageXOffset,
+			X: _Browser_window.pageYOffset,
 			H: _Browser_doc.documentElement.clientWidth,
 			B: _Browser_doc.documentElement.clientHeight
 		}
@@ -4201,13 +4201,13 @@ function _Browser_getViewportOf(id)
 	return _Browser_withNode(id, function(node)
 	{
 		return {
-			aw: {
+			aB: {
 				H: node.scrollWidth,
 				B: node.scrollHeight
 			},
-			az: {
-				V: node.scrollLeft,
-				W: node.scrollTop,
+			aE: {
+				W: node.scrollLeft,
+				X: node.scrollTop,
 				H: node.clientWidth,
 				B: node.clientHeight
 			}
@@ -4239,16 +4239,16 @@ function _Browser_getElement(id)
 		var x = _Browser_window.pageXOffset;
 		var y = _Browser_window.pageYOffset;
 		return {
-			aw: _Browser_getScene(),
-			az: {
-				V: x,
-				W: y,
+			aB: _Browser_getScene(),
+			aE: {
+				W: x,
+				X: y,
 				H: _Browser_doc.documentElement.clientWidth,
 				B: _Browser_doc.documentElement.clientHeight
 			},
-			aE: {
-				V: x + rect.left,
-				W: y + rect.top,
+			aJ: {
+				W: x + rect.left,
+				X: y + rect.top,
 				H: rect.width,
 				B: rect.height
 			}
@@ -4384,6 +4384,9 @@ var author$project$OnePlayer$MenuMsg = function (a) {
 var author$project$Bottle$KeyDown = function (a) {
 	return {$: 1, a: a};
 };
+var author$project$Bottle$SetGoal = function (a) {
+	return {$: 4, a: a};
+};
 var author$project$Bottle$TickTock = function (a) {
 	return {$: 2, a: a};
 };
@@ -4404,7 +4407,7 @@ var elm$browser$Browser$Events$MySub = F3(
 	});
 var elm$browser$Browser$Events$State = F2(
 	function (subs, pids) {
-		return {ao: pids, ax: subs};
+		return {at: pids, aC: subs};
 	});
 var elm$core$Dict$RBEmpty_elm_builtin = {$: -2};
 var elm$core$Dict$empty = elm$core$Dict$RBEmpty_elm_builtin;
@@ -4510,7 +4513,7 @@ var elm$browser$Browser$Events$addKey = function (sub) {
 };
 var elm$browser$Browser$Events$Event = F2(
 	function (key, event) {
-		return {ah: event, ak: key};
+		return {aj: event, an: key};
 	});
 var elm$core$Basics$apL = F2(
 	function (f, x) {
@@ -4629,25 +4632,25 @@ var elm$core$Basics$sub = _Basics_sub;
 var elm$core$Elm$JsArray$length = _JsArray_length;
 var elm$core$Array$builderToArray = F2(
 	function (reverseNodeList, builder) {
-		if (!builder.b) {
+		if (!builder.c) {
 			return A4(
 				elm$core$Array$Array_elm_builtin,
-				elm$core$Elm$JsArray$length(builder.e),
+				elm$core$Elm$JsArray$length(builder.f),
 				elm$core$Array$shiftStep,
 				elm$core$Elm$JsArray$empty,
-				builder.e);
+				builder.f);
 		} else {
-			var treeLen = builder.b * elm$core$Array$branchFactor;
+			var treeLen = builder.c * elm$core$Array$branchFactor;
 			var depth = elm$core$Basics$floor(
 				A2(elm$core$Basics$logBase, elm$core$Array$branchFactor, treeLen - 1));
-			var correctNodeList = reverseNodeList ? elm$core$List$reverse(builder.g) : builder.g;
-			var tree = A2(elm$core$Array$treeFromBuilder, correctNodeList, builder.b);
+			var correctNodeList = reverseNodeList ? elm$core$List$reverse(builder.h) : builder.h;
+			var tree = A2(elm$core$Array$treeFromBuilder, correctNodeList, builder.c);
 			return A4(
 				elm$core$Array$Array_elm_builtin,
-				elm$core$Elm$JsArray$length(builder.e) + treeLen,
+				elm$core$Elm$JsArray$length(builder.f) + treeLen,
 				A2(elm$core$Basics$max, 5, depth * elm$core$Array$shiftStep),
 				tree,
-				builder.e);
+				builder.f);
 		}
 	});
 var elm$core$Basics$idiv = _Basics_idiv;
@@ -4661,7 +4664,7 @@ var elm$core$Array$initializeHelp = F5(
 				return A2(
 					elm$core$Array$builderToArray,
 					false,
-					{g: nodeList, b: (len / elm$core$Array$branchFactor) | 0, e: tail});
+					{h: nodeList, c: (len / elm$core$Array$branchFactor) | 0, f: tail});
 			} else {
 				var leaf = elm$core$Array$Leaf(
 					A3(elm$core$Elm$JsArray$initialize, elm$core$Array$branchFactor, fromIndex, fn));
@@ -5109,7 +5112,7 @@ var elm$core$String$contains = _String_contains;
 var elm$core$String$toInt = _String_toInt;
 var elm$url$Url$Url = F6(
 	function (protocol, host, port_, path, query, fragment) {
-		return {ai: fragment, aj: host, an: path, ap: port_, as: protocol, at: query};
+		return {ak: fragment, am: host, as: path, au: port_, ax: protocol, ay: query};
 	});
 var elm$url$Url$chompBeforePath = F5(
 	function (protocol, path, params, frag, str) {
@@ -5493,7 +5496,7 @@ var elm$browser$Browser$Events$onEffects = F3(
 			stepLeft,
 			stepBoth,
 			stepRight,
-			state.ao,
+			state.at,
 			elm$core$Dict$fromList(newSubs),
 			_Utils_Tuple3(_List_Nil, elm$core$Dict$empty, _List_Nil));
 		var deadPids = _n0.a;
@@ -5539,8 +5542,8 @@ var elm$core$List$filterMap = F2(
 	});
 var elm$browser$Browser$Events$onSelfMsg = F3(
 	function (router, _n0, state) {
-		var key = _n0.ak;
-		var event = _n0.ah;
+		var key = _n0.an;
+		var event = _n0.aj;
 		var toMessage = function (_n2) {
 			var subKey = _n2.a;
 			var _n3 = _n2.b;
@@ -5549,7 +5552,7 @@ var elm$browser$Browser$Events$onSelfMsg = F3(
 			var decoder = _n3.c;
 			return _Utils_eq(subKey, key) ? A2(_Browser_decodeEvent, decoder, event) : elm$core$Maybe$Nothing;
 		};
-		var messages = A2(elm$core$List$filterMap, toMessage, state.ax);
+		var messages = A2(elm$core$List$filterMap, toMessage, state.aC);
 		return A2(
 			elm$core$Task$andThen,
 			function (_n1) {
@@ -5595,7 +5598,7 @@ var elm$time$Time$Every = F2(
 	});
 var elm$time$Time$State = F2(
 	function (taggers, processes) {
-		return {ar: processes, ay: taggers};
+		return {aw: processes, aD: taggers};
 	});
 var elm$time$Time$init = elm$core$Task$succeed(
 	A2(elm$time$Time$State, elm$core$Dict$empty, elm$core$Dict$empty));
@@ -5688,7 +5691,7 @@ var elm$time$Time$spawnHelp = F3(
 	});
 var elm$time$Time$onEffects = F3(
 	function (router, subs, _n0) {
-		var processes = _n0.ar;
+		var processes = _n0.aw;
 		var rightStep = F3(
 			function (_n6, id, _n7) {
 				var spawns = _n7.a;
@@ -5757,7 +5760,7 @@ var elm$time$Time$millisToPosix = elm$core$Basics$identity;
 var elm$time$Time$now = _Time_now(elm$time$Time$millisToPosix);
 var elm$time$Time$onSelfMsg = F3(
 	function (router, interval, state) {
-		var _n0 = A2(elm$core$Dict$get, interval, state.ay);
+		var _n0 = A2(elm$core$Dict$get, interval, state.aD);
 		if (_n0.$ === 1) {
 			return elm$core$Task$succeed(state);
 		} else {
@@ -5812,11 +5815,26 @@ var author$project$Bottle$subscriptions = F2(
 					elm$time$Time$every,
 					author$project$Bottle$tickForSpeed(speed),
 					author$project$Bottle$TickTock),
-					elm$browser$Browser$Events$onKeyDown(
-					A2(
-						elm$json$Json$Decode$map,
-						A2(elm$core$Basics$composeR, model.R, author$project$Bottle$KeyDown),
-						elm$html$Html$Events$keyCode))
+					function () {
+					var _n0 = model.R;
+					if (!_n0.$) {
+						var controls = _n0.a;
+						return elm$browser$Browser$Events$onKeyDown(
+							A2(
+								elm$json$Json$Decode$map,
+								A2(elm$core$Basics$composeR, controls, author$project$Bottle$KeyDown),
+								elm$html$Html$Events$keyCode));
+					} else {
+						var bot = _n0.a;
+						var direction = A2(bot, model.a, model.i);
+						return A2(
+							elm$time$Time$every,
+							author$project$Bottle$tickForSpeed(speed) / 4,
+							function (_n1) {
+								return author$project$Bottle$SetGoal(direction);
+							});
+					}
+				}()
 				]));
 	});
 var author$project$OnePlayer$Game$BottleMsg = function (a) {
@@ -5826,7 +5844,7 @@ var elm$core$Platform$Sub$map = _Platform_map;
 var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var author$project$OnePlayer$Game$subscriptions = function (model) {
 	if (model.$ === 1) {
-		var speed = model.a._;
+		var speed = model.a.aa;
 		var bottle = model.a.y;
 		return elm$core$Platform$Sub$batch(
 			_List_fromArray(
@@ -5897,19 +5915,19 @@ var author$project$TwoPlayer$Game$SecondBottleMsg = function (a) {
 };
 var author$project$TwoPlayer$Game$subscriptions = function (model) {
 	if (model.$ === 2) {
-		var first = model.a.f;
-		var second = model.a.d;
+		var first = model.a.g;
+		var second = model.a.e;
 		return elm$core$Platform$Sub$batch(
 			_List_fromArray(
 				[
 					A2(
 					elm$core$Platform$Sub$map,
 					author$project$TwoPlayer$Game$FirstBottleMsg,
-					A2(author$project$Bottle$subscriptions, first._, first.y)),
+					A2(author$project$Bottle$subscriptions, first.aa, first.y)),
 					A2(
 					elm$core$Platform$Sub$map,
 					author$project$TwoPlayer$Game$SecondBottleMsg,
-					A2(author$project$Bottle$subscriptions, second._, second.y))
+					A2(author$project$Bottle$subscriptions, second.aa, second.y))
 				]));
 	} else {
 		return elm$core$Platform$Sub$none;
@@ -5969,7 +5987,7 @@ var author$project$OnePlayer$Init = function (a) {
 };
 var author$project$Bottle$Med = 1;
 var author$project$OnePlayer$Menu$Level = 1;
-var author$project$OnePlayer$Menu$init = {T: 10, E: 1, _: 1};
+var author$project$OnePlayer$Menu$init = {U: 10, E: 1, aa: 1};
 var elm$core$Platform$Cmd$batch = _Platform_batch;
 var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$OnePlayer$init = _Utils_Tuple2(
@@ -6019,43 +6037,111 @@ var author$project$OnePlayer$Reset = {$: 3};
 var author$project$OnePlayer$Start = function (a) {
 	return {$: 1, a: a};
 };
+var author$project$Bottle$Bot = function (a) {
+	return {$: 1, a: a};
+};
 var author$project$Bottle$Falling = function (a) {
 	return {$: 1, a: a};
 };
 var author$project$Bottle$Red = 0;
-var author$project$Grid$Cell = F2(
-	function (coords, state) {
-		return {j: coords, c: state};
+var author$project$Bottle$Down = 1;
+var author$project$Bottle$Horizontal = F2(
+	function (a, b) {
+		return {$: 0, a: a, b: b};
 	});
-var author$project$Grid$fromDimensions = F2(
-	function (width_, height_) {
-		var makeColumn = function (x) {
-			return A2(
-				elm$core$List$map,
-				function (y) {
-					return A2(
-						author$project$Grid$Cell,
-						_Utils_Tuple2(x, y),
-						elm$core$Maybe$Nothing);
-				},
-				A2(elm$core$List$range, 1, height_));
-		};
-		return A2(
-			elm$core$List$map,
-			makeColumn,
-			A2(elm$core$List$range, 1, width_));
+var author$project$Bottle$Left = 2;
+var author$project$Bottle$Right = 3;
+var author$project$Bottle$Up = 0;
+var author$project$Bottle$Vertical = F2(
+	function (a, b) {
+		return {$: 1, a: a, b: b};
 	});
-var author$project$Bottle$init = {
-	n: _List_Nil,
-	a: A2(author$project$Grid$fromDimensions, 8, 16),
-	R: function (_n0) {
-		return elm$core$Maybe$Nothing;
-	},
-	h: author$project$Bottle$Falling(_List_Nil),
-	L: _Utils_Tuple2(0, 0)
+var elm$core$Tuple$pair = F2(
+	function (a, b) {
+		return _Utils_Tuple2(a, b);
+	});
+var author$project$Grid$zip = elm$core$List$map2(elm$core$Tuple$pair);
+var elm$core$Array$fromListHelp = F3(
+	function (list, nodeList, nodeListSize) {
+		fromListHelp:
+		while (true) {
+			var _n0 = A2(elm$core$Elm$JsArray$initializeFromList, elm$core$Array$branchFactor, list);
+			var jsArray = _n0.a;
+			var remainingItems = _n0.b;
+			if (_Utils_cmp(
+				elm$core$Elm$JsArray$length(jsArray),
+				elm$core$Array$branchFactor) < 0) {
+				return A2(
+					elm$core$Array$builderToArray,
+					true,
+					{h: nodeList, c: nodeListSize, f: jsArray});
+			} else {
+				var $temp$list = remainingItems,
+					$temp$nodeList = A2(
+					elm$core$List$cons,
+					elm$core$Array$Leaf(jsArray),
+					nodeList),
+					$temp$nodeListSize = nodeListSize + 1;
+				list = $temp$list;
+				nodeList = $temp$nodeList;
+				nodeListSize = $temp$nodeListSize;
+				continue fromListHelp;
+			}
+		}
+	});
+var elm$core$Array$fromList = function (list) {
+	if (!list.b) {
+		return elm$core$Array$empty;
+	} else {
+		return A3(elm$core$Array$fromListHelp, list, _List_Nil, 0);
+	}
 };
-var author$project$Bottle$Blue = 1;
-var author$project$Bottle$Yellow = 2;
+var elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
+var elm$core$Array$bitMask = 4294967295 >>> (32 - elm$core$Array$shiftStep);
+var elm$core$Bitwise$and = _Bitwise_and;
+var elm$core$Elm$JsArray$unsafeGet = _JsArray_unsafeGet;
+var elm$core$Array$getHelp = F3(
+	function (shift, index, tree) {
+		getHelp:
+		while (true) {
+			var pos = elm$core$Array$bitMask & (index >>> shift);
+			var _n0 = A2(elm$core$Elm$JsArray$unsafeGet, pos, tree);
+			if (!_n0.$) {
+				var subTree = _n0.a;
+				var $temp$shift = shift - elm$core$Array$shiftStep,
+					$temp$index = index,
+					$temp$tree = subTree;
+				shift = $temp$shift;
+				index = $temp$index;
+				tree = $temp$tree;
+				continue getHelp;
+			} else {
+				var values = _n0.a;
+				return A2(elm$core$Elm$JsArray$unsafeGet, elm$core$Array$bitMask & index, values);
+			}
+		}
+	});
+var elm$core$Bitwise$shiftLeftBy = _Bitwise_shiftLeftBy;
+var elm$core$Array$tailIndex = function (len) {
+	return (len >>> 5) << 5;
+};
+var elm$core$Basics$ge = _Utils_ge;
+var elm$core$Array$get = F2(
+	function (index, _n0) {
+		var len = _n0.a;
+		var startShift = _n0.b;
+		var tree = _n0.c;
+		var tail = _n0.d;
+		return ((index < 0) || (_Utils_cmp(index, len) > -1)) ? elm$core$Maybe$Nothing : ((_Utils_cmp(
+			index,
+			elm$core$Array$tailIndex(len)) > -1) ? elm$core$Maybe$Just(
+			A2(elm$core$Elm$JsArray$unsafeGet, elm$core$Array$bitMask & index, tail)) : elm$core$Maybe$Just(
+			A3(elm$core$Array$getHelp, startShift, index, tree)));
+	});
+var elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var elm$core$Basics$neq = _Utils_notEqual;
 var elm$core$List$drop = F2(
 	function (n, list) {
 		drop:
@@ -6077,131 +6163,6 @@ var elm$core$List$drop = F2(
 			}
 		}
 	});
-var elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (!maybe.$) {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
-var elm$core$Basics$negate = function (n) {
-	return -n;
-};
-var elm$core$Bitwise$and = _Bitwise_and;
-var elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
-var elm$random$Random$Generator = elm$core$Basics$identity;
-var elm$random$Random$Seed = F2(
-	function (a, b) {
-		return {$: 0, a: a, b: b};
-	});
-var elm$random$Random$next = function (_n0) {
-	var state0 = _n0.a;
-	var incr = _n0.b;
-	return A2(elm$random$Random$Seed, ((state0 * 1664525) + incr) >>> 0, incr);
-};
-var elm$core$Bitwise$xor = _Bitwise_xor;
-var elm$random$Random$peel = function (_n0) {
-	var state = _n0.a;
-	var word = (state ^ (state >>> ((state >>> 28) + 4))) * 277803737;
-	return ((word >>> 22) ^ word) >>> 0;
-};
-var elm$random$Random$int = F2(
-	function (a, b) {
-		return function (seed0) {
-			var _n0 = (_Utils_cmp(a, b) < 0) ? _Utils_Tuple2(a, b) : _Utils_Tuple2(b, a);
-			var lo = _n0.a;
-			var hi = _n0.b;
-			var range = (hi - lo) + 1;
-			if (!((range - 1) & range)) {
-				return _Utils_Tuple2(
-					(((range - 1) & elm$random$Random$peel(seed0)) >>> 0) + lo,
-					elm$random$Random$next(seed0));
-			} else {
-				var threshhold = (((-range) >>> 0) % range) >>> 0;
-				var accountForBias = function (seed) {
-					accountForBias:
-					while (true) {
-						var x = elm$random$Random$peel(seed);
-						var seedN = elm$random$Random$next(seed);
-						if (_Utils_cmp(x, threshhold) < 0) {
-							var $temp$seed = seedN;
-							seed = $temp$seed;
-							continue accountForBias;
-						} else {
-							return _Utils_Tuple2((x % range) + lo, seedN);
-						}
-					}
-				};
-				return accountForBias(seed0);
-			}
-		};
-	});
-var elm$random$Random$map = F2(
-	function (func, _n0) {
-		var genA = _n0;
-		return function (seed0) {
-			var _n1 = genA(seed0);
-			var a = _n1.a;
-			var seed1 = _n1.b;
-			return _Utils_Tuple2(
-				func(a),
-				seed1);
-		};
-	});
-var author$project$RandomExtra$selectWithDefault = F2(
-	function (defaultValue, options) {
-		var get = F2(
-			function (index, list) {
-				if (index < 0) {
-					return elm$core$Maybe$Nothing;
-				} else {
-					var _n0 = A2(elm$core$List$drop, index, list);
-					if (!_n0.b) {
-						return elm$core$Maybe$Nothing;
-					} else {
-						var x = _n0.a;
-						var xs = _n0.b;
-						return elm$core$Maybe$Just(x);
-					}
-				}
-			});
-		var select = function (list) {
-			return A2(
-				elm$random$Random$map,
-				function (index) {
-					return A2(get, index, list);
-				},
-				A2(
-					elm$random$Random$int,
-					0,
-					elm$core$List$length(list) - 1));
-		};
-		return A2(
-			elm$random$Random$map,
-			elm$core$Maybe$withDefault(defaultValue),
-			select(options));
-	});
-var author$project$Bottle$generateColor = A2(
-	author$project$RandomExtra$selectWithDefault,
-	1,
-	_List_fromArray(
-		[0, 2, 1]));
-var elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3(elm$core$List$foldr, elm$core$List$cons, ys, xs);
-		}
-	});
-var elm$core$List$concat = function (lists) {
-	return A3(elm$core$List$foldr, elm$core$List$append, _List_Nil, lists);
-};
-var author$project$Grid$toList = function (grid) {
-	return elm$core$List$concat(grid);
-};
 var elm$core$List$filter = F2(
 	function (isGood, list) {
 		return A3(
@@ -6213,13 +6174,6 @@ var elm$core$List$filter = F2(
 			_List_Nil,
 			list);
 	});
-var author$project$Grid$filter = F2(
-	function (predicate, grid) {
-		return A2(
-			elm$core$List$filter,
-			predicate,
-			author$project$Grid$toList(grid));
-	});
 var elm$core$List$head = function (list) {
 	if (list.b) {
 		var x = list.a;
@@ -6229,479 +6183,7 @@ var elm$core$List$head = function (list) {
 		return elm$core$Maybe$Nothing;
 	}
 };
-var author$project$Grid$find = F2(
-	function (test, list) {
-		return elm$core$List$head(
-			A2(elm$core$List$filter, test, list));
-	});
-var author$project$Grid$findCellAtCoords = F2(
-	function (coords, grid) {
-		return A2(
-			elm$core$Maybe$withDefault,
-			A2(
-				author$project$Grid$Cell,
-				_Utils_Tuple2(-1, -1),
-				elm$core$Maybe$Nothing),
-			A2(
-				author$project$Grid$find,
-				function (cell) {
-					return _Utils_eq(cell.j, coords);
-				},
-				author$project$Grid$toList(grid)));
-	});
-var author$project$Grid$isEmpty = F2(
-	function (coords, grid) {
-		return A3(
-			elm$core$Basics$composeR,
-			function ($) {
-				return $.c;
-			},
-			elm$core$Basics$eq(elm$core$Maybe$Nothing),
-			A2(author$project$Grid$findCellAtCoords, coords, grid));
-	});
-var elm$core$Basics$ge = _Utils_ge;
-var elm$core$Tuple$second = function (_n0) {
-	var y = _n0.b;
-	return y;
-};
-var author$project$Bottle$generateEmptyCoords = function (grid) {
-	var emptyCoords = A2(
-		elm$core$List$map,
-		function ($) {
-			return $.j;
-		},
-		A2(
-			author$project$Grid$filter,
-			function (_n0) {
-				var coords = _n0.j;
-				return (coords.b >= 5) && A2(author$project$Grid$isEmpty, coords, grid);
-			},
-			grid));
-	return A2(
-		author$project$RandomExtra$selectWithDefault,
-		_Utils_Tuple2(-1, -1),
-		emptyCoords);
-};
-var author$project$LevelCreator$NewVirus = function (a) {
-	return {$: 0, a: a};
-};
-var elm$random$Random$Generate = elm$core$Basics$identity;
-var elm$random$Random$initialSeed = function (x) {
-	var _n0 = elm$random$Random$next(
-		A2(elm$random$Random$Seed, 0, 1013904223));
-	var state1 = _n0.a;
-	var incr = _n0.b;
-	var state2 = (state1 + x) >>> 0;
-	return elm$random$Random$next(
-		A2(elm$random$Random$Seed, state2, incr));
-};
-var elm$time$Time$posixToMillis = function (_n0) {
-	var millis = _n0;
-	return millis;
-};
-var elm$random$Random$init = A2(
-	elm$core$Task$andThen,
-	function (time) {
-		return elm$core$Task$succeed(
-			elm$random$Random$initialSeed(
-				elm$time$Time$posixToMillis(time)));
-	},
-	elm$time$Time$now);
-var elm$random$Random$step = F2(
-	function (_n0, seed) {
-		var generator = _n0;
-		return generator(seed);
-	});
-var elm$random$Random$onEffects = F3(
-	function (router, commands, seed) {
-		if (!commands.b) {
-			return elm$core$Task$succeed(seed);
-		} else {
-			var generator = commands.a;
-			var rest = commands.b;
-			var _n1 = A2(elm$random$Random$step, generator, seed);
-			var value = _n1.a;
-			var newSeed = _n1.b;
-			return A2(
-				elm$core$Task$andThen,
-				function (_n2) {
-					return A3(elm$random$Random$onEffects, router, rest, newSeed);
-				},
-				A2(elm$core$Platform$sendToApp, router, value));
-		}
-	});
-var elm$random$Random$onSelfMsg = F3(
-	function (_n0, _n1, seed) {
-		return elm$core$Task$succeed(seed);
-	});
-var elm$random$Random$cmdMap = F2(
-	function (func, _n0) {
-		var generator = _n0;
-		return A2(elm$random$Random$map, func, generator);
-	});
-_Platform_effectManagers['Random'] = _Platform_createManager(elm$random$Random$init, elm$random$Random$onEffects, elm$random$Random$onSelfMsg, elm$random$Random$cmdMap);
-var elm$random$Random$command = _Platform_leaf('Random');
-var elm$random$Random$generate = F2(
-	function (tagger, generator) {
-		return elm$random$Random$command(
-			A2(elm$random$Random$map, tagger, generator));
-	});
-var elm$random$Random$map2 = F3(
-	function (func, _n0, _n1) {
-		var genA = _n0;
-		var genB = _n1;
-		return function (seed0) {
-			var _n2 = genA(seed0);
-			var a = _n2.a;
-			var seed1 = _n2.b;
-			var _n3 = genB(seed1);
-			var b = _n3.a;
-			var seed2 = _n3.b;
-			return _Utils_Tuple2(
-				A2(func, a, b),
-				seed2);
-		};
-	});
-var elm$random$Random$pair = F2(
-	function (genA, genB) {
-		return A3(
-			elm$random$Random$map2,
-			F2(
-				function (a, b) {
-					return _Utils_Tuple2(a, b);
-				}),
-			genA,
-			genB);
-	});
-var author$project$LevelCreator$randomNewVirus = function (bottle) {
-	return A2(
-		elm$random$Random$generate,
-		author$project$LevelCreator$NewVirus,
-		A2(
-			elm$random$Random$pair,
-			author$project$Bottle$generateColor,
-			author$project$Bottle$generateEmptyCoords(bottle)));
-};
-var author$project$LevelCreator$init = function (level) {
-	var bottle = author$project$Bottle$init;
-	return _Utils_Tuple2(
-		{y: bottle, T: level},
-		author$project$LevelCreator$randomNewVirus(bottle.a));
-};
-var author$project$OnePlayer$Game$CreatorMsg = function (a) {
-	return {$: 1, a: a};
-};
-var author$project$OnePlayer$Game$PrepareGame = function (a) {
-	return {$: 0, a: a};
-};
-var author$project$OnePlayer$Game$initWithScore = F3(
-	function (level, speed, score) {
-		var _n0 = author$project$LevelCreator$init(level);
-		var creator = _n0.a;
-		var cmd = _n0.b;
-		return _Utils_Tuple2(
-			author$project$OnePlayer$Game$PrepareGame(
-				{S: creator, m: score, _: speed}),
-			A2(elm$core$Platform$Cmd$map, author$project$OnePlayer$Game$CreatorMsg, cmd));
-	});
-var author$project$OnePlayer$Game$init = F2(
-	function (level, speed) {
-		return A3(author$project$OnePlayer$Game$initWithScore, level, speed, 0);
-	});
-var author$project$Bottle$pillCoordsPair = F2(
-	function (pill, _n0) {
-		var x = _n0.a;
-		var y = _n0.b;
-		if (!pill.$) {
-			return _List_fromArray(
-				[
-					_Utils_Tuple2(x, y + 1),
-					_Utils_Tuple2(x + 1, y + 1)
-				]);
-		} else {
-			return _List_fromArray(
-				[
-					_Utils_Tuple2(x, y),
-					_Utils_Tuple2(x, y + 1)
-				]);
-		}
-	});
-var elm$core$Basics$not = _Basics_not;
-var elm$core$List$any = F2(
-	function (isOkay, list) {
-		any:
-		while (true) {
-			if (!list.b) {
-				return false;
-			} else {
-				var x = list.a;
-				var xs = list.b;
-				if (isOkay(x)) {
-					return true;
-				} else {
-					var $temp$isOkay = isOkay,
-						$temp$list = xs;
-					isOkay = $temp$isOkay;
-					list = $temp$list;
-					continue any;
-				}
-			}
-		}
-	});
-var author$project$Bottle$hasConflict = function (_n0) {
-	var mode = _n0.h;
-	var contents = _n0.a;
-	if (!mode.$) {
-		var pill = mode.a;
-		var coords = mode.b;
-		return A2(
-			elm$core$List$any,
-			elm$core$Basics$not,
-			A2(
-				elm$core$List$map,
-				function (p) {
-					return A2(author$project$Grid$isEmpty, p, contents);
-				},
-				A2(author$project$Bottle$pillCoordsPair, pill, coords)));
-	} else {
-		return false;
-	}
-};
-var author$project$Bottle$totalViruses = function (contents) {
-	return elm$core$List$length(
-		A2(
-			author$project$Grid$filter,
-			function (c) {
-				var _n0 = c.c;
-				if ((!_n0.$) && (!_n0.a.b.$)) {
-					var _n1 = _n0.a;
-					var _n2 = _n1.b;
-					return true;
-				} else {
-					return false;
-				}
-			},
-			contents));
-};
-var author$project$Bottle$Bomb = F2(
-	function (a, b) {
-		return {$: 3, a: a, b: b};
-	});
-var author$project$Bottle$Horizontal = F2(
-	function (a, b) {
-		return {$: 0, a: a, b: b};
-	});
-var author$project$Bottle$Pill = function (a) {
-	return {$: 1, a: a};
-};
-var author$project$Bottle$PlacingPill = F2(
-	function (a, b) {
-		return {$: 0, a: a, b: b};
-	});
-var author$project$Bottle$Vertical = F2(
-	function (a, b) {
-		return {$: 1, a: a, b: b};
-	});
-var author$project$Bottle$Bombing = {$: 2};
-var author$project$Bottle$NewPill = function (a) {
-	return {$: 0, a: a};
-};
-var author$project$Bottle$Down = 1;
-var author$project$Bottle$Left = 2;
-var author$project$Bottle$Right = 3;
-var author$project$Bottle$Up = 0;
-var author$project$Bottle$colorCoords = F2(
-	function (pill, coords) {
-		var _n0 = function () {
-			if (!pill.$) {
-				var a = pill.a;
-				var b = pill.b;
-				return _Utils_Tuple2(
-					_Utils_Tuple2(a, 3),
-					_Utils_Tuple2(b, 2));
-			} else {
-				var a = pill.a;
-				var b = pill.b;
-				return _Utils_Tuple2(
-					_Utils_Tuple2(a, 1),
-					_Utils_Tuple2(b, 0));
-			}
-		}();
-		var _n1 = _n0.a;
-		var a_color = _n1.a;
-		var a_dep = _n1.b;
-		var _n2 = _n0.b;
-		var b_color = _n2.a;
-		var b_dep = _n2.b;
-		var _n4 = A2(author$project$Bottle$pillCoordsPair, pill, coords);
-		if ((_n4.b && _n4.b.b) && (!_n4.b.b.b)) {
-			var first = _n4.a;
-			var _n5 = _n4.b;
-			var second = _n5.a;
-			return _List_fromArray(
-				[
-					_Utils_Tuple3(first, a_color, a_dep),
-					_Utils_Tuple3(second, b_color, b_dep)
-				]);
-		} else {
-			return _List_Nil;
-		}
-	});
-var author$project$Grid$map = F2(
-	function (f, grid) {
-		return A2(
-			elm$core$List$map,
-			elm$core$List$map(f),
-			grid);
-	});
-var author$project$Grid$updateCellAtCoords = F3(
-	function (update, coords, grid) {
-		return A2(
-			author$project$Grid$map,
-			function (cell) {
-				return _Utils_eq(cell.j, coords) ? update(cell) : cell;
-			},
-			grid);
-	});
-var author$project$Grid$setState = F3(
-	function (state, coords, grid) {
-		return A3(
-			author$project$Grid$updateCellAtCoords,
-			function (c) {
-				return _Utils_update(
-					c,
-					{
-						c: elm$core$Maybe$Just(state)
-					});
-			},
-			coords,
-			grid);
-	});
-var author$project$Bottle$addPill = F3(
-	function (pill, coords, bottle) {
-		return A3(
-			elm$core$List$foldl,
-			F2(
-				function (_n0, grid) {
-					var coords_ = _n0.a;
-					var color = _n0.b;
-					var dependent = _n0.c;
-					return A3(
-						author$project$Grid$setState,
-						_Utils_Tuple2(
-							color,
-							author$project$Bottle$Pill(
-								elm$core$Maybe$Just(dependent))),
-						coords_,
-						grid);
-				}),
-			bottle,
-			A2(author$project$Bottle$colorCoords, pill, coords));
-	});
-var author$project$Bottle$coordsWithDirection = F2(
-	function (_n0, direction) {
-		var x = _n0.a;
-		var y = _n0.b;
-		switch (direction) {
-			case 0:
-				return _Utils_Tuple2(x, y - 1);
-			case 1:
-				return _Utils_Tuple2(x, y + 1);
-			case 2:
-				return _Utils_Tuple2(x - 1, y);
-			default:
-				return _Utils_Tuple2(x + 1, y);
-		}
-	});
-var author$project$Grid$below = F2(
-	function (_n0, grid) {
-		var x = _n0.a;
-		var y = _n0.b;
-		var _n1 = elm$core$List$head(
-			A2(elm$core$List$drop, x - 1, grid));
-		if (_n1.$ === 1) {
-			return _List_Nil;
-		} else {
-			var column = _n1.a;
-			return A2(elm$core$List$drop, y, column);
-		}
-	});
-var author$project$Bottle$canFall = F2(
-	function (coords, bottle) {
-		canFall:
-		while (true) {
-			var hasRoom = function (cells) {
-				hasRoom:
-				while (true) {
-					if (!cells.b) {
-						return false;
-					} else {
-						var head = cells.a;
-						var tail = cells.b;
-						var _n1 = head.c;
-						if (_n1.$ === 1) {
-							return true;
-						} else {
-							if (_n1.a.b.$ === 1) {
-								if (_n1.a.b.a.$ === 1) {
-									var _n2 = _n1.a;
-									var _n3 = _n2.b.a;
-									var $temp$cells = tail;
-									cells = $temp$cells;
-									continue hasRoom;
-								} else {
-									var _n4 = _n1.a;
-									var dependent = _n4.b.a;
-									return A2(author$project$Bottle$canFall, head.j, bottle);
-								}
-							} else {
-								var _n5 = _n1.a;
-								var _n6 = _n5.b;
-								return false;
-							}
-						}
-					}
-				}
-			};
-			var cell = A2(author$project$Grid$findCellAtCoords, coords, bottle);
-			var _n7 = cell.c;
-			if ((!_n7.$) && (_n7.a.b.$ === 1)) {
-				if (_n7.a.b.a.$ === 1) {
-					var _n8 = _n7.a;
-					var _n9 = _n8.b.a;
-					return hasRoom(
-						A2(author$project$Grid$below, coords, bottle));
-				} else {
-					switch (_n7.a.b.a.a) {
-						case 0:
-							var _n10 = _n7.a;
-							var _n11 = _n10.b.a.a;
-							return hasRoom(
-								A2(author$project$Grid$below, coords, bottle));
-						case 1:
-							var _n12 = _n7.a;
-							var _n13 = _n12.b.a.a;
-							var $temp$coords = A2(author$project$Bottle$coordsWithDirection, coords, 1),
-								$temp$bottle = bottle;
-							coords = $temp$coords;
-							bottle = $temp$bottle;
-							continue canFall;
-						default:
-							var _n14 = _n7.a;
-							var dependent = _n14.b.a.a;
-							return hasRoom(
-								A2(author$project$Grid$below, coords, bottle)) && hasRoom(
-								A2(
-									author$project$Grid$below,
-									A2(author$project$Bottle$coordsWithDirection, coords, dependent),
-									bottle));
-					}
-				}
-			} else {
-				return false;
-			}
-		}
-	});
+var elm$core$List$sortBy = _List_sortBy;
 var elm$core$List$takeReverse = F3(
 	function (n, list, kept) {
 		takeReverse:
@@ -6828,6 +6310,953 @@ var elm$core$List$take = F2(
 	function (n, list) {
 		return A3(elm$core$List$takeFast, 0, n, list);
 	});
+var elm$core$Maybe$andThen = F2(
+	function (callback, maybeValue) {
+		if (!maybeValue.$) {
+			var value = maybeValue.a;
+			return callback(value);
+		} else {
+			return elm$core$Maybe$Nothing;
+		}
+	});
+var elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (!maybe.$) {
+			var value = maybe.a;
+			return elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return elm$core$Maybe$Nothing;
+		}
+	});
+var elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (!maybe.$) {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var elm$core$Tuple$second = function (_n0) {
+	var y = _n0.b;
+	return y;
+};
+var elm_community$list_extra$List$Extra$maximumBy = F2(
+	function (f, ls) {
+		var maxBy = F2(
+			function (x, _n1) {
+				var y = _n1.a;
+				var fy = _n1.b;
+				var fx = f(x);
+				return (_Utils_cmp(fx, fy) > 0) ? _Utils_Tuple2(x, fx) : _Utils_Tuple2(y, fy);
+			});
+		if (ls.b) {
+			if (!ls.b.b) {
+				var l_ = ls.a;
+				return elm$core$Maybe$Just(l_);
+			} else {
+				var l_ = ls.a;
+				var ls_ = ls.b;
+				return elm$core$Maybe$Just(
+					A3(
+						elm$core$List$foldl,
+						maxBy,
+						_Utils_Tuple2(
+							l_,
+							f(l_)),
+						ls_).a);
+			}
+		} else {
+			return elm$core$Maybe$Nothing;
+		}
+	});
+var elm_community$list_extra$List$Extra$minimumBy = F2(
+	function (f, ls) {
+		var minBy = F2(
+			function (x, _n1) {
+				var y = _n1.a;
+				var fy = _n1.b;
+				var fx = f(x);
+				return (_Utils_cmp(fx, fy) < 0) ? _Utils_Tuple2(x, fx) : _Utils_Tuple2(y, fy);
+			});
+		if (ls.b) {
+			if (!ls.b.b) {
+				var l_ = ls.a;
+				return elm$core$Maybe$Just(l_);
+			} else {
+				var l_ = ls.a;
+				var ls_ = ls.b;
+				return elm$core$Maybe$Just(
+					A3(
+						elm$core$List$foldl,
+						minBy,
+						_Utils_Tuple2(
+							l_,
+							f(l_)),
+						ls_).a);
+			}
+		} else {
+			return elm$core$Maybe$Nothing;
+		}
+	});
+var elm_community$list_extra$List$Extra$takeWhile = function (predicate) {
+	var takeWhileMemo = F2(
+		function (memo, list) {
+			takeWhileMemo:
+			while (true) {
+				if (!list.b) {
+					return elm$core$List$reverse(memo);
+				} else {
+					var x = list.a;
+					var xs = list.b;
+					if (predicate(x)) {
+						var $temp$memo = A2(elm$core$List$cons, x, memo),
+							$temp$list = xs;
+						memo = $temp$memo;
+						list = $temp$list;
+						continue takeWhileMemo;
+					} else {
+						return elm$core$List$reverse(memo);
+					}
+				}
+			}
+		});
+	return takeWhileMemo(_List_Nil);
+};
+var author$project$Bottle$trashBot = F2(
+	function (bottle, mode) {
+		switch (mode.$) {
+			case 1:
+				return _Utils_Tuple2(elm$core$Maybe$Nothing, elm$core$Maybe$Nothing);
+			case 2:
+				return _Utils_Tuple2(elm$core$Maybe$Nothing, elm$core$Maybe$Nothing);
+			default:
+				var pill = mode.a;
+				var coords = mode.b;
+				var peaks = A2(
+					elm$core$List$filterMap,
+					elm$core$Basics$identity,
+					A2(
+						elm$core$List$map,
+						function (column) {
+							return elm$core$List$head(
+								A2(
+									elm$core$List$filter,
+									function (cell) {
+										var _n13 = cell.b;
+										if (!_n13.$) {
+											return _Utils_cmp(cell.d.b, coords.b) > -1;
+										} else {
+											return false;
+										}
+									},
+									column));
+						},
+						bottle));
+				var orientationBonus = function (o) {
+					if (_Utils_eq(o, pill)) {
+						return 2;
+					} else {
+						if (!pill.$) {
+							return 0;
+						} else {
+							var a = pill.a;
+							var b = pill.b;
+							return _Utils_eq(a, b) ? 1 : 0;
+						}
+					}
+				};
+				var colorIndexScore = F2(
+					function (color, index) {
+						var scoring = {ag: 0, al: 50, ao: 120};
+						var colorAtIndex = A2(
+							elm$core$Maybe$map,
+							function (state) {
+								return state.a;
+							},
+							A2(
+								elm$core$Maybe$andThen,
+								function (cell) {
+									return cell.b;
+								},
+								A2(
+									elm$core$Array$get,
+									index - 1,
+									elm$core$Array$fromList(peaks))));
+						if (colorAtIndex.$ === 1) {
+							return scoring.al;
+						} else {
+							var aColor = colorAtIndex.a;
+							return _Utils_eq(aColor, color) ? scoring.ao : scoring.ag;
+						}
+					});
+				var _n1 = function () {
+					if (pill.$ === 1) {
+						var a = pill.a;
+						var b = pill.b;
+						return _Utils_Tuple2(a, b);
+					} else {
+						var a = pill.a;
+						var b = pill.b;
+						return _Utils_Tuple2(a, b);
+					}
+				}();
+				var color_a = _n1.a;
+				var color_b = _n1.b;
+				var options = function () {
+					var heads = A2(
+						elm$core$List$map,
+						function (column) {
+							return A2(
+								elm$core$Maybe$withDefault,
+								{
+									d: _Utils_Tuple2(-1, -1),
+									b: elm$core$Maybe$Nothing
+								},
+								elm$core$List$head(column));
+						},
+						A2(
+							elm$core$List$map,
+							function (column) {
+								return A2(elm$core$List$drop, coords.b - 1, column);
+							},
+							bottle));
+					var getOpenings = elm_community$list_extra$List$Extra$takeWhile(
+						function (cell) {
+							return _Utils_eq(cell.b, elm$core$Maybe$Nothing);
+						});
+					var _n9 = _Utils_Tuple2(
+						getOpenings(
+							elm$core$List$reverse(
+								A2(elm$core$List$take, coords.a, heads))),
+						getOpenings(
+							A2(elm$core$List$drop, coords.a, heads)));
+					var before = _n9.a;
+					var after = _n9.b;
+					var openCells = _Utils_ap(before, after);
+					var _n10 = _Utils_Tuple2(
+						A2(
+							elm$core$Maybe$withDefault,
+							coords.a,
+							A2(
+								elm$core$Maybe$map,
+								A2(
+									elm$core$Basics$composeR,
+									function ($) {
+										return $.d;
+									},
+									elm$core$Tuple$first),
+								A2(
+									elm_community$list_extra$List$Extra$minimumBy,
+									function (cell) {
+										return cell.d.a;
+									},
+									openCells))),
+						A2(
+							elm$core$Maybe$withDefault,
+							coords.a,
+							A2(
+								elm$core$Maybe$map,
+								A2(
+									elm$core$Basics$composeR,
+									function ($) {
+										return $.d;
+									},
+									elm$core$Tuple$first),
+								A2(
+									elm_community$list_extra$List$Extra$maximumBy,
+									function (cell) {
+										return cell.d.a;
+									},
+									openCells))));
+					var minX = _n10.a;
+					var maxX = _n10.b;
+					return _Utils_ap(
+						A2(
+							elm$core$List$map,
+							function (x) {
+								return _Utils_Tuple2(
+									x,
+									A2(author$project$Bottle$Vertical, color_a, color_b));
+							},
+							A2(elm$core$List$range, minX, maxX)),
+						_Utils_ap(
+							_Utils_eq(color_a, color_b) ? _List_Nil : A2(
+								elm$core$List$map,
+								function (x) {
+									return _Utils_Tuple2(
+										x,
+										A2(author$project$Bottle$Horizontal, color_b, color_a));
+								},
+								A2(elm$core$List$range, minX, maxX - 1)),
+							A2(
+								elm$core$List$map,
+								function (x) {
+									return _Utils_Tuple2(
+										x,
+										A2(author$project$Bottle$Horizontal, color_a, color_b));
+								},
+								A2(elm$core$List$range, minX, maxX - 1))));
+				}();
+				var scores = A2(
+					elm$core$List$map,
+					function (_n7) {
+						var x = _n7.a;
+						var orientation = _n7.b;
+						return orientationBonus(orientation) + function () {
+							if (!orientation.$) {
+								var a = orientation.a;
+								var b = orientation.b;
+								return A2(colorIndexScore, a, x) + A2(colorIndexScore, b, x + 1);
+							} else {
+								var a = orientation.a;
+								var b = orientation.b;
+								return _Utils_eq(a, b) ? (A2(colorIndexScore, a, x) + A2(colorIndexScore, b, x)) : A2(colorIndexScore, b, x);
+							}
+						}();
+					},
+					options);
+				var choice = elm$core$List$head(
+					A2(
+						elm$core$List$map,
+						elm$core$Tuple$second,
+						A2(
+							elm$core$List$sortBy,
+							A2(
+								elm$core$Basics$composeR,
+								elm$core$Tuple$first,
+								function (a) {
+									return -a;
+								}),
+							A2(author$project$Grid$zip, scores, options))));
+				var withGoal = function (dir) {
+					return _Utils_Tuple2(dir, choice);
+				};
+				var _n3 = _Utils_Tuple2(choice, coords);
+				if (!_n3.a.$) {
+					var _n4 = _n3.a.a;
+					var aimX = _n4.a;
+					var pill_ = _n4.b;
+					var _n5 = _n3.b;
+					var x = _n5.a;
+					return (!_Utils_eq(pill_, pill)) ? withGoal(
+						elm$core$Maybe$Just(0)) : ((_Utils_cmp(aimX, x) > 0) ? withGoal(
+						elm$core$Maybe$Just(3)) : ((_Utils_cmp(aimX, x) < 0) ? withGoal(
+						elm$core$Maybe$Just(2)) : withGoal(
+						elm$core$Maybe$Just(1))));
+				} else {
+					var _n6 = _n3.a;
+					return withGoal(elm$core$Maybe$Nothing);
+				}
+		}
+	});
+var author$project$Grid$Cell = F2(
+	function (coords, state) {
+		return {d: coords, b: state};
+	});
+var author$project$Grid$fromDimensions = F2(
+	function (width_, height_) {
+		var makeColumn = function (x) {
+			return A2(
+				elm$core$List$map,
+				function (y) {
+					return A2(
+						author$project$Grid$Cell,
+						_Utils_Tuple2(x, y),
+						elm$core$Maybe$Nothing);
+				},
+				A2(elm$core$List$range, 1, height_));
+		};
+		return A2(
+			elm$core$List$map,
+			makeColumn,
+			A2(elm$core$List$range, 1, width_));
+	});
+var author$project$Bottle$init = {
+	n: _List_Nil,
+	a: A2(author$project$Grid$fromDimensions, 8, 16),
+	R: author$project$Bottle$Bot(author$project$Bottle$trashBot),
+	T: elm$core$Maybe$Nothing,
+	i: author$project$Bottle$Falling(_List_Nil),
+	L: _Utils_Tuple2(0, 0)
+};
+var author$project$Bottle$Blue = 1;
+var author$project$Bottle$Yellow = 2;
+var elm$random$Random$Generator = elm$core$Basics$identity;
+var elm$random$Random$Seed = F2(
+	function (a, b) {
+		return {$: 0, a: a, b: b};
+	});
+var elm$random$Random$next = function (_n0) {
+	var state0 = _n0.a;
+	var incr = _n0.b;
+	return A2(elm$random$Random$Seed, ((state0 * 1664525) + incr) >>> 0, incr);
+};
+var elm$core$Bitwise$xor = _Bitwise_xor;
+var elm$random$Random$peel = function (_n0) {
+	var state = _n0.a;
+	var word = (state ^ (state >>> ((state >>> 28) + 4))) * 277803737;
+	return ((word >>> 22) ^ word) >>> 0;
+};
+var elm$random$Random$int = F2(
+	function (a, b) {
+		return function (seed0) {
+			var _n0 = (_Utils_cmp(a, b) < 0) ? _Utils_Tuple2(a, b) : _Utils_Tuple2(b, a);
+			var lo = _n0.a;
+			var hi = _n0.b;
+			var range = (hi - lo) + 1;
+			if (!((range - 1) & range)) {
+				return _Utils_Tuple2(
+					(((range - 1) & elm$random$Random$peel(seed0)) >>> 0) + lo,
+					elm$random$Random$next(seed0));
+			} else {
+				var threshhold = (((-range) >>> 0) % range) >>> 0;
+				var accountForBias = function (seed) {
+					accountForBias:
+					while (true) {
+						var x = elm$random$Random$peel(seed);
+						var seedN = elm$random$Random$next(seed);
+						if (_Utils_cmp(x, threshhold) < 0) {
+							var $temp$seed = seedN;
+							seed = $temp$seed;
+							continue accountForBias;
+						} else {
+							return _Utils_Tuple2((x % range) + lo, seedN);
+						}
+					}
+				};
+				return accountForBias(seed0);
+			}
+		};
+	});
+var elm$random$Random$map = F2(
+	function (func, _n0) {
+		var genA = _n0;
+		return function (seed0) {
+			var _n1 = genA(seed0);
+			var a = _n1.a;
+			var seed1 = _n1.b;
+			return _Utils_Tuple2(
+				func(a),
+				seed1);
+		};
+	});
+var author$project$RandomExtra$selectWithDefault = F2(
+	function (defaultValue, options) {
+		var get = F2(
+			function (index, list) {
+				if (index < 0) {
+					return elm$core$Maybe$Nothing;
+				} else {
+					var _n0 = A2(elm$core$List$drop, index, list);
+					if (!_n0.b) {
+						return elm$core$Maybe$Nothing;
+					} else {
+						var x = _n0.a;
+						var xs = _n0.b;
+						return elm$core$Maybe$Just(x);
+					}
+				}
+			});
+		var select = function (list) {
+			return A2(
+				elm$random$Random$map,
+				function (index) {
+					return A2(get, index, list);
+				},
+				A2(
+					elm$random$Random$int,
+					0,
+					elm$core$List$length(list) - 1));
+		};
+		return A2(
+			elm$random$Random$map,
+			elm$core$Maybe$withDefault(defaultValue),
+			select(options));
+	});
+var author$project$Bottle$generateColor = A2(
+	author$project$RandomExtra$selectWithDefault,
+	1,
+	_List_fromArray(
+		[0, 2, 1]));
+var elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3(elm$core$List$foldr, elm$core$List$cons, ys, xs);
+		}
+	});
+var elm$core$List$concat = function (lists) {
+	return A3(elm$core$List$foldr, elm$core$List$append, _List_Nil, lists);
+};
+var author$project$Grid$toList = function (grid) {
+	return elm$core$List$concat(grid);
+};
+var author$project$Grid$filter = F2(
+	function (predicate, grid) {
+		return A2(
+			elm$core$List$filter,
+			predicate,
+			author$project$Grid$toList(grid));
+	});
+var author$project$Grid$find = F2(
+	function (test, list) {
+		return elm$core$List$head(
+			A2(elm$core$List$filter, test, list));
+	});
+var author$project$Grid$findCellAtCoords = F2(
+	function (coords, grid) {
+		return A2(
+			elm$core$Maybe$withDefault,
+			A2(
+				author$project$Grid$Cell,
+				_Utils_Tuple2(-1, -1),
+				elm$core$Maybe$Nothing),
+			A2(
+				author$project$Grid$find,
+				function (cell) {
+					return _Utils_eq(cell.d, coords);
+				},
+				author$project$Grid$toList(grid)));
+	});
+var author$project$Grid$isEmpty = F2(
+	function (coords, grid) {
+		return A3(
+			elm$core$Basics$composeR,
+			function ($) {
+				return $.b;
+			},
+			elm$core$Basics$eq(elm$core$Maybe$Nothing),
+			A2(author$project$Grid$findCellAtCoords, coords, grid));
+	});
+var author$project$Bottle$generateEmptyCoords = function (grid) {
+	var emptyCoords = A2(
+		elm$core$List$map,
+		function ($) {
+			return $.d;
+		},
+		A2(
+			author$project$Grid$filter,
+			function (_n0) {
+				var coords = _n0.d;
+				return (coords.b >= 5) && A2(author$project$Grid$isEmpty, coords, grid);
+			},
+			grid));
+	return A2(
+		author$project$RandomExtra$selectWithDefault,
+		_Utils_Tuple2(-1, -1),
+		emptyCoords);
+};
+var author$project$LevelCreator$NewVirus = function (a) {
+	return {$: 0, a: a};
+};
+var elm$random$Random$Generate = elm$core$Basics$identity;
+var elm$random$Random$initialSeed = function (x) {
+	var _n0 = elm$random$Random$next(
+		A2(elm$random$Random$Seed, 0, 1013904223));
+	var state1 = _n0.a;
+	var incr = _n0.b;
+	var state2 = (state1 + x) >>> 0;
+	return elm$random$Random$next(
+		A2(elm$random$Random$Seed, state2, incr));
+};
+var elm$time$Time$posixToMillis = function (_n0) {
+	var millis = _n0;
+	return millis;
+};
+var elm$random$Random$init = A2(
+	elm$core$Task$andThen,
+	function (time) {
+		return elm$core$Task$succeed(
+			elm$random$Random$initialSeed(
+				elm$time$Time$posixToMillis(time)));
+	},
+	elm$time$Time$now);
+var elm$random$Random$step = F2(
+	function (_n0, seed) {
+		var generator = _n0;
+		return generator(seed);
+	});
+var elm$random$Random$onEffects = F3(
+	function (router, commands, seed) {
+		if (!commands.b) {
+			return elm$core$Task$succeed(seed);
+		} else {
+			var generator = commands.a;
+			var rest = commands.b;
+			var _n1 = A2(elm$random$Random$step, generator, seed);
+			var value = _n1.a;
+			var newSeed = _n1.b;
+			return A2(
+				elm$core$Task$andThen,
+				function (_n2) {
+					return A3(elm$random$Random$onEffects, router, rest, newSeed);
+				},
+				A2(elm$core$Platform$sendToApp, router, value));
+		}
+	});
+var elm$random$Random$onSelfMsg = F3(
+	function (_n0, _n1, seed) {
+		return elm$core$Task$succeed(seed);
+	});
+var elm$random$Random$cmdMap = F2(
+	function (func, _n0) {
+		var generator = _n0;
+		return A2(elm$random$Random$map, func, generator);
+	});
+_Platform_effectManagers['Random'] = _Platform_createManager(elm$random$Random$init, elm$random$Random$onEffects, elm$random$Random$onSelfMsg, elm$random$Random$cmdMap);
+var elm$random$Random$command = _Platform_leaf('Random');
+var elm$random$Random$generate = F2(
+	function (tagger, generator) {
+		return elm$random$Random$command(
+			A2(elm$random$Random$map, tagger, generator));
+	});
+var elm$random$Random$map2 = F3(
+	function (func, _n0, _n1) {
+		var genA = _n0;
+		var genB = _n1;
+		return function (seed0) {
+			var _n2 = genA(seed0);
+			var a = _n2.a;
+			var seed1 = _n2.b;
+			var _n3 = genB(seed1);
+			var b = _n3.a;
+			var seed2 = _n3.b;
+			return _Utils_Tuple2(
+				A2(func, a, b),
+				seed2);
+		};
+	});
+var elm$random$Random$pair = F2(
+	function (genA, genB) {
+		return A3(
+			elm$random$Random$map2,
+			F2(
+				function (a, b) {
+					return _Utils_Tuple2(a, b);
+				}),
+			genA,
+			genB);
+	});
+var author$project$LevelCreator$randomNewVirus = function (bottle) {
+	return A2(
+		elm$random$Random$generate,
+		author$project$LevelCreator$NewVirus,
+		A2(
+			elm$random$Random$pair,
+			author$project$Bottle$generateColor,
+			author$project$Bottle$generateEmptyCoords(bottle)));
+};
+var author$project$LevelCreator$init = function (level) {
+	var bottle = author$project$Bottle$init;
+	return _Utils_Tuple2(
+		{y: bottle, U: level},
+		author$project$LevelCreator$randomNewVirus(bottle.a));
+};
+var author$project$OnePlayer$Game$CreatorMsg = function (a) {
+	return {$: 1, a: a};
+};
+var author$project$OnePlayer$Game$PrepareGame = function (a) {
+	return {$: 0, a: a};
+};
+var author$project$OnePlayer$Game$initWithScore = F3(
+	function (level, speed, score) {
+		var _n0 = author$project$LevelCreator$init(level);
+		var creator = _n0.a;
+		var cmd = _n0.b;
+		return _Utils_Tuple2(
+			author$project$OnePlayer$Game$PrepareGame(
+				{S: creator, m: score, aa: speed}),
+			A2(elm$core$Platform$Cmd$map, author$project$OnePlayer$Game$CreatorMsg, cmd));
+	});
+var author$project$OnePlayer$Game$init = F2(
+	function (level, speed) {
+		return A3(author$project$OnePlayer$Game$initWithScore, level, speed, 0);
+	});
+var author$project$Bottle$pillCoordsPair = F2(
+	function (pill, _n0) {
+		var x = _n0.a;
+		var y = _n0.b;
+		if (!pill.$) {
+			return _List_fromArray(
+				[
+					_Utils_Tuple2(x, y + 1),
+					_Utils_Tuple2(x + 1, y + 1)
+				]);
+		} else {
+			return _List_fromArray(
+				[
+					_Utils_Tuple2(x, y),
+					_Utils_Tuple2(x, y + 1)
+				]);
+		}
+	});
+var elm$core$Basics$not = _Basics_not;
+var elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var author$project$Bottle$hasConflict = function (_n0) {
+	var mode = _n0.i;
+	var contents = _n0.a;
+	if (!mode.$) {
+		var pill = mode.a;
+		var coords = mode.b;
+		return A2(
+			elm$core$List$any,
+			elm$core$Basics$not,
+			A2(
+				elm$core$List$map,
+				function (p) {
+					return A2(author$project$Grid$isEmpty, p, contents);
+				},
+				A2(author$project$Bottle$pillCoordsPair, pill, coords)));
+	} else {
+		return false;
+	}
+};
+var author$project$Bottle$totalViruses = function (contents) {
+	return elm$core$List$length(
+		A2(
+			author$project$Grid$filter,
+			function (c) {
+				var _n0 = c.b;
+				if ((!_n0.$) && (!_n0.a.b.$)) {
+					var _n1 = _n0.a;
+					var _n2 = _n1.b;
+					return true;
+				} else {
+					return false;
+				}
+			},
+			contents));
+};
+var author$project$Bottle$Bomb = F2(
+	function (a, b) {
+		return {$: 3, a: a, b: b};
+	});
+var author$project$Bottle$Pill = function (a) {
+	return {$: 1, a: a};
+};
+var author$project$Bottle$PlacingPill = F2(
+	function (a, b) {
+		return {$: 0, a: a, b: b};
+	});
+var author$project$Bottle$Bombing = {$: 2};
+var author$project$Bottle$NewPill = function (a) {
+	return {$: 0, a: a};
+};
+var author$project$Bottle$colorCoords = F2(
+	function (pill, coords) {
+		var _n0 = function () {
+			if (!pill.$) {
+				var a = pill.a;
+				var b = pill.b;
+				return _Utils_Tuple2(
+					_Utils_Tuple2(a, 3),
+					_Utils_Tuple2(b, 2));
+			} else {
+				var a = pill.a;
+				var b = pill.b;
+				return _Utils_Tuple2(
+					_Utils_Tuple2(a, 1),
+					_Utils_Tuple2(b, 0));
+			}
+		}();
+		var _n1 = _n0.a;
+		var a_color = _n1.a;
+		var a_dep = _n1.b;
+		var _n2 = _n0.b;
+		var b_color = _n2.a;
+		var b_dep = _n2.b;
+		var _n4 = A2(author$project$Bottle$pillCoordsPair, pill, coords);
+		if ((_n4.b && _n4.b.b) && (!_n4.b.b.b)) {
+			var first = _n4.a;
+			var _n5 = _n4.b;
+			var second = _n5.a;
+			return _List_fromArray(
+				[
+					_Utils_Tuple3(first, a_color, a_dep),
+					_Utils_Tuple3(second, b_color, b_dep)
+				]);
+		} else {
+			return _List_Nil;
+		}
+	});
+var author$project$Grid$map = F2(
+	function (f, grid) {
+		return A2(
+			elm$core$List$map,
+			elm$core$List$map(f),
+			grid);
+	});
+var author$project$Grid$updateCellAtCoords = F3(
+	function (update, coords, grid) {
+		return A2(
+			author$project$Grid$map,
+			function (cell) {
+				return _Utils_eq(cell.d, coords) ? update(cell) : cell;
+			},
+			grid);
+	});
+var author$project$Grid$setState = F3(
+	function (state, coords, grid) {
+		return A3(
+			author$project$Grid$updateCellAtCoords,
+			function (c) {
+				return _Utils_update(
+					c,
+					{
+						b: elm$core$Maybe$Just(state)
+					});
+			},
+			coords,
+			grid);
+	});
+var author$project$Bottle$addPill = F3(
+	function (pill, coords, bottle) {
+		return A3(
+			elm$core$List$foldl,
+			F2(
+				function (_n0, grid) {
+					var coords_ = _n0.a;
+					var color = _n0.b;
+					var dependent = _n0.c;
+					return A3(
+						author$project$Grid$setState,
+						_Utils_Tuple2(
+							color,
+							author$project$Bottle$Pill(
+								elm$core$Maybe$Just(dependent))),
+						coords_,
+						grid);
+				}),
+			bottle,
+			A2(author$project$Bottle$colorCoords, pill, coords));
+	});
+var author$project$Bottle$coordsWithDirection = F2(
+	function (_n0, direction) {
+		var x = _n0.a;
+		var y = _n0.b;
+		switch (direction) {
+			case 0:
+				return _Utils_Tuple2(x, y - 1);
+			case 1:
+				return _Utils_Tuple2(x, y + 1);
+			case 2:
+				return _Utils_Tuple2(x - 1, y);
+			default:
+				return _Utils_Tuple2(x + 1, y);
+		}
+	});
+var author$project$Grid$below = F2(
+	function (_n0, grid) {
+		var x = _n0.a;
+		var y = _n0.b;
+		var _n1 = elm$core$List$head(
+			A2(elm$core$List$drop, x - 1, grid));
+		if (_n1.$ === 1) {
+			return _List_Nil;
+		} else {
+			var column = _n1.a;
+			return A2(elm$core$List$drop, y, column);
+		}
+	});
+var author$project$Bottle$canFall = F2(
+	function (coords, bottle) {
+		canFall:
+		while (true) {
+			var hasRoom = function (cells) {
+				hasRoom:
+				while (true) {
+					if (!cells.b) {
+						return false;
+					} else {
+						var head = cells.a;
+						var tail = cells.b;
+						var _n1 = head.b;
+						if (_n1.$ === 1) {
+							return true;
+						} else {
+							if (_n1.a.b.$ === 1) {
+								if (_n1.a.b.a.$ === 1) {
+									var _n2 = _n1.a;
+									var _n3 = _n2.b.a;
+									var $temp$cells = tail;
+									cells = $temp$cells;
+									continue hasRoom;
+								} else {
+									var _n4 = _n1.a;
+									var dependent = _n4.b.a;
+									return A2(author$project$Bottle$canFall, head.d, bottle);
+								}
+							} else {
+								var _n5 = _n1.a;
+								var _n6 = _n5.b;
+								return false;
+							}
+						}
+					}
+				}
+			};
+			var cell = A2(author$project$Grid$findCellAtCoords, coords, bottle);
+			var _n7 = cell.b;
+			if ((!_n7.$) && (_n7.a.b.$ === 1)) {
+				if (_n7.a.b.a.$ === 1) {
+					var _n8 = _n7.a;
+					var _n9 = _n8.b.a;
+					return hasRoom(
+						A2(author$project$Grid$below, coords, bottle));
+				} else {
+					switch (_n7.a.b.a.a) {
+						case 0:
+							var _n10 = _n7.a;
+							var _n11 = _n10.b.a.a;
+							return hasRoom(
+								A2(author$project$Grid$below, coords, bottle));
+						case 1:
+							var _n12 = _n7.a;
+							var _n13 = _n12.b.a.a;
+							var $temp$coords = A2(author$project$Bottle$coordsWithDirection, coords, 1),
+								$temp$bottle = bottle;
+							coords = $temp$coords;
+							bottle = $temp$bottle;
+							continue canFall;
+						default:
+							var _n14 = _n7.a;
+							var dependent = _n14.b.a.a;
+							return hasRoom(
+								A2(author$project$Grid$below, coords, bottle)) && hasRoom(
+								A2(
+									author$project$Grid$below,
+									A2(author$project$Bottle$coordsWithDirection, coords, dependent),
+									bottle));
+					}
+				}
+			} else {
+				return false;
+			}
+		}
+	});
 var author$project$Bottle$subLists = F2(
 	function (len, list) {
 		return (_Utils_cmp(
@@ -6878,7 +7307,7 @@ var author$project$Bottle$isCleared = F2(
 			author$project$Grid$findCellAtCoords,
 			_Utils_Tuple2(x, y),
 			grid);
-		var _n1 = cell.c;
+		var _n1 = cell.b;
 		if (_n1.$ === 1) {
 			return false;
 		} else {
@@ -6888,7 +7317,7 @@ var author$project$Bottle$isCleared = F2(
 				elm$core$List$any,
 				elm$core$List$all(
 					function (cell_) {
-						var _n3 = cell_.c;
+						var _n3 = cell_.b;
 						if (!_n3.$) {
 							var _n4 = _n3.a;
 							var c = _n4.a;
@@ -6900,7 +7329,6 @@ var author$project$Bottle$isCleared = F2(
 				_Utils_ap(vertical, horizontal));
 		}
 	});
-var elm$core$Basics$neq = _Utils_notEqual;
 var author$project$Bottle$canSweep = function (grid) {
 	return A3(
 		elm$core$Basics$composeR,
@@ -6909,7 +7337,7 @@ var author$project$Bottle$canSweep = function (grid) {
 		A2(
 			author$project$Grid$filter,
 			function (cell) {
-				return A2(author$project$Bottle$isCleared, cell.j, grid);
+				return A2(author$project$Bottle$isCleared, cell.d, grid);
 			},
 			grid));
 };
@@ -6917,8 +7345,8 @@ var author$project$Bottle$fall = function (bottle) {
 	return A2(
 		author$project$Grid$map,
 		function (cell) {
-			var coords = cell.j;
-			var state = cell.c;
+			var coords = cell.d;
+			var state = cell.b;
 			var _n0 = coords;
 			var x = _n0.a;
 			var y = _n0.b;
@@ -6931,22 +7359,22 @@ var author$project$Bottle$fall = function (bottle) {
 				bottle) ? _Utils_update(
 				cell,
 				{
-					c: A2(
+					b: A2(
 						author$project$Grid$findCellAtCoords,
 						_Utils_Tuple2(x, y - 1),
-						bottle).c
+						bottle).b
 				}) : _Utils_update(
 				cell,
-				{c: elm$core$Maybe$Nothing})) : ((_Utils_eq(state, elm$core$Maybe$Nothing) && A2(
+				{b: elm$core$Maybe$Nothing})) : ((_Utils_eq(state, elm$core$Maybe$Nothing) && A2(
 				author$project$Bottle$canFall,
 				_Utils_Tuple2(x, y - 1),
 				bottle)) ? _Utils_update(
 				cell,
 				{
-					c: A2(
+					b: A2(
 						author$project$Grid$findCellAtCoords,
 						_Utils_Tuple2(x, y - 1),
-						bottle).c
+						bottle).b
 				}) : cell);
 		},
 		bottle);
@@ -6992,13 +7420,13 @@ var author$project$Bottle$generateBomb = function (bottle) {
 			A2(
 				elm$core$Basics$composeR,
 				function ($) {
-					return $.j;
+					return $.d;
 				},
 				elm$core$Tuple$first),
 			A2(
 				elm$core$List$filter,
 				function (c) {
-					var _n0 = c.c;
+					var _n0 = c.b;
 					if (!_n0.$) {
 						return false;
 					} else {
@@ -7049,24 +7477,6 @@ var author$project$Bottle$isAvailable = F3(
 		var inBottle = (x >= 1) && (withinRight && aboveBottom);
 		return inBottle && noOccupant;
 	});
-var author$project$Grid$zip = F2(
-	function (xs, ys) {
-		var _n0 = _Utils_Tuple2(xs, ys);
-		if (_n0.a.b && _n0.b.b) {
-			var _n1 = _n0.a;
-			var x = _n1.a;
-			var xBack = _n1.b;
-			var _n2 = _n0.b;
-			var y = _n2.a;
-			var yBack = _n2.b;
-			return A2(
-				elm$core$List$cons,
-				_Utils_Tuple2(x, y),
-				A2(author$project$Grid$zip, xBack, yBack));
-		} else {
-			return _List_Nil;
-		}
-	});
 var author$project$Grid$difference = F3(
 	function (diff, a, b) {
 		return A2(
@@ -7074,7 +7484,7 @@ var author$project$Grid$difference = F3(
 			function (_n0) {
 				var y = _n0.a;
 				var z = _n0.b;
-				return A2(diff, y.c, z.c) ? elm$core$Maybe$Just(y) : elm$core$Maybe$Nothing;
+				return A2(diff, y.b, z.b) ? elm$core$Maybe$Just(y) : elm$core$Maybe$Nothing;
 			},
 			A2(
 				author$project$Grid$zip,
@@ -7111,8 +7521,8 @@ var author$project$Bottle$sweep = function (model) {
 		A2(
 			elm$core$List$map,
 			function (_n13) {
-				var coords = _n13.j;
-				var state = _n13.c;
+				var coords = _n13.d;
+				var state = _n13.b;
 				if (((!state.$) && (state.a.b.$ === 1)) && (!state.a.b.a.$)) {
 					var _n15 = state.a;
 					var dependent = _n15.b.a.a;
@@ -7124,8 +7534,8 @@ var author$project$Bottle$sweep = function (model) {
 			A2(
 				author$project$Grid$filter,
 				function (cell) {
-					var coords = cell.j;
-					var state = cell.c;
+					var coords = cell.d;
+					var state = cell.b;
 					if (((!state.$) && (state.a.b.$ === 1)) && (!state.a.b.a.$)) {
 						var _n12 = state.a;
 						var dependent = _n12.b.a.a;
@@ -7138,12 +7548,12 @@ var author$project$Bottle$sweep = function (model) {
 	var swept = A2(
 		author$project$Grid$map,
 		function (cell) {
-			var coords = cell.j;
-			var state = cell.c;
+			var coords = cell.d;
+			var state = cell.b;
 			if (A2(author$project$Bottle$isCleared, coords, contents)) {
 				return _Utils_update(
 					cell,
-					{c: elm$core$Maybe$Nothing});
+					{b: elm$core$Maybe$Nothing});
 			} else {
 				if (A2(elm$core$Set$member, coords, coordsLosingDependent)) {
 					if (!state.$) {
@@ -7152,7 +7562,7 @@ var author$project$Bottle$sweep = function (model) {
 						return _Utils_update(
 							cell,
 							{
-								c: elm$core$Maybe$Just(
+								b: elm$core$Maybe$Just(
 									_Utils_Tuple2(
 										color,
 										author$project$Bottle$Pill(elm$core$Maybe$Nothing)))
@@ -7186,7 +7596,7 @@ var author$project$Bottle$sweep = function (model) {
 		} else {
 			var x = cells.a;
 			var xs = cells.b;
-			var _n1 = x.c;
+			var _n1 = x.b;
 			if (!_n1.$) {
 				var _n2 = _n1.a;
 				var color = _n2.a;
@@ -7197,7 +7607,7 @@ var author$project$Bottle$sweep = function (model) {
 						A2(
 							elm$core$List$filter,
 							function (c) {
-								var _n3 = _Utils_Tuple2(x.j, c.j);
+								var _n3 = _Utils_Tuple2(x.d, c.d);
 								var _n4 = _n3.a;
 								var xx = _n4.a;
 								var xy = _n4.b;
@@ -7213,7 +7623,7 @@ var author$project$Bottle$sweep = function (model) {
 		}
 	};
 	var alreadyCleared = function () {
-		var _n6 = model.h;
+		var _n6 = model.i;
 		if (_n6.$ === 1) {
 			var cleared = _n6.a;
 			return cleared;
@@ -7225,7 +7635,7 @@ var author$project$Bottle$sweep = function (model) {
 		model,
 		{
 			a: swept,
-			h: author$project$Bottle$Falling(
+			i: author$project$Bottle$Falling(
 				_Utils_ap(
 					alreadyCleared,
 					clearedLines(diff)))
@@ -7244,7 +7654,7 @@ var elm$core$List$isEmpty = function (xs) {
 var author$project$Bottle$advance = function (model) {
 	advance:
 	while (true) {
-		var _n0 = model.h;
+		var _n0 = model.i;
 		switch (_n0.$) {
 			case 0:
 				var pill = _n0.a;
@@ -7267,14 +7677,14 @@ var author$project$Bottle$advance = function (model) {
 								model,
 								{
 									a: newContents,
-									h: author$project$Bottle$Falling(_List_Nil)
+									i: author$project$Bottle$Falling(_List_Nil)
 								}));
 					});
 				return author$project$Bottle$withNothing(
 					A3(author$project$Bottle$isAvailable, newCoords, pill, model.a) ? _Utils_update(
 						model,
 						{
-							h: A2(author$project$Bottle$PlacingPill, pill, newCoords)
+							i: A2(author$project$Bottle$PlacingPill, pill, newCoords)
 						}) : A2(
 						afterPill,
 						pill,
@@ -7287,7 +7697,7 @@ var author$project$Bottle$advance = function (model) {
 					A2(
 						author$project$Grid$filter,
 						function (_n3) {
-							var coords = _n3.j;
+							var coords = _n3.d;
 							return A2(author$project$Bottle$canFall, coords, model.a);
 						},
 						model.a));
@@ -7309,7 +7719,7 @@ var author$project$Bottle$advance = function (model) {
 						if (!_n2.$) {
 							var $temp$model = _Utils_update(
 								model,
-								{h: author$project$Bottle$Bombing});
+								{i: author$project$Bottle$Bombing});
 							model = $temp$model;
 							continue advance;
 						} else {
@@ -7342,147 +7752,168 @@ var author$project$Bottle$advance = function (model) {
 };
 var author$project$Bottle$update = F3(
 	function (_n0, msg, model) {
-		var onBomb = _n0.aL;
-		var _n1 = _Utils_Tuple2(model.h, msg);
-		_n1$5:
+		update:
 		while (true) {
-			switch (_n1.b.$) {
-				case 0:
-					if (_n1.a.$ === 1) {
-						var cleared = _n1.a.a;
-						var next = _n1.b.a;
-						var _n2 = model.L;
-						var a = _n2.a;
-						var b = _n2.b;
-						return _Utils_Tuple3(
-							_Utils_update(
-								model,
-								{
-									h: A2(
-										author$project$Bottle$PlacingPill,
-										A2(author$project$Bottle$Horizontal, a, b),
-										_Utils_Tuple2(4, 0)),
-									L: next
-								}),
-							elm$core$Platform$Cmd$none,
-							(elm$core$List$length(cleared) > 1) ? onBomb(cleared) : elm$core$Maybe$Nothing);
-					} else {
-						break _n1$5;
-					}
-				case 1:
-					if (!_n1.a.$) {
-						var _n3 = _n1.a;
-						var pill = _n3.a;
-						var _n4 = _n3.b;
-						var x = _n4.a;
-						var y = _n4.b;
-						var key = _n1.b.a;
-						var moveIfAvailable = F2(
-							function (pill_, coords) {
-								return author$project$Bottle$withNothing(
-									A3(author$project$Bottle$isAvailable, coords, pill_, model.a) ? _Utils_update(
-										model,
-										{
-											h: A2(author$project$Bottle$PlacingPill, pill_, coords)
-										}) : model);
-							});
-						if (!key.$) {
-							switch (key.a) {
-								case 0:
-									var _n6 = key.a;
-									var newPill = function () {
-										if (!pill.$) {
-											var a = pill.a;
-											var b = pill.b;
-											return A2(author$project$Bottle$Vertical, a, b);
-										} else {
-											var a = pill.a;
-											var b = pill.b;
-											return A2(author$project$Bottle$Horizontal, b, a);
-										}
-									}();
-									return A2(
-										moveIfAvailable,
-										newPill,
-										_Utils_Tuple2(x, y));
-								case 2:
-									var _n8 = key.a;
-									return A2(
-										moveIfAvailable,
-										pill,
-										_Utils_Tuple2(x - 1, y));
-								case 3:
-									var _n9 = key.a;
-									return A2(
-										moveIfAvailable,
-										pill,
-										_Utils_Tuple2(x + 1, y));
-								default:
-									var _n10 = key.a;
-									return A2(
-										moveIfAvailable,
-										pill,
-										_Utils_Tuple2(x, y + 1));
+			var onBomb = _n0.ar;
+			var _n1 = _Utils_Tuple2(model.i, msg);
+			_n1$6:
+			while (true) {
+				switch (_n1.b.$) {
+					case 0:
+						if (_n1.a.$ === 1) {
+							var cleared = _n1.a.a;
+							var next = _n1.b.a;
+							var _n2 = model.L;
+							var a = _n2.a;
+							var b = _n2.b;
+							return _Utils_Tuple3(
+								_Utils_update(
+									model,
+									{
+										i: A2(
+											author$project$Bottle$PlacingPill,
+											A2(author$project$Bottle$Horizontal, a, b),
+											_Utils_Tuple2(4, 0)),
+										L: next
+									}),
+								elm$core$Platform$Cmd$none,
+								(elm$core$List$length(cleared) > 1) ? onBomb(cleared) : elm$core$Maybe$Nothing);
+						} else {
+							break _n1$6;
+						}
+					case 1:
+						if (!_n1.a.$) {
+							var _n3 = _n1.a;
+							var pill = _n3.a;
+							var _n4 = _n3.b;
+							var x = _n4.a;
+							var y = _n4.b;
+							var key = _n1.b.a;
+							var moveIfAvailable = F2(
+								function (pill_, coords) {
+									return author$project$Bottle$withNothing(
+										A3(author$project$Bottle$isAvailable, coords, pill_, model.a) ? _Utils_update(
+											model,
+											{
+												i: A2(author$project$Bottle$PlacingPill, pill_, coords)
+											}) : model);
+								});
+							if (!key.$) {
+								switch (key.a) {
+									case 0:
+										var _n6 = key.a;
+										var newPill = function () {
+											if (!pill.$) {
+												var a = pill.a;
+												var b = pill.b;
+												return A2(author$project$Bottle$Vertical, a, b);
+											} else {
+												var a = pill.a;
+												var b = pill.b;
+												return A2(author$project$Bottle$Horizontal, b, a);
+											}
+										}();
+										return A2(
+											moveIfAvailable,
+											newPill,
+											_Utils_Tuple2(x, y));
+									case 2:
+										var _n8 = key.a;
+										return A2(
+											moveIfAvailable,
+											pill,
+											_Utils_Tuple2(x - 1, y));
+									case 3:
+										var _n9 = key.a;
+										return A2(
+											moveIfAvailable,
+											pill,
+											_Utils_Tuple2(x + 1, y));
+									default:
+										var _n10 = key.a;
+										return A2(
+											moveIfAvailable,
+											pill,
+											_Utils_Tuple2(x, y + 1));
+								}
+							} else {
+								return author$project$Bottle$withNothing(model);
 							}
 						} else {
 							return author$project$Bottle$withNothing(model);
 						}
-					} else {
-						return author$project$Bottle$withNothing(model);
-					}
-				case 2:
-					return author$project$Bottle$advance(model);
-				default:
-					if (_n1.a.$ === 2) {
-						var _n11 = _n1.a;
-						var _n12 = _n1.b;
-						var color = _n12.a;
-						var x = _n12.b;
-						var contents = A3(
-							author$project$Grid$setState,
-							_Utils_Tuple2(
-								color,
-								author$project$Bottle$Pill(elm$core$Maybe$Nothing)),
-							_Utils_Tuple2(x, 1),
-							model.a);
-						var model_ = _Utils_update(
+					case 4:
+						var _n11 = _n1.b.a;
+						var key = _n11.a;
+						var goal = _n11.b;
+						var $temp$_n0 = {ar: onBomb},
+							$temp$msg = author$project$Bottle$KeyDown(key),
+							$temp$model = _Utils_update(
 							model,
-							{a: contents});
-						var _n13 = model.n;
-						if (_n13.b) {
-							var head = _n13.a;
-							var tail = _n13.b;
-							return _Utils_Tuple3(
-								_Utils_update(
-									model_,
-									{n: tail}),
-								A2(
-									elm$random$Random$generate,
-									author$project$Bottle$Bomb(head),
-									author$project$Bottle$generateBomb(model_.a)),
-								elm$core$Maybe$Nothing);
+							{T: goal});
+						_n0 = $temp$_n0;
+						msg = $temp$msg;
+						model = $temp$model;
+						continue update;
+					case 2:
+						return author$project$Bottle$advance(model);
+					default:
+						if (_n1.a.$ === 2) {
+							var _n12 = _n1.a;
+							var _n13 = _n1.b;
+							var color = _n13.a;
+							var x = _n13.b;
+							var contents = A3(
+								author$project$Grid$setState,
+								_Utils_Tuple2(
+									color,
+									author$project$Bottle$Pill(elm$core$Maybe$Nothing)),
+								_Utils_Tuple2(x, 1),
+								model.a);
+							var model_ = _Utils_update(
+								model,
+								{a: contents});
+							var _n14 = model.n;
+							if (_n14.b) {
+								var head = _n14.a;
+								var tail = _n14.b;
+								return _Utils_Tuple3(
+									_Utils_update(
+										model_,
+										{n: tail}),
+									A2(
+										elm$random$Random$generate,
+										author$project$Bottle$Bomb(head),
+										author$project$Bottle$generateBomb(model_.a)),
+									elm$core$Maybe$Nothing);
+							} else {
+								return _Utils_Tuple3(
+									_Utils_update(
+										model_,
+										{
+											i: author$project$Bottle$Falling(_List_Nil)
+										}),
+									elm$core$Platform$Cmd$none,
+									elm$core$Maybe$Nothing);
+							}
 						} else {
-							return _Utils_Tuple3(
-								_Utils_update(
-									model_,
-									{
-										h: author$project$Bottle$Falling(_List_Nil)
-									}),
-								elm$core$Platform$Cmd$none,
-								elm$core$Maybe$Nothing);
+							break _n1$6;
 						}
-					} else {
-						break _n1$5;
-					}
+				}
 			}
+			return author$project$Bottle$withNothing(model);
 		}
-		return author$project$Bottle$withNothing(model);
 	});
+var author$project$Bottle$Keyboard = function (a) {
+	return {$: 0, a: a};
+};
 var author$project$Bottle$withControls = F2(
 	function (controls, model) {
 		return _Utils_update(
 			model,
-			{R: controls});
+			{
+				R: author$project$Bottle$Keyboard(controls)
+			});
 	});
 var author$project$Component$raiseOutMsg = F4(
 	function (update, toModel, toMsg, result) {
@@ -7561,8 +7992,8 @@ var author$project$LevelCreator$virusesForLevel = function (level) {
 };
 var author$project$LevelCreator$update = F3(
 	function (_n0, action, model) {
-		var onCreated = _n0.aM;
-		var level = model.T;
+		var onCreated = _n0.aQ;
+		var level = model.U;
 		var bottle = model.y;
 		if (!action.$) {
 			var _n2 = action.a;
@@ -7589,7 +8020,7 @@ var author$project$LevelCreator$update = F3(
 			var colors = action.a;
 			var model_ = {
 				y: A2(author$project$Bottle$withNext, colors, bottle),
-				T: level
+				U: level
 			};
 			return _Utils_Tuple3(
 				model_,
@@ -7636,7 +8067,7 @@ var author$project$OnePlayer$Game$update = F3(
 	function (_n2, action, model) {
 		update:
 		while (true) {
-			var onLeave = _n2.aN;
+			var onLeave = _n2.aR;
 			var _n3 = _Utils_Tuple2(model, action);
 			switch (_n3.a.$) {
 				case 0:
@@ -7645,16 +8076,16 @@ var author$project$OnePlayer$Game$update = F3(
 							var state = _n3.a.a;
 							var score = state.m;
 							var creator = state.S;
-							var speed = state._;
+							var speed = state.aa;
 							var msg = _n3.b.a;
 							var _n4 = A3(
 								author$project$LevelCreator$update,
 								{
-									aM: function (_n5) {
-										var level = _n5.T;
+									aQ: function (_n5) {
+										var level = _n5.U;
 										var bottle = _n5.y;
 										return author$project$OnePlayer$Game$LevelReady(
-											{y: bottle, T: level, m: score, _: speed});
+											{y: bottle, U: level, m: score, aa: speed});
 									}
 								},
 								msg,
@@ -7672,7 +8103,7 @@ var author$project$OnePlayer$Game$update = F3(
 									elm$core$Maybe$Nothing);
 							} else {
 								var msg2 = maybeMsg.a;
-								var $temp$_n2 = {aN: onLeave},
+								var $temp$_n2 = {aR: onLeave},
 									$temp$action = msg2,
 									$temp$model = author$project$OnePlayer$Game$PrepareGame(
 									_Utils_update(
@@ -7722,20 +8153,20 @@ var author$project$OnePlayer$Game$update = F3(
 						var msg = _n3.b;
 						return (!author$project$Bottle$totalViruses(state.y.a)) ? _Utils_Tuple3(
 							author$project$OnePlayer$Game$Over(
-								{A: state, U: true}),
+								{A: state, V: true}),
 							elm$core$Platform$Cmd$none,
 							elm$core$Maybe$Nothing) : (author$project$Bottle$hasConflict(state.y) ? _Utils_Tuple3(
 							author$project$OnePlayer$Game$Over(
-								{A: state, U: false}),
+								{A: state, V: false}),
 							elm$core$Platform$Cmd$none,
 							elm$core$Maybe$Nothing) : A3(author$project$OnePlayer$Game$updatePlayState, onLeave, msg, state));
 					}
 				default:
 					switch (_n3.b.$) {
 						case 3:
-							var level = _n3.b.a.T;
+							var level = _n3.b.a.U;
 							var score = _n3.b.a.m;
-							var speed = _n3.b.a._;
+							var speed = _n3.b.a.aa;
 							var _n9 = A3(author$project$OnePlayer$Game$initWithScore, level, speed, score);
 							var model_ = _n9.a;
 							var msg = _n9.b;
@@ -7755,7 +8186,7 @@ var author$project$OnePlayer$Game$update = F3(
 var author$project$OnePlayer$Game$updatePlayState = F3(
 	function (onLeave, action, model) {
 		var bottle = model.y;
-		var speed = model._;
+		var speed = model.aa;
 		var score = model.m;
 		var withBottle = function (newBottle) {
 			var sweptViruses = author$project$Bottle$totalViruses(bottle.a) - author$project$Bottle$totalViruses(newBottle.a);
@@ -7770,13 +8201,13 @@ var author$project$OnePlayer$Game$updatePlayState = F3(
 			return A4(
 				author$project$Component$raiseOutMsg,
 				author$project$OnePlayer$Game$update(
-					{aN: onLeave}),
+					{aR: onLeave}),
 				withBottle,
 				author$project$OnePlayer$Game$BottleMsg,
 				A3(
 					author$project$Bottle$update,
 					{
-						aL: function (_n1) {
+						ar: function (_n1) {
 							return elm$core$Maybe$Nothing;
 						}
 					},
@@ -7795,7 +8226,7 @@ var author$project$OnePlayer$Menu$Speed = 0;
 var author$project$OnePlayer$Menu$update = F3(
 	function (events, msg, state) {
 		var selecting = state.E;
-		var speed = state._;
+		var speed = state.aa;
 		var withNothing = function (s) {
 			return _Utils_Tuple3(s, elm$core$Platform$Cmd$none, elm$core$Maybe$Nothing);
 		};
@@ -7826,7 +8257,7 @@ var author$project$OnePlayer$Menu$update = F3(
 							return _Utils_update(
 								state,
 								{
-									T: A2(elm$core$Basics$max, 0, state.T - 1)
+									U: A2(elm$core$Basics$max, 0, state.U - 1)
 								});
 						} else {
 							switch (_n1.b) {
@@ -7835,13 +8266,13 @@ var author$project$OnePlayer$Menu$update = F3(
 									var _n4 = _n1.b;
 									return _Utils_update(
 										state,
-										{_: 1});
+										{aa: 1});
 								case 1:
 									var _n5 = _n1.a;
 									var _n6 = _n1.b;
 									return _Utils_update(
 										state,
-										{_: 0});
+										{aa: 0});
 								default:
 									var _n7 = _n1.a;
 									return state;
@@ -7857,7 +8288,7 @@ var author$project$OnePlayer$Menu$update = F3(
 							return _Utils_update(
 								state,
 								{
-									T: A2(elm$core$Basics$min, 20, state.T + 1)
+									U: A2(elm$core$Basics$min, 20, state.U + 1)
 								});
 						} else {
 							switch (_n8.b) {
@@ -7866,13 +8297,13 @@ var author$project$OnePlayer$Menu$update = F3(
 									var _n11 = _n8.b;
 									return _Utils_update(
 										state,
-										{_: 1});
+										{aa: 1});
 								case 1:
 									var _n12 = _n8.a;
 									var _n13 = _n8.b;
 									return _Utils_update(
 										state,
-										{_: 2});
+										{aa: 2});
 								default:
 									var _n14 = _n8.a;
 									return state;
@@ -7884,8 +8315,8 @@ var author$project$OnePlayer$Menu$update = F3(
 					state,
 					elm$core$Platform$Cmd$none,
 					elm$core$Maybe$Just(
-						events.aO(
-							{T: state.T, _: state._})));
+						events.aS(
+							{U: state.U, aa: state.aa})));
 			default:
 				return withNothing(state);
 		}
@@ -7905,8 +8336,8 @@ var author$project$OnePlayer$update = F2(
 		while (true) {
 			switch (_n0.b.$) {
 				case 1:
-					var level = _n0.b.a.T;
-					var speed = _n0.b.a._;
+					var level = _n0.b.a.U;
+					var speed = _n0.b.a.aa;
 					return A2(
 						elm$core$Tuple$mapSecond,
 						elm$core$Platform$Cmd$map(author$project$OnePlayer$GameMsg),
@@ -7926,11 +8357,11 @@ var author$project$OnePlayer$update = F2(
 							A3(
 								author$project$OnePlayer$Menu$update,
 								{
-									aO: function (_n1) {
-										var level = _n1.T;
-										var speed = _n1._;
+									aS: function (_n1) {
+										var level = _n1.U;
+										var speed = _n1.aa;
 										return author$project$OnePlayer$Start(
-											{T: level, _: speed});
+											{U: level, aa: speed});
 									}
 								},
 								msg,
@@ -7949,7 +8380,7 @@ var author$project$OnePlayer$update = F2(
 							author$project$OnePlayer$GameMsg,
 							A3(
 								author$project$OnePlayer$Game$update,
-								{aN: author$project$OnePlayer$Reset},
+								{aR: author$project$OnePlayer$Reset},
 								msg,
 								state));
 					} else {
@@ -7992,17 +8423,17 @@ var author$project$TwoPlayer$Game$PrepareFirst = F2(
 var author$project$TwoPlayer$Game$init = F2(
 	function (first, second) {
 		var withOpts = function (opts) {
-			return {y: author$project$Bottle$init, T: opts.T, _: opts._};
+			return {y: author$project$Bottle$init, U: opts.U, aa: opts.aa};
 		};
-		var _n0 = author$project$LevelCreator$init(first.T);
+		var _n0 = author$project$LevelCreator$init(first.U);
 		var creator = _n0.a;
 		var cmd = _n0.b;
 		return _Utils_Tuple2(
 			A2(
 				author$project$TwoPlayer$Game$PrepareFirst,
 				{
-					f: withOpts(first),
-					d: withOpts(second)
+					g: withOpts(first),
+					e: withOpts(second)
 				},
 				creator),
 			A2(elm$core$Platform$Cmd$map, author$project$TwoPlayer$Game$CreatorMsg, cmd));
@@ -8015,20 +8446,6 @@ var author$project$Bottle$withBombs = F2(
 				n: _Utils_ap(model.n, colors)
 			});
 	});
-var author$project$Controls$wasd = function (keyCode) {
-	switch (keyCode) {
-		case 87:
-			return elm$core$Maybe$Just(0);
-		case 65:
-			return elm$core$Maybe$Just(2);
-		case 68:
-			return elm$core$Maybe$Just(3);
-		case 83:
-			return elm$core$Maybe$Just(1);
-		default:
-			return elm$core$Maybe$Nothing;
-	}
-};
 var author$project$TwoPlayer$Game$First = 0;
 var author$project$TwoPlayer$Game$FirstBomb = function (a) {
 	return {$: 4, a: a};
@@ -8063,7 +8480,7 @@ var author$project$TwoPlayer$Game$update = F3(
 	function (_n1, action, model) {
 		update:
 		while (true) {
-			var onLeave = _n1.aN;
+			var onLeave = _n1.aR;
 			var _n2 = _Utils_Tuple2(model, action);
 			switch (_n2.a.$) {
 				case 0:
@@ -8073,22 +8490,20 @@ var author$project$TwoPlayer$Game$update = F3(
 							var state = _n3.a;
 							var creator = _n3.b;
 							var msg = _n2.b.a;
-							var first = state.f;
+							var first = state.g;
 							var _n4 = A3(
 								author$project$LevelCreator$update,
 								{
-									aM: function (_n5) {
-										var level = _n5.T;
+									aQ: function (_n5) {
+										var level = _n5.U;
 										var bottle = _n5.y;
 										return author$project$TwoPlayer$Game$LevelReady(
 											_Utils_update(
 												state,
 												{
-													f: _Utils_update(
+													g: _Utils_update(
 														first,
-														{
-															y: A2(author$project$Bottle$withControls, author$project$Controls$wasd, bottle)
-														})
+														{y: bottle})
 												}));
 									}
 								},
@@ -8104,7 +8519,7 @@ var author$project$TwoPlayer$Game$update = F3(
 									elm$core$Maybe$Nothing);
 							} else {
 								var msg2 = maybeMsg.a;
-								var $temp$_n1 = {aN: onLeave},
+								var $temp$_n1 = {aR: onLeave},
 									$temp$action = msg2,
 									$temp$model = A2(author$project$TwoPlayer$Game$PrepareFirst, state, creator_);
 								_n1 = $temp$_n1;
@@ -8116,7 +8531,7 @@ var author$project$TwoPlayer$Game$update = F3(
 							var _n7 = _n2.a;
 							var creator = _n7.b;
 							var state = _n2.b.a;
-							var _n8 = author$project$LevelCreator$init(state.d.T);
+							var _n8 = author$project$LevelCreator$init(state.e.U);
 							var creator_ = _n8.a;
 							var cmd = _n8.b;
 							return _Utils_Tuple3(
@@ -8134,18 +8549,18 @@ var author$project$TwoPlayer$Game$update = F3(
 							var state = _n10.a;
 							var creator = _n10.b;
 							var msg = _n2.b.a;
-							var second = state.d;
+							var second = state.e;
 							var _n11 = A3(
 								author$project$LevelCreator$update,
 								{
-									aM: function (_n12) {
-										var level = _n12.T;
+									aQ: function (_n12) {
+										var level = _n12.U;
 										var bottle = _n12.y;
 										return author$project$TwoPlayer$Game$LevelReady(
 											_Utils_update(
 												state,
 												{
-													d: _Utils_update(
+													e: _Utils_update(
 														second,
 														{
 															y: A2(author$project$Bottle$withControls, author$project$Controls$arrows, bottle)
@@ -8158,16 +8573,16 @@ var author$project$TwoPlayer$Game$update = F3(
 							var creator_ = _n11.a;
 							var cmd = _n11.b;
 							var maybeMsg = _n11.c;
-							if (_Utils_eq(state.f.T, state.d.T)) {
+							if (_Utils_eq(state.g.U, state.e.U)) {
 								return _Utils_Tuple3(
 									author$project$TwoPlayer$Game$Playing(
 										_Utils_update(
 											state,
 											{
-												d: _Utils_update(
+												e: _Utils_update(
 													second,
 													{
-														y: A2(author$project$Bottle$withControls, author$project$Controls$arrows, state.f.y)
+														y: A2(author$project$Bottle$withControls, author$project$Controls$arrows, state.g.y)
 													})
 											})),
 									elm$core$Platform$Cmd$none,
@@ -8180,7 +8595,7 @@ var author$project$TwoPlayer$Game$update = F3(
 										elm$core$Maybe$Nothing);
 								} else {
 									var msg2 = maybeMsg.a;
-									var $temp$_n1 = {aN: onLeave},
+									var $temp$_n1 = {aR: onLeave},
 										$temp$action = msg2,
 										$temp$model = A2(author$project$TwoPlayer$Game$PrepareSecond, state, creator_);
 									_n1 = $temp$_n1;
@@ -8230,10 +8645,10 @@ var author$project$TwoPlayer$Game$update = F3(
 									_Utils_update(
 										state,
 										{
-											d: A2(
+											e: A2(
 												author$project$TwoPlayer$Game$withBottle,
-												A2(author$project$Bottle$withBombs, colors, state.d.y),
-												state.d)
+												A2(author$project$Bottle$withBombs, colors, state.e.y),
+												state.e)
 										})),
 								elm$core$Platform$Cmd$none,
 								elm$core$Maybe$Nothing);
@@ -8245,25 +8660,25 @@ var author$project$TwoPlayer$Game$update = F3(
 									_Utils_update(
 										state,
 										{
-											f: A2(
+											g: A2(
 												author$project$TwoPlayer$Game$withBottle,
-												A2(author$project$Bottle$withBombs, colors, state.f.y),
-												state.f)
+												A2(author$project$Bottle$withBombs, colors, state.g.y),
+												state.g)
 										})),
 								elm$core$Platform$Cmd$none,
 								elm$core$Maybe$Nothing);
 						default:
 							var state = _n2.a.a;
-							var first = state.f;
-							var second = state.d;
+							var first = state.g;
+							var second = state.e;
 							var msg = _n2.b;
 							return ((!author$project$Bottle$totalViruses(first.y.a)) || author$project$Bottle$hasConflict(second.y)) ? _Utils_Tuple3(
 								author$project$TwoPlayer$Game$Over(
-									{A: state, ac: 0}),
+									{A: state, ad: 0}),
 								elm$core$Platform$Cmd$none,
 								elm$core$Maybe$Nothing) : (((!author$project$Bottle$totalViruses(second.y.a)) || author$project$Bottle$hasConflict(first.y)) ? _Utils_Tuple3(
 								author$project$TwoPlayer$Game$Over(
-									{A: state, ac: 1}),
+									{A: state, ad: 1}),
 								elm$core$Platform$Cmd$none,
 								elm$core$Maybe$Nothing) : A3(author$project$TwoPlayer$Game$updatePlayState, onLeave, msg, state));
 					}
@@ -8282,28 +8697,28 @@ var author$project$TwoPlayer$Game$update = F3(
 	});
 var author$project$TwoPlayer$Game$updatePlayState = F3(
 	function (onLeave, action, model) {
-		var first = model.f;
-		var second = model.d;
+		var first = model.g;
+		var second = model.e;
 		switch (action.$) {
 			case 0:
 				var msg = action.a;
 				return A4(
 					author$project$Component$raiseOutMsg,
 					author$project$TwoPlayer$Game$update(
-						{aN: onLeave}),
+						{aR: onLeave}),
 					function (bottle) {
 						return author$project$TwoPlayer$Game$Playing(
 							_Utils_update(
 								model,
 								{
-									f: A2(author$project$TwoPlayer$Game$withBottle, bottle, first)
+									g: A2(author$project$TwoPlayer$Game$withBottle, bottle, first)
 								}));
 					},
 					author$project$TwoPlayer$Game$FirstBottleMsg,
 					A3(
 						author$project$Bottle$update,
 						{
-							aL: A2(elm$core$Basics$composeR, author$project$TwoPlayer$Game$FirstBomb, elm$core$Maybe$Just)
+							ar: A2(elm$core$Basics$composeR, author$project$TwoPlayer$Game$FirstBomb, elm$core$Maybe$Just)
 						},
 						msg,
 						first.y));
@@ -8312,20 +8727,20 @@ var author$project$TwoPlayer$Game$updatePlayState = F3(
 				return A4(
 					author$project$Component$raiseOutMsg,
 					author$project$TwoPlayer$Game$update(
-						{aN: onLeave}),
+						{aR: onLeave}),
 					function (bottle) {
 						return author$project$TwoPlayer$Game$Playing(
 							_Utils_update(
 								model,
 								{
-									d: A2(author$project$TwoPlayer$Game$withBottle, bottle, second)
+									e: A2(author$project$TwoPlayer$Game$withBottle, bottle, second)
 								}));
 					},
 					author$project$TwoPlayer$Game$SecondBottleMsg,
 					A3(
 						author$project$Bottle$update,
 						{
-							aL: A2(elm$core$Basics$composeR, author$project$TwoPlayer$Game$SecondBomb, elm$core$Maybe$Just)
+							ar: A2(elm$core$Basics$composeR, author$project$TwoPlayer$Game$SecondBomb, elm$core$Maybe$Just)
 						},
 						msg,
 						second.y));
@@ -8344,8 +8759,8 @@ var author$project$TwoPlayer$update = F2(
 			if (!_n0.a.$) {
 				switch (_n0.b.$) {
 					case 0:
-						var level = _n0.b.a.T;
-						var speed = _n0.b.a._;
+						var level = _n0.b.a.U;
+						var speed = _n0.b.a.aa;
 						return A2(
 							elm$core$Tuple$mapSecond,
 							elm$core$Platform$Cmd$map(author$project$TwoPlayer$GameMsg),
@@ -8354,8 +8769,8 @@ var author$project$TwoPlayer$update = F2(
 								author$project$TwoPlayer$InGame,
 								A2(
 									author$project$TwoPlayer$Game$init,
-									{T: level, _: speed},
-									{T: level, _: speed})));
+									{U: level, aa: speed},
+									{U: level, aa: speed})));
 					case 1:
 						var state = _n0.a.a;
 						var msg = _n0.b.a;
@@ -8367,11 +8782,11 @@ var author$project$TwoPlayer$update = F2(
 							A3(
 								author$project$OnePlayer$Menu$update,
 								{
-									aO: function (_n1) {
-										var level = _n1.T;
-										var speed = _n1._;
+									aS: function (_n1) {
+										var level = _n1.U;
+										var speed = _n1.aa;
 										return author$project$TwoPlayer$Start(
-											{T: level, _: speed});
+											{U: level, aa: speed});
 									}
 								},
 								msg,
@@ -8391,7 +8806,7 @@ var author$project$TwoPlayer$update = F2(
 							author$project$TwoPlayer$GameMsg,
 							A3(
 								author$project$TwoPlayer$Game$update,
-								{aN: author$project$TwoPlayer$Reset},
+								{aR: author$project$TwoPlayer$Reset},
 								msg,
 								state));
 					case 3:
@@ -8685,7 +9100,8 @@ var author$project$Bottle$viewVirus = function (color) {
 };
 var author$project$Bottle$view = function (_n0) {
 	var contents = _n0.a;
-	var mode = _n0.h;
+	var mode = _n0.i;
+	var goal = _n0.T;
 	return A2(
 		elm$html$Html$div,
 		_List_Nil,
@@ -8713,7 +9129,7 @@ var author$project$Bottle$view = function (_n0) {
 							A2(
 								elm$core$List$map,
 								function (cell) {
-									var _n1 = cell.c;
+									var _n1 = cell.b;
 									if (_n1.$ === 1) {
 										return A2(elm$html$Html$div, author$project$Bottle$cellStyle, _List_Nil);
 									} else {
@@ -8736,6 +9152,20 @@ var author$project$Bottle$view = function (_n0) {
 						if (!mode.$) {
 							var pill = mode.a;
 							var coords = mode.b;
+							var withGoal = function () {
+								if (goal.$ === 1) {
+									return contents;
+								} else {
+									var _n7 = goal.a;
+									var x = _n7.a;
+									var p = _n7.b;
+									return A3(
+										author$project$Bottle$addPill,
+										p,
+										_Utils_Tuple2(x, 0),
+										contents);
+								}
+							}();
 							return A3(author$project$Bottle$addPill, pill, coords, contents);
 						} else {
 							return contents;
@@ -8769,23 +9199,13 @@ var author$project$OnePlayer$Game$columnEl = A2(
 		[
 			_Utils_Tuple2('margin', '0 16px')
 		]));
-var elm$core$Maybe$map = F2(
-	function (f, maybe) {
-		if (!maybe.$) {
-			var value = maybe.a;
-			return elm$core$Maybe$Just(
-				f(value));
-		} else {
-			return elm$core$Maybe$Nothing;
-		}
-	});
 var elm$html$Html$p = _VirtualDom_node('p');
 var author$project$OnePlayer$Game$viewPlaying = F2(
 	function (pauseMsg, _n0) {
 		var score = _n0.m;
 		var bottle = _n0.y;
-		var level = _n0.T;
-		var speed = _n0._;
+		var level = _n0.U;
+		var speed = _n0.aa;
 		return A2(
 			elm$html$Html$div,
 			_List_fromArray(
@@ -8969,19 +9389,19 @@ var author$project$OnePlayer$Game$view = function (model) {
 					[
 						A2(
 						author$project$OnePlayer$Game$viewMessage,
-						state.U ? 'You Win!' : 'Game Over',
+						state.V ? 'You Win!' : 'Game Over',
 						A2(
 							elm$html$Html$div,
 							_List_Nil,
 							_List_fromArray(
 								[
-									state.U ? A2(
+									state.V ? A2(
 									elm$html$Html$button,
 									_List_fromArray(
 										[
 											elm$html$Html$Events$onClick(
 											author$project$OnePlayer$Game$Advance(
-												{T: state.A.T + 1, m: state.A.m, _: state.A._}))
+												{U: state.A.U + 1, m: state.A.m, aa: state.A.aa}))
 										]),
 									_List_fromArray(
 										[
@@ -9098,8 +9518,8 @@ var author$project$OnePlayer$Menu$viewSpeed = F2(
 				]));
 	});
 var author$project$OnePlayer$Menu$view = function (_n0) {
-	var level = _n0.T;
-	var speed = _n0._;
+	var level = _n0.U;
+	var speed = _n0.aa;
 	var selecting = _n0.E;
 	return A2(
 		elm$html$Html$div,
@@ -9198,8 +9618,8 @@ var author$project$TwoPlayer$Game$viewMessage = F2(
 	});
 var author$project$TwoPlayer$Game$viewPlayer = function (_n0) {
 	var bottle = _n0.y;
-	var level = _n0.T;
-	var speed = _n0._;
+	var level = _n0.U;
+	var speed = _n0.aa;
 	return A2(
 		elm$html$Html$div,
 		_List_fromArray(
@@ -9268,7 +9688,7 @@ var author$project$TwoPlayer$Game$view = function (model) {
 							]),
 						_List_fromArray(
 							[
-								author$project$TwoPlayer$Game$viewPlayer(state.f),
+								author$project$TwoPlayer$Game$viewPlayer(state.g),
 								A2(
 								elm$html$Html$div,
 								_List_fromArray(
@@ -9294,14 +9714,14 @@ var author$project$TwoPlayer$Game$view = function (model) {
 												_List_Nil,
 												_List_fromArray(
 													[
-														A2(elm$core$Basics$composeR, elm$core$String$fromInt, elm$html$Html$text)(state.f.T)
+														A2(elm$core$Basics$composeR, elm$core$String$fromInt, elm$html$Html$text)(state.g.U)
 													])),
 												A2(
 												elm$html$Html$span,
 												_List_Nil,
 												_List_fromArray(
 													[
-														A2(elm$core$Basics$composeR, elm$core$String$fromInt, elm$html$Html$text)(state.d.T)
+														A2(elm$core$Basics$composeR, elm$core$String$fromInt, elm$html$Html$text)(state.e.U)
 													]))
 											])),
 										A2(
@@ -9321,14 +9741,14 @@ var author$project$TwoPlayer$Game$view = function (model) {
 												_List_Nil,
 												_List_fromArray(
 													[
-														A2(elm$core$Basics$composeR, author$project$Bottle$speedToString, elm$html$Html$text)(state.f._)
+														A2(elm$core$Basics$composeR, author$project$Bottle$speedToString, elm$html$Html$text)(state.g.aa)
 													])),
 												A2(
 												elm$html$Html$span,
 												_List_Nil,
 												_List_fromArray(
 													[
-														A2(elm$core$Basics$composeR, author$project$Bottle$speedToString, elm$html$Html$text)(state.d._)
+														A2(elm$core$Basics$composeR, author$project$Bottle$speedToString, elm$html$Html$text)(state.e.aa)
 													]))
 											])),
 										A2(
@@ -9349,7 +9769,7 @@ var author$project$TwoPlayer$Game$view = function (model) {
 												_List_fromArray(
 													[
 														elm$html$Html$text(
-														author$project$TwoPlayer$Game$displayViruses(state.f))
+														author$project$TwoPlayer$Game$displayViruses(state.g))
 													])),
 												A2(
 												elm$html$Html$span,
@@ -9357,11 +9777,11 @@ var author$project$TwoPlayer$Game$view = function (model) {
 												_List_fromArray(
 													[
 														elm$html$Html$text(
-														author$project$TwoPlayer$Game$displayViruses(state.d))
+														author$project$TwoPlayer$Game$displayViruses(state.e))
 													]))
 											]))
 									])),
-								author$project$TwoPlayer$Game$viewPlayer(state.d)
+								author$project$TwoPlayer$Game$viewPlayer(state.e)
 							]))
 					]));
 		case 3:
@@ -9395,7 +9815,7 @@ var author$project$TwoPlayer$Game$view = function (model) {
 						A2(
 						author$project$TwoPlayer$Game$viewMessage,
 						function () {
-							var _n1 = state.ac;
+							var _n1 = state.ad;
 							if (!_n1) {
 								return '1p wins';
 							} else {
@@ -9477,12 +9897,12 @@ var author$project$Main$view = function (model) {
 var elm$browser$Browser$element = _Browser_element;
 var author$project$Main$main = elm$browser$Browser$element(
 	{
-		aJ: function (_n0) {
+		aO: function (_n0) {
 			return _Utils_Tuple2(author$project$Main$Selecting, elm$core$Platform$Cmd$none);
 		},
-		aT: author$project$Main$subscriptions,
-		aV: author$project$Main$update,
-		aX: author$project$Main$view
+		aX: author$project$Main$subscriptions,
+		aZ: author$project$Main$update,
+		a$: author$project$Main$view
 	});
 _Platform_export({'Main':{'init':author$project$Main$main(
 	elm$json$Json$Decode$succeed(0))(0)}});}(this));
