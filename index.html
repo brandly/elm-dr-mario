@@ -21,17 +21,11 @@
   </head>
   <body>
     <div id="elm"></div>
-    <!-- one for dev, one for prod  -->
-    <script src="/_compile/src/Main.elm"></script>
     <script src="the.js"></script>
     <script>
-      if (window.runElmProgram) {
-        runElmProgram();
-      } else {
-        Elm.Main.init({
-          node: document.getElementById('elm')
-        });
-      }
+      Elm.Main.init({
+        node: document.getElementById('elm')
+      });
     </script>
   </body>
 </html>
