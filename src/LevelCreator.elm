@@ -19,7 +19,7 @@ type alias Model =
 
 
 type Msg
-    = NewVirus ( Color, Grid.Coords )
+    = NewVirus Grid.Coords
     | NewPill ( Color, Color )
 
 
@@ -44,10 +44,13 @@ virusesForLevel level =
 update : { onCreated : Model -> msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
 update { onCreated } action ({ level, bottle } as model) =
     case action of
-        NewVirus ( color, coords ) ->
+        NewVirus coords ->
             let
                 newBottle =
                     Bottle.withVirus color coords bottle
+
+                color =
+                    Bottle.getColor (Bottle.totalViruses bottle.contents)
             in
                 if Bottle.isCleared coords newBottle.contents then
                     -- would create a 4-in-a-row, so let's try a new virus
@@ -81,4 +84,4 @@ update { onCreated } action ({ level, bottle } as model) =
 randomNewVirus : Bottle -> Cmd Msg
 randomNewVirus bottle =
     Random.generate NewVirus <|
-        Random.pair Bottle.generateColor (Bottle.generateEmptyCoords bottle)
+        Bottle.generateEmptyCoords bottle

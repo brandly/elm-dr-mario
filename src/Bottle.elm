@@ -6,7 +6,7 @@ module Bottle
         , Model
         , Msg(..)
         , Speed(..)
-        , generateColor
+        , getColor
         , generateEmptyCoords
         , generatePill
         , hasConflict
@@ -87,6 +87,20 @@ type Color
     = Red
     | Blue
     | Yellow
+
+
+getColor : Int -> Color
+getColor index =
+    -- TODO: is there a way to express "number of constructors"?
+    case remainderBy 3 index of
+        0 ->
+            Red
+
+        1 ->
+            Blue
+
+        _ ->
+            Yellow
 
 
 type alias Contents =
