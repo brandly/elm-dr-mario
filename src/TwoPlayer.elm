@@ -14,7 +14,7 @@ init =
 
 type Model
     = Init Menu.State
-    | InGame Game.Model
+    | InGame Menu.State Game.Model
 
 
 type Msg
@@ -27,11 +27,11 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
     case ( model, action ) of
-        ( Init _, Start { level, speed } ) ->
+        ( Init menu, Start { level, speed } ) ->
             Game.init
                 { level = level, speed = speed }
                 { level = level, speed = speed }
-                |> Tuple.mapFirst InGame
+                |> Tuple.mapFirst (InGame menu)
                 |> Tuple.mapSecond (Cmd.map GameMsg)
 
         ( Init state, MenuMsg msg ) ->
@@ -47,13 +47,13 @@ update action model =
                     msg
                 |> Component.mapOutMsg update Init MenuMsg
 
-        ( InGame state, GameMsg msg ) ->
+        ( InGame menu state, GameMsg msg ) ->
             state
                 |> Game.update { onLeave = Reset } msg
-                |> Component.mapOutMsg update InGame GameMsg
+                |> Component.mapOutMsg update (InGame menu) GameMsg
 
-        ( InGame state, Reset ) ->
-            ( Init Menu.init, Cmd.none )
+        ( InGame menu state, Reset ) ->
+            ( Init menu, Cmd.none )
 
         ( _, _ ) ->
             ( model, Cmd.none )
@@ -65,7 +65,7 @@ subscriptions model =
         Init state ->
             Sub.map MenuMsg <| Menu.subscriptions state
 
-        InGame state ->
+        InGame _ state ->
             Sub.map GameMsg <| Game.subscriptions state
 
 
@@ -75,6 +75,6 @@ view model =
         Init state ->
             Menu.view state
 
-        InGame state ->
+        InGame _ state ->
             Game.view state
                 |> Html.map GameMsg
