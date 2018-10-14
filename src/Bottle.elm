@@ -169,41 +169,35 @@ trashBot bottle mode =
                         getOpenings =
                             List.Extra.takeWhile (\cell -> cell.state == Nothing)
 
-                        ( before, after ) =
-                            ( getOpenings (List.reverse (List.take (Tuple.first coords) heads))
-                            , getOpenings (List.drop (Tuple.first coords) heads)
-                            )
+                        floodHorizontal : Grid.Coords -> List (Cell Contents)
+                        floodHorizontal ( x, y ) =
+                            -- TODO: use y, define getRow instead of `heads`
+                            let
+                                ( before, after ) =
+                                    ( getOpenings (List.reverse (List.take x heads))
+                                    , getOpenings (List.drop x heads)
+                                    )
+                            in
+                                before ++ after
 
-                        openCells : List (Cell Contents)
-                        openCells =
-                            before ++ after
+                        openCoords : List Int
+                        openCoords =
+                            List.map (.coords >> Tuple.first) (floodHorizontal coords)
 
-                        ( minX, maxX ) =
-                            ( openCells
-                                |> List.Extra.minimumBy (\cell -> Tuple.first cell.coords)
-                                |> Maybe.map (.coords >> Tuple.first)
-                                |> Maybe.withDefault (Tuple.first coords)
-                            , openCells
-                                |> (List.Extra.maximumBy (\cell -> Tuple.first cell.coords))
-                                |> (Maybe.map (.coords >> Tuple.first))
-                                |> Maybe.withDefault (Tuple.first coords)
-                            )
+                        possibilites =
+                            List.map (\x -> ( x, Vertical color_a color_b )) openCoords
+                                ++ (List.map (\x -> ( x, Horizontal color_a color_b )) openCoords)
+                                ++ (if color_a == color_b then
+                                        []
+                                    else
+                                        List.map (\x -> ( x, Horizontal color_b color_a )) openCoords
+                                   )
                     in
-                        (List.range minX maxX
-                            |> List.map
-                                (\x ->
-                                    ( x, Vertical color_a color_b )
+                        possibilites
+                            |> List.filter
+                                (\( x, p ) ->
+                                    not (pillHasConflict p ( x, (Tuple.second coords) ) bottle)
                                 )
-                        )
-                            ++ (if color_a == color_b then
-                                    []
-                                else
-                                    List.range minX (maxX - 1)
-                                        |> List.map (\x -> ( x, Horizontal color_b color_a ))
-                               )
-                            ++ (List.range minX (maxX - 1)
-                                    |> List.map (\x -> ( x, Horizontal color_a color_b ))
-                               )
 
                 peaks : List (Grid.Cell Contents)
                 peaks =
@@ -878,12 +872,17 @@ hasConflict : Model -> Bool
 hasConflict { mode, contents } =
     case mode of
         PlacingPill pill coords ->
-            pillCoordsPair pill coords
-                |> List.map (\p -> Grid.isEmpty p contents)
-                |> List.any not
+            pillHasConflict pill coords contents
 
         _ ->
             False
+
+
+pillHasConflict : Pill -> Grid.Coords -> Bottle -> Bool
+pillHasConflict pill coords contents =
+    pillCoordsPair pill coords
+        |> List.map (\p -> Grid.isEmpty p contents)
+        |> List.any not
 
 
 
