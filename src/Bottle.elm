@@ -156,14 +156,7 @@ trashBot bottle mode =
                     let
                         heads : List (Cell Contents)
                         heads =
-                            bottle
-                                |> List.map (\column -> List.drop (Tuple.second coords - 1) column)
-                                |> List.map
-                                    (\column ->
-                                        List.head column
-                                            |> Maybe.withDefault
-                                                { state = Nothing, coords = ( -1, -1 ) }
-                                    )
+                            Grid.row (Tuple.second coords) bottle
 
                         getOpenings : List (Cell Contents) -> List (Cell Contents)
                         getOpenings =

@@ -12,6 +12,7 @@ module Grid
         , height
         , isEmpty
         , map
+        , row
         , setState
         , topRow
         , width
@@ -152,20 +153,11 @@ below ( x, y ) grid =
             List.drop y column
 
 
+row : Int -> Grid val -> List (Cell val)
+row index grid =
+    List.filterMap (List.drop (index - 1) >> List.head) grid
+
+
 topRow : Grid val -> List (Cell val)
 topRow grid =
-    let
-        go result grid_ =
-            case grid_ of
-                head :: tail ->
-                    case head of
-                        Just cell ->
-                            go (cell :: result) tail
-
-                        Nothing ->
-                            go result tail
-
-                _ ->
-                    result
-    in
-        go [] (List.map List.head grid)
+    row 1 grid
