@@ -132,6 +132,25 @@ init =
     }
 
 
+floodHorizontal : Grid.Coords -> Bottle -> List (Cell Contents)
+floodHorizontal ( x, y ) bottle =
+    let
+        heads : List (Cell Contents)
+        heads =
+            Grid.row y bottle
+
+        getOpenings : List (Cell Contents) -> List (Cell Contents)
+        getOpenings =
+            List.Extra.takeWhile (\cell -> cell.state == Nothing)
+
+        ( before, after ) =
+            ( getOpenings (List.reverse (List.take x heads))
+            , getOpenings (List.drop x heads)
+            )
+    in
+        before ++ after
+
+
 trashBot : Bottle -> Mode -> ( Maybe Direction, Maybe ( Int, Pill ) )
 trashBot bottle mode =
     case mode of
@@ -154,28 +173,9 @@ trashBot bottle mode =
                 options : List ( Int, Pill )
                 options =
                     let
-                        heads : List (Cell Contents)
-                        heads =
-                            Grid.row (Tuple.second coords) bottle
-
-                        getOpenings : List (Cell Contents) -> List (Cell Contents)
-                        getOpenings =
-                            List.Extra.takeWhile (\cell -> cell.state == Nothing)
-
-                        floodHorizontal : Grid.Coords -> List (Cell Contents)
-                        floodHorizontal ( x, y ) =
-                            -- TODO: use y, define getRow instead of `heads`
-                            let
-                                ( before, after ) =
-                                    ( getOpenings (List.reverse (List.take x heads))
-                                    , getOpenings (List.drop x heads)
-                                    )
-                            in
-                                before ++ after
-
                         openCoords : List Int
                         openCoords =
-                            List.map (.coords >> Tuple.first) (floodHorizontal coords)
+                            List.map (.coords >> Tuple.first) (floodHorizontal coords bottle)
 
                         possibilites =
                             List.map (\x -> ( x, Vertical color_a color_b )) openCoords
