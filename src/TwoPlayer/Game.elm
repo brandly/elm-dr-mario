@@ -1,18 +1,17 @@
-module TwoPlayer.Game
-    exposing
-        ( Model(..)
-        , Msg(..)
-        , init
-        , subscriptions
-        , update
-        , view
-        )
+module TwoPlayer.Game exposing
+    ( Model(..)
+    , Msg(..)
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
-import Bottle exposing (Bottle, Color(..), Speed(..))
+import Bottle exposing (Color(..), Speed(..))
 import Component
 import Controls
-import Element exposing (Element, none, px, styled)
-import Html exposing (Html, div, h1, h3, p, text, span)
+import Element exposing (Element, none, styled)
+import Html exposing (Html, div, h3, p, span, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import LevelCreator
@@ -83,13 +82,13 @@ init first second =
             , bottle = Bottle.init
             }
     in
-        ( PrepareFirst
-            { first = withOpts first
-            , second = withOpts second
-            }
-            creator
-        , Cmd.map CreatorMsg cmd
-        )
+    ( PrepareFirst
+        { first = withOpts first
+        , second = withOpts second
+        }
+        creator
+    , Cmd.map CreatorMsg cmd
+    )
 
 
 subscriptions : Model -> Sub Msg
@@ -122,34 +121,34 @@ update { onLeave } action model =
                 ( creator_, cmd, maybeMsg ) =
                     LevelCreator.update
                         { onCreated =
-                            \{ level, bottle } ->
+                            \{ bottle } ->
                                 LevelReady
                                     { state | first = { first | bottle = bottle } }
                         }
                         msg
                         creator
             in
-                case maybeMsg of
-                    Nothing ->
-                        ( PrepareFirst state creator_
-                        , Cmd.map CreatorMsg cmd
-                        , Nothing
-                        )
+            case maybeMsg of
+                Nothing ->
+                    ( PrepareFirst state creator_
+                    , Cmd.map CreatorMsg cmd
+                    , Nothing
+                    )
 
-                    Just msg2 ->
-                        update { onLeave = onLeave }
-                            msg2
-                            (PrepareFirst state creator_)
+                Just msg2 ->
+                    update { onLeave = onLeave }
+                        msg2
+                        (PrepareFirst state creator_)
 
-        ( PrepareFirst _ creator, LevelReady state ) ->
+        ( PrepareFirst _ _, LevelReady state ) ->
             let
                 ( creator_, cmd ) =
                     LevelCreator.init state.second.level
             in
-                ( PrepareSecond state creator_
-                , Cmd.map CreatorMsg cmd
-                , Nothing
-                )
+            ( PrepareSecond state creator_
+            , Cmd.map CreatorMsg cmd
+            , Nothing
+            )
 
         ( PrepareFirst _ _, _ ) ->
             ( model, Cmd.none, Nothing )
@@ -162,33 +161,34 @@ update { onLeave } action model =
                 ( creator_, cmd, maybeMsg ) =
                     LevelCreator.update
                         { onCreated =
-                            \{ level, bottle } ->
+                            \{ bottle } ->
                                 LevelReady
                                     { state | second = { second | bottle = Bottle.withControls Controls.arrows bottle } }
                         }
                         msg
                         creator
             in
-                if state.first.level == state.second.level then
-                    ( Playing
-                        { state | second = { second | bottle = Bottle.withControls Controls.arrows state.first.bottle } }
-                    , Cmd.none
-                    , Nothing
-                    )
-                else
-                    case maybeMsg of
-                        Nothing ->
-                            ( PrepareSecond state creator_
-                            , Cmd.map CreatorMsg cmd
-                            , Nothing
-                            )
+            if state.first.level == state.second.level then
+                ( Playing
+                    { state | second = { second | bottle = Bottle.withControls Controls.arrows state.first.bottle } }
+                , Cmd.none
+                , Nothing
+                )
 
-                        Just msg2 ->
-                            update { onLeave = onLeave }
-                                msg2
-                                (PrepareSecond state creator_)
+            else
+                case maybeMsg of
+                    Nothing ->
+                        ( PrepareSecond state creator_
+                        , Cmd.map CreatorMsg cmd
+                        , Nothing
+                        )
 
-        ( PrepareSecond _ creator, LevelReady state ) ->
+                    Just msg2 ->
+                        update { onLeave = onLeave }
+                            msg2
+                            (PrepareSecond state creator_)
+
+        ( PrepareSecond _ _, LevelReady state ) ->
             ( Playing state, Cmd.none, Nothing )
 
         ( PrepareSecond _ _, _ ) ->
@@ -200,7 +200,7 @@ update { onLeave } action model =
         ( Paused state, Resume ) ->
             ( Playing state, Cmd.none, Nothing )
 
-        ( Paused state, _ ) ->
+        ( Paused _, _ ) ->
             ( model, Cmd.none, Nothing )
 
         ( Playing state, FirstBomb colors ) ->
@@ -234,6 +234,7 @@ update { onLeave } action model =
                 , Cmd.none
                 , Nothing
                 )
+
             else if Bottle.totalViruses second.bottle.contents == 0 || Bottle.hasConflict first.bottle then
                 ( Over
                     { winner = Second
@@ -242,6 +243,7 @@ update { onLeave } action model =
                 , Cmd.none
                 , Nothing
                 )
+
             else
                 updatePlayState onLeave msg state
 
@@ -256,7 +258,7 @@ updatePlayState : msg -> Msg -> State -> ( Model, Cmd Msg, Maybe msg )
 updatePlayState onLeave action ({ first, second } as model) =
     case action of
         FirstBottleMsg msg ->
-            Bottle.update { onBomb = (FirstBomb >> Just) } msg first.bottle
+            Bottle.update { onBomb = FirstBomb >> Just } msg first.bottle
                 |> Component.raiseOutMsg (update { onLeave = onLeave })
                     (\bottle ->
                         Playing
@@ -265,7 +267,7 @@ updatePlayState onLeave action ({ first, second } as model) =
                     FirstBottleMsg
 
         SecondBottleMsg msg ->
-            Bottle.update { onBomb = (SecondBomb >> Just) } msg second.bottle
+            Bottle.update { onBomb = SecondBomb >> Just } msg second.bottle
                 |> Component.raiseOutMsg (update { onLeave = onLeave })
                     (\bottle ->
                         Playing
@@ -320,7 +322,7 @@ view model =
                     ]
                 ]
 
-        Paused state ->
+        Paused _ ->
             div []
                 [ viewMessage "Paused" <|
                     Html.button
@@ -350,7 +352,7 @@ displayViruses player =
 
 
 viewPlayer : Player -> Html msg
-viewPlayer { bottle, level, speed } =
+viewPlayer { bottle } =
     div
         [ style "display" "flex"
         , style "flex-direction" "column"
@@ -362,11 +364,6 @@ viewPlayer { bottle, level, speed } =
             ]
         , Bottle.view bottle
         ]
-
-
-columnEl : Element msg
-columnEl =
-    styled div [ ( "margin", "0 16px" ) ]
 
 
 spaceBetween : Element msg

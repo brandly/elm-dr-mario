@@ -1,19 +1,18 @@
-module OnePlayer.Menu
-    exposing
-        ( Msg(..)
-        , State
-        , init
-        , subscriptions
-        , update
-        , view
-        )
+module OnePlayer.Menu exposing
+    ( Msg(..)
+    , State
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
 import Bottle exposing (Speed(..))
+import Browser.Events exposing (onKeyDown)
 import Element exposing (Element, px, styled)
 import Html exposing (Html, div, h3, h4, p, text)
-import Html.Attributes exposing (style, type_)
-import Html.Events exposing (onSubmit, keyCode)
-import Browser.Events exposing (onKeyDown)
+import Html.Attributes exposing (style)
+import Html.Events exposing (keyCode)
 import Json.Decode as Decode
 
 
@@ -32,7 +31,10 @@ type Selection
 
 
 type alias State =
-    { level : Int, speed : Speed, selecting : Selection }
+    { level : Int
+    , speed : Speed
+    , selecting : Selection
+    }
 
 
 init : State
@@ -87,53 +89,53 @@ update events msg ({ selecting, speed } as state) =
         withNothing s =
             ( s, Cmd.none, Nothing )
     in
-        case msg of
-            Up ->
-                withNothing { state | selecting = other }
+    case msg of
+        Up ->
+            withNothing { state | selecting = other }
 
-            Down ->
-                withNothing { state | selecting = other }
+        Down ->
+            withNothing { state | selecting = other }
 
-            Left ->
-                withNothing
-                    (case ( selecting, speed ) of
-                        ( Level, _ ) ->
-                            { state | level = max 0 (state.level - 1) }
+        Left ->
+            withNothing
+                (case ( selecting, speed ) of
+                    ( Level, _ ) ->
+                        { state | level = max 0 (state.level - 1) }
 
-                        ( Speed, High ) ->
-                            { state | speed = Med }
+                    ( Speed, High ) ->
+                        { state | speed = Med }
 
-                        ( Speed, Med ) ->
-                            { state | speed = Low }
+                    ( Speed, Med ) ->
+                        { state | speed = Low }
 
-                        ( Speed, _ ) ->
-                            state
-                    )
-
-            Right ->
-                withNothing
-                    (case ( selecting, speed ) of
-                        ( Level, _ ) ->
-                            { state | level = min 20 (state.level + 1) }
-
-                        ( Speed, Low ) ->
-                            { state | speed = Med }
-
-                        ( Speed, Med ) ->
-                            { state | speed = High }
-
-                        ( Speed, _ ) ->
-                            state
-                    )
-
-            Enter ->
-                ( state
-                , Cmd.none
-                , Just <| events.onSubmit { level = state.level, speed = state.speed }
+                    ( Speed, _ ) ->
+                        state
                 )
 
-            Noop ->
-                withNothing state
+        Right ->
+            withNothing
+                (case ( selecting, speed ) of
+                    ( Level, _ ) ->
+                        { state | level = min 20 (state.level + 1) }
+
+                    ( Speed, Low ) ->
+                        { state | speed = Med }
+
+                    ( Speed, Med ) ->
+                        { state | speed = High }
+
+                    ( Speed, _ ) ->
+                        state
+                )
+
+        Enter ->
+            ( state
+            , Cmd.none
+            , Just <| events.onSubmit { level = state.level, speed = state.speed }
+            )
+
+        Noop ->
+            withNothing state
 
 
 view : State -> Html msg
@@ -159,6 +161,7 @@ view { level, speed, selecting } =
         ]
 
 
+viewLevel : Int -> Html msg
 viewLevel level =
     div [ style "padding" "0 24px" ]
         [ h4 [ style "text-align" "right" ] [ (String.fromInt >> text) level ]
@@ -166,6 +169,7 @@ viewLevel level =
         ]
 
 
+viewLevelSlider : Int -> Html msg
 viewLevelSlider level =
     div
         [ style "display" "flex"
@@ -180,6 +184,7 @@ viewLevelSlider level =
                             (px
                                 (if modBy 5 n == 0 then
                                     16
+
                                  else
                                     8
                                 )
@@ -188,6 +193,7 @@ viewLevelSlider level =
                         , style "background"
                             (if n == level then
                                 "#fb7c54"
+
                              else
                                 "#000"
                             )
@@ -212,6 +218,7 @@ heading selected str =
         [ text <|
             if selected then
                 ">" ++ str ++ "<"
+
             else
                 str
         ]
@@ -225,11 +232,11 @@ row =
 viewSpeed : Speed -> Speed -> Html msg
 viewSpeed ideal real =
     h4
-        [ (style "padding" "4px 8px")
-        , (if real == ideal then
+        [ style "padding" "4px 8px"
+        , if real == ideal then
             style "border" "3px solid #fb7c54"
-           else
+
+          else
             style "" ""
-          )
         ]
         [ (Bottle.speedToString >> text) real ]

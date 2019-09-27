@@ -1,42 +1,41 @@
-module Bottle
-    exposing
-        ( Bottle
-        , Color(..)
-        , Direction(..)
-        , Model
-        , Msg(..)
-        , Speed(..)
-        , getColor
-        , generateEmptyCoords
-        , generatePill
-        , hasConflict
-        , init
-        , isCleared
-        , subscriptions
-        , totalViruses
-        , update
-        , view
-        , viewPill
-        , withBombs
-        , withControls
-        , withNext
-        , withVirus
-        , speedToString
-        )
+module Bottle exposing
+    ( Bottle
+    , Color(..)
+    , Direction(..)
+    , Model
+    , Msg(..)
+    , Speed(..)
+    , generateEmptyCoords
+    , generatePill
+    , getColor
+    , hasConflict
+    , init
+    , isCleared
+    , speedToString
+    , subscriptions
+    , totalViruses
+    , update
+    , view
+    , viewPill
+    , withBombs
+    , withControls
+    , withNext
+    , withVirus
+    )
 
 import Array
-import Element exposing (Element, none, px, styled)
-import Grid exposing (Cell, Column, Grid)
-import Html exposing (Html, div, h1, h3, p, text)
+import Browser.Events exposing (onKeyDown)
+import Element exposing (none, px)
+import Grid exposing (Cell, Grid)
+import Html exposing (Html, div, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (keyCode)
-import Browser.Events exposing (onKeyDown)
+import Json.Decode as Decode
+import List.Extra
 import Random exposing (Generator(..))
 import RandomExtra exposing (selectWithDefault)
 import Set
 import Time exposing (Posix)
-import Json.Decode as Decode
-import List.Extra
 
 
 type Speed
@@ -91,7 +90,6 @@ type Color
 
 getColor : Int -> Color
 getColor index =
-    -- TODO: is there a way to express "number of constructors"?
     case remainderBy 3 index of
         0 ->
             Red
@@ -184,26 +182,27 @@ trashBot bottle mode =
                                 |> Maybe.map (.coords >> Tuple.first)
                                 |> Maybe.withDefault (Tuple.first coords)
                             , openCells
-                                |> (List.Extra.maximumBy (\cell -> Tuple.first cell.coords))
-                                |> (Maybe.map (.coords >> Tuple.first))
+                                |> List.Extra.maximumBy (\cell -> Tuple.first cell.coords)
+                                |> Maybe.map (.coords >> Tuple.first)
                                 |> Maybe.withDefault (Tuple.first coords)
                             )
                     in
-                        (List.range minX maxX
-                            |> List.map
-                                (\x ->
-                                    ( x, Vertical color_a color_b )
-                                )
-                        )
-                            ++ (if color_a == color_b then
-                                    []
-                                else
-                                    List.range minX (maxX - 1)
-                                        |> List.map (\x -> ( x, Horizontal color_b color_a ))
-                               )
-                            ++ (List.range minX (maxX - 1)
-                                    |> List.map (\x -> ( x, Horizontal color_a color_b ))
-                               )
+                    (List.range minX maxX
+                        |> List.map
+                            (\x ->
+                                ( x, Vertical color_a color_b )
+                            )
+                    )
+                        ++ (if color_a == color_b then
+                                []
+
+                            else
+                                List.range minX (maxX - 1)
+                                    |> List.map (\x -> ( x, Horizontal color_b color_a ))
+                           )
+                        ++ (List.range minX (maxX - 1)
+                                |> List.map (\x -> ( x, Horizontal color_a color_b ))
+                           )
 
                 peaks : List (Grid.Cell Contents)
                 peaks =
@@ -240,20 +239,22 @@ trashBot bottle mode =
                                 |> Maybe.andThen (\cell -> cell.state)
                                 |> Maybe.map (\state -> Tuple.first state)
                     in
-                        case colorAtIndex of
-                            Nothing ->
-                                scoring.hole
+                    case colorAtIndex of
+                        Nothing ->
+                            scoring.hole
 
-                            Just aColor ->
-                                if aColor == color then
-                                    scoring.match
-                                else
-                                    scoring.conflict
+                        Just aColor ->
+                            if aColor == color then
+                                scoring.match
+
+                            else
+                                scoring.conflict
 
                 orientationBonus : Pill -> Int
                 orientationBonus o =
                     if o == pill then
                         2
+
                     else
                         case pill of
                             Horizontal _ _ ->
@@ -262,6 +263,7 @@ trashBot bottle mode =
                             Vertical a b ->
                                 if a == b then
                                     1
+
                                 else
                                     0
 
@@ -272,11 +274,12 @@ trashBot bottle mode =
                             orientationBonus orientation
                                 + (case orientation of
                                     Horizontal a b ->
-                                        (colorIndexScore a x) + (colorIndexScore b (x + 1))
+                                        colorIndexScore a x + colorIndexScore b (x + 1)
 
                                     Vertical a b ->
                                         if a == b then
-                                            (colorIndexScore a x) + (colorIndexScore b x)
+                                            colorIndexScore a x + colorIndexScore b x
+
                                         else
                                             colorIndexScore b x
                                   )
@@ -294,19 +297,22 @@ trashBot bottle mode =
                 withGoal dir =
                     ( dir, choice )
             in
-                case ( choice, coords ) of
-                    ( Just ( aimX, pill_ ), ( x, _ ) ) ->
-                        if pill_ /= pill then
-                            withGoal <| Just Up
-                        else if aimX > x then
-                            withGoal <| Just Right
-                        else if aimX < x then
-                            withGoal <| Just Left
-                        else
-                            withGoal <| Just Down
+            case ( choice, coords ) of
+                ( Just ( aimX, pill_ ), ( x, _ ) ) ->
+                    if pill_ /= pill then
+                        withGoal <| Just Up
 
-                    ( Nothing, _ ) ->
-                        withGoal <| Nothing
+                    else if aimX > x then
+                        withGoal <| Just Right
+
+                    else if aimX < x then
+                        withGoal <| Just Left
+
+                    else
+                        withGoal <| Just Down
+
+                ( Nothing, _ ) ->
+                    withGoal <| Nothing
 
 
 withNext : ( Color, Color ) -> Model -> Model
@@ -362,7 +368,7 @@ subscriptions speed model =
                     direction =
                         bot model.contents model.mode
                 in
-                    Time.every (tickForSpeed speed / 4) (\_ -> SetGoal direction)
+                Time.every (tickForSpeed speed / 4) (\_ -> SetGoal direction)
         ]
 
 
@@ -391,16 +397,17 @@ update { onBomb } msg model =
                 ( a, b ) =
                     model.next
             in
-                ( { model
-                    | mode = PlacingPill (Horizontal a b) ( 4, 0 )
-                    , next = next
-                  }
-                , Cmd.none
-                , if (List.length cleared) > 1 then
-                    onBomb cleared
-                  else
-                    Nothing
-                )
+            ( { model
+                | mode = PlacingPill (Horizontal a b) ( 4, 0 )
+                , next = next
+              }
+            , Cmd.none
+            , if List.length cleared > 1 then
+                onBomb cleared
+
+              else
+                Nothing
+            )
 
         ( PlacingPill pill ( x, y ), KeyDown key ) ->
             let
@@ -409,34 +416,35 @@ update { onBomb } msg model =
                     withNothing
                         (if isAvailable coords pill_ model.contents then
                             { model | mode = PlacingPill pill_ coords }
+
                          else
                             model
                         )
             in
-                case key of
-                    Just Up ->
-                        let
-                            newPill =
-                                case pill of
-                                    Horizontal a b ->
-                                        Vertical a b
+            case key of
+                Just Up ->
+                    let
+                        newPill =
+                            case pill of
+                                Horizontal a b ->
+                                    Vertical a b
 
-                                    Vertical a b ->
-                                        Horizontal b a
-                        in
-                            moveIfAvailable newPill ( x, y )
+                                Vertical a b ->
+                                    Horizontal b a
+                    in
+                    moveIfAvailable newPill ( x, y )
 
-                    Just Left ->
-                        moveIfAvailable pill ( x - 1, y )
+                Just Left ->
+                    moveIfAvailable pill ( x - 1, y )
 
-                    Just Right ->
-                        moveIfAvailable pill ( x + 1, y )
+                Just Right ->
+                    moveIfAvailable pill ( x + 1, y )
 
-                    Just Down ->
-                        moveIfAvailable pill ( x, y + 1 )
+                Just Down ->
+                    moveIfAvailable pill ( x, y + 1 )
 
-                    Nothing ->
-                        withNothing model
+                Nothing ->
+                    withNothing model
 
         ( _, KeyDown _ ) ->
             withNothing model
@@ -458,16 +466,16 @@ update { onBomb } msg model =
                 model_ =
                     { model | contents = contents }
             in
-                case model.bombs of
-                    head :: tail ->
-                        ( { model_ | bombs = tail }
-                        , Random.generate (Bomb head) <|
-                            generateBomb model_.contents
-                        , Nothing
-                        )
+            case model.bombs of
+                head :: tail ->
+                    ( { model_ | bombs = tail }
+                    , Random.generate (Bomb head) <|
+                        generateBomb model_.contents
+                    , Nothing
+                    )
 
-                    _ ->
-                        ( { model_ | mode = Falling [] }, Cmd.none, Nothing )
+                _ ->
+                    ( { model_ | mode = Falling [] }, Cmd.none, Nothing )
 
         _ ->
             withNothing model
@@ -495,21 +503,23 @@ advance model =
                         modify =
                             if canSweep newContents then
                                 sweep
+
                             else
                                 \m -> { m | contents = fall newContents }
                     in
-                        modify
-                            { model
-                                | mode = Falling []
-                                , contents = newContents
-                            }
+                    modify
+                        { model
+                            | mode = Falling []
+                            , contents = newContents
+                        }
             in
-                withNothing
-                    (if isAvailable newCoords pill model.contents then
-                        { model | mode = PlacingPill pill newCoords }
-                     else
-                        afterPill pill ( x, y )
-                    )
+            withNothing
+                (if isAvailable newCoords pill model.contents then
+                    { model | mode = PlacingPill pill newCoords }
+
+                 else
+                    afterPill pill ( x, y )
+                )
 
         Falling _ ->
             let
@@ -520,21 +530,23 @@ advance model =
                             (\{ coords } -> canFall coords model.contents)
                         |> (List.isEmpty >> not)
             in
-                if timeToFall then
-                    withNothing { model | contents = fall model.contents }
-                else if canSweep model.contents then
-                    ( sweep model, Cmd.none, Nothing )
-                else
-                    case List.head model.bombs of
-                        Just _ ->
-                            advance { model | mode = Bombing }
+            if timeToFall then
+                withNothing { model | contents = fall model.contents }
 
-                        Nothing ->
-                            ( model
-                            , Random.generate NewPill <|
-                                generatePill
-                            , Nothing
-                            )
+            else if canSweep model.contents then
+                ( sweep model, Cmd.none, Nothing )
+
+            else
+                case List.head model.bombs of
+                    Just _ ->
+                        advance { model | mode = Bombing }
+
+                    Nothing ->
+                        ( model
+                        , Random.generate NewPill <|
+                            generatePill
+                        , Nothing
+                        )
 
         Bombing ->
             case model.bombs of
@@ -570,12 +582,12 @@ colorCoords pill coords =
                 Vertical a b ->
                     ( ( a, Down ), ( b, Up ) )
     in
-        case pillCoordsPair pill coords of
-            first :: second :: [] ->
-                [ ( first, a_color, a_dep ), ( second, b_color, b_dep ) ]
+    case pillCoordsPair pill coords of
+        first :: second :: [] ->
+            [ ( first, a_color, a_dep ), ( second, b_color, b_dep ) ]
 
-            _ ->
-                []
+        _ ->
+            []
 
 
 fall : Bottle -> Bottle
@@ -586,23 +598,26 @@ fall bottle =
                 ( x, y ) =
                     coords
             in
-                if canFall ( x, y ) bottle then
-                    -- look above
-                    if canFall ( x, y - 1 ) bottle then
-                        { cell
-                            | state =
-                                .state <| Grid.findCellAtCoords ( x, y - 1 ) bottle
-                        }
-                    else
-                        { cell | state = Nothing }
-                else if state == Nothing && canFall ( x, y - 1 ) bottle then
+            if canFall ( x, y ) bottle then
+                -- look above
+                if canFall ( x, y - 1 ) bottle then
                     { cell
                         | state =
-                            .state <|
-                                Grid.findCellAtCoords ( x, y - 1 ) bottle
+                            .state <| Grid.findCellAtCoords ( x, y - 1 ) bottle
                     }
+
                 else
-                    cell
+                    { cell | state = Nothing }
+
+            else if state == Nothing && canFall ( x, y - 1 ) bottle then
+                { cell
+                    | state =
+                        .state <|
+                            Grid.findCellAtCoords ( x, y - 1 ) bottle
+                }
+
+            else
+                cell
         )
         bottle
 
@@ -613,11 +628,12 @@ sweep ({ contents } as model) =
         coordsLosingDependent =
             contents
                 |> Grid.filter
-                    (\({ coords, state } as cell) ->
+                    (\{ coords, state } ->
                         case state of
-                            Just ( _, Pill (Just dependent) ) ->
+                            Just ( _, Pill (Just _) ) ->
                                 if isCleared coords contents then
                                     True
+
                                 else
                                     False
 
@@ -641,6 +657,7 @@ sweep ({ contents } as model) =
                 (\({ coords, state } as cell) ->
                     if isCleared coords contents then
                         { cell | state = Nothing }
+
                     else if Set.member coords coordsLosingDependent then
                         case state of
                             Just ( color, _ ) ->
@@ -648,6 +665,7 @@ sweep ({ contents } as model) =
 
                             Nothing ->
                                 cell
+
                     else
                         cell
                 )
@@ -699,7 +717,7 @@ sweep ({ contents } as model) =
                     -- should always be in Falling. can types enforce this?
                     []
     in
-        { model | contents = swept, mode = Falling (alreadyCleared ++ (clearedLines diff)) }
+    { model | contents = swept, mode = Falling (alreadyCleared ++ clearedLines diff) }
 
 
 coordsWithDirection : Grid.Coords -> Direction -> Grid.Coords
@@ -756,7 +774,7 @@ isAvailable (( x, y ) as coords) pill grid =
                 |> List.map (\p -> Grid.isEmpty p grid)
                 |> List.all identity
     in
-        inBottle && noOccupant
+    inBottle && noOccupant
 
 
 canSweep : Bottle -> Bool
@@ -789,32 +807,32 @@ canFall coords bottle =
                         Just ( _, Pill Nothing ) ->
                             hasRoom tail
 
-                        Just ( _, Pill dependent ) ->
+                        Just ( _, Pill _ ) ->
                             canFall head.coords bottle
 
                         Just ( _, Virus ) ->
                             False
     in
-        case cell.state of
-            Just ( _, Pill Nothing ) ->
-                Grid.below coords bottle |> hasRoom
+    case cell.state of
+        Just ( _, Pill Nothing ) ->
+            Grid.below coords bottle |> hasRoom
 
-            Just ( _, Pill (Just Up) ) ->
-                Grid.below coords bottle |> hasRoom
+        Just ( _, Pill (Just Up) ) ->
+            Grid.below coords bottle |> hasRoom
 
-            Just ( _, Pill (Just Down) ) ->
-                canFall (coordsWithDirection coords Down) bottle
+        Just ( _, Pill (Just Down) ) ->
+            canFall (coordsWithDirection coords Down) bottle
 
-            Just ( _, Pill (Just dependent) ) ->
-                -- Left or Right
-                (Grid.below coords bottle |> hasRoom)
-                    && (bottle
-                            |> Grid.below (coordsWithDirection coords dependent)
-                            |> hasRoom
-                       )
+        Just ( _, Pill (Just dependent) ) ->
+            -- Left or Right
+            (Grid.below coords bottle |> hasRoom)
+                && (bottle
+                        |> Grid.below (coordsWithDirection coords dependent)
+                        |> hasRoom
+                   )
 
-            _ ->
-                False
+        _ ->
+            False
 
 
 isCleared : Grid.Coords -> Bottle -> Bool
@@ -840,23 +858,23 @@ isCleared ( x, y ) grid =
                 |> List.map (\coords -> Grid.findCellAtCoords coords grid)
                 |> subLists len
     in
-        case cell.state of
-            Nothing ->
-                False
+    case cell.state of
+        Nothing ->
+            False
 
-            Just ( color, _ ) ->
-                List.any
-                    (List.all
-                        (\cell_ ->
-                            case cell_.state of
-                                Just ( c, _ ) ->
-                                    c == color
+        Just ( color, _ ) ->
+            List.any
+                (List.all
+                    (\cell_ ->
+                        case cell_.state of
+                            Just ( c, _ ) ->
+                                c == color
 
-                                Nothing ->
-                                    False
-                        )
+                            Nothing ->
+                                False
                     )
-                    (vertical ++ horizontal)
+                )
+                (vertical ++ horizontal)
 
 
 totalViruses : Bottle -> Int
@@ -902,7 +920,7 @@ generateEmptyCoords grid =
                     )
                 |> List.map .coords
     in
-        selectWithDefault ( -1, -1 ) emptyCoords
+    selectWithDefault ( -1, -1 ) emptyCoords
 
 
 generatePill : Generator ( Color, Color )
@@ -966,16 +984,7 @@ view { contents, mode, goal } =
                 )
                 (case mode of
                     PlacingPill pill coords ->
-                        let
-                            withGoal =
-                                case goal of
-                                    Nothing ->
-                                        contents
-
-                                    Just ( x, p ) ->
-                                        addPill p ( x, 0 ) contents
-                        in
-                            addPill pill coords contents
+                        addPill pill coords contents
 
                     _ ->
                         contents
@@ -990,16 +999,16 @@ viewPill dependent color =
         8
         (case dependent of
             Just Up ->
-                [ (style "border-top-left-radius" (px 0)), (style "border-top-right-radius" (px 0)) ]
+                [ style "border-top-left-radius" (px 0), style "border-top-right-radius" (px 0) ]
 
             Just Down ->
-                [ (style "border-bottom-left-radius" (px 0)), (style "border-bottom-right-radius" (px 0)) ]
+                [ style "border-bottom-left-radius" (px 0), style "border-bottom-right-radius" (px 0) ]
 
             Just Left ->
-                [ (style "border-top-left-radius" (px 0)), (style "border-bottom-left-radius" (px 0)) ]
+                [ style "border-top-left-radius" (px 0), style "border-bottom-left-radius" (px 0) ]
 
             Just Right ->
-                [ (style "border-top-right-radius" (px 0)), (style "border-bottom-right-radius" (px 0)) ]
+                [ style "border-top-right-radius" (px 0), style "border-bottom-right-radius" (px 0) ]
 
             Nothing ->
                 []
@@ -1026,16 +1035,16 @@ viewColor color radius extraStyle =
                 Yellow ->
                     "#ffbd03"
     in
-        div
-            ([ style "background-color" bg
-             , style "border-top-left-radius" (px radius)
-             , style "border-top-right-radius" (px radius)
-             , style "border-bottom-left-radius" (px radius)
-             , style "border-bottom-right-radius" (px radius)
-             ]
-                ++ cellStyle
-                ++ extraStyle
-            )
+    div
+        ([ style "background-color" bg
+         , style "border-top-left-radius" (px radius)
+         , style "border-top-right-radius" (px radius)
+         , style "border-bottom-left-radius" (px radius)
+         , style "border-bottom-right-radius" (px radius)
+         ]
+            ++ cellStyle
+            ++ extraStyle
+        )
 
 
 cellStyle : List (Html.Attribute msg)
@@ -1059,5 +1068,6 @@ subLists : Int -> List a -> List (List a)
 subLists len list =
     if List.length list < len then
         []
+
     else
         List.take len list :: subLists len (List.drop 1 list)

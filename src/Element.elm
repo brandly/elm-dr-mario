@@ -11,7 +11,7 @@ type alias Element msg =
 styled : Element msg -> List ( String, String ) -> Element msg
 styled el css =
     \attrs children ->
-        el ((List.map (\( k, v ) -> style k v) css) ++ attrs) children
+        el (List.map (\( k, v ) -> style k v) css ++ attrs) children
 
 
 px : Int -> String

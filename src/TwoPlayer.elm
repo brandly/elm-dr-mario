@@ -2,7 +2,7 @@ module TwoPlayer exposing (Model(..), Msg(..), init, subscriptions, update, view
 
 import Bottle exposing (Speed(..))
 import Component
-import Html exposing (Html, text)
+import Html exposing (Html)
 import OnePlayer.Menu as Menu
 import TwoPlayer.Game as Game
 
@@ -52,7 +52,7 @@ update action model =
                 |> Game.update { onLeave = Reset } msg
                 |> Component.mapOutMsg update (InGame menu) GameMsg
 
-        ( InGame menu state, Reset ) ->
+        ( InGame menu _, Reset ) ->
             ( Init menu, Cmd.none )
 
         ( _, _ ) ->

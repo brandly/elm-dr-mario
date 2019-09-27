@@ -1,18 +1,17 @@
-module OnePlayer.Game
-    exposing
-        ( Model(..)
-        , Msg(..)
-        , init
-        , subscriptions
-        , update
-        , view
-        )
+module OnePlayer.Game exposing
+    ( Model(..)
+    , Msg(..)
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
-import Bottle exposing (Bottle, Color(..), Speed(..))
+import Bottle exposing (Color(..), Speed(..))
 import Component
 import Controls
-import Element exposing (Element, none, px, styled)
-import Html exposing (Html, div, h1, h3, p, text)
+import Element exposing (Element, none, styled)
+import Html exposing (Html, div, h3, p, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import LevelCreator
@@ -59,18 +58,19 @@ init level speed =
     initWithScore level speed 0
 
 
+initWithScore : Int -> Speed -> Int -> ( Model, Cmd Msg )
 initWithScore level speed score =
     let
         ( creator, cmd ) =
             LevelCreator.init level
     in
-        ( PrepareGame
-            { creator = creator
-            , score = score
-            , speed = speed
-            }
-        , Cmd.map CreatorMsg cmd
-        )
+    ( PrepareGame
+        { creator = creator
+        , score = score
+        , speed = speed
+        }
+    , Cmd.map CreatorMsg cmd
+    )
 
 
 subscriptions : Model -> Sub Msg
@@ -105,6 +105,7 @@ pointsForClearedViruses speed cleared =
                 High ->
                     300
             )
+
     else
         0
 
@@ -132,17 +133,17 @@ update { onLeave } action model =
                         msg
                         creator
             in
-                case maybeMsg of
-                    Nothing ->
-                        ( PrepareGame { state | creator = creator_ }
-                        , Cmd.map CreatorMsg cmd
-                        , Nothing
-                        )
+            case maybeMsg of
+                Nothing ->
+                    ( PrepareGame { state | creator = creator_ }
+                    , Cmd.map CreatorMsg cmd
+                    , Nothing
+                    )
 
-                    Just msg2 ->
-                        update { onLeave = onLeave }
-                            msg2
-                            (PrepareGame { state | creator = creator_ })
+                Just msg2 ->
+                    update { onLeave = onLeave }
+                        msg2
+                        (PrepareGame { state | creator = creator_ })
 
         ( PrepareGame _, LevelReady state ) ->
             ( Playing
@@ -160,7 +161,7 @@ update { onLeave } action model =
         ( Paused state, Resume ) ->
             ( Playing state, Cmd.none, Nothing )
 
-        ( Paused state, _ ) ->
+        ( Paused _, _ ) ->
             ( model, Cmd.none, Nothing )
 
         ( Playing state, msg ) ->
@@ -172,6 +173,7 @@ update { onLeave } action model =
                 , Cmd.none
                 , Nothing
                 )
+
             else if Bottle.hasConflict state.bottle then
                 ( Over
                     { won = False
@@ -180,6 +182,7 @@ update { onLeave } action model =
                 , Cmd.none
                 , Nothing
                 )
+
             else
                 updatePlayState onLeave msg state
 
@@ -188,7 +191,7 @@ update { onLeave } action model =
                 ( model_, msg ) =
                     initWithScore level speed score
             in
-                ( model_, msg, Nothing )
+            ( model_, msg, Nothing )
 
         ( Over _, Reset ) ->
             ( model, Cmd.none, Just onLeave )
@@ -209,22 +212,22 @@ updatePlayState onLeave action ({ bottle, speed, score } as model) =
                 additionalPoints =
                     pointsForClearedViruses speed sweptViruses
             in
-                Playing
-                    { model
-                        | bottle = newBottle
-                        , score = score + additionalPoints
-                    }
+            Playing
+                { model
+                    | bottle = newBottle
+                    , score = score + additionalPoints
+                }
     in
-        case action of
-            BottleMsg msg ->
-                Bottle.update { onBomb = \_ -> Nothing } msg model.bottle
-                    |> Component.raiseOutMsg (update { onLeave = onLeave })
-                        withBottle
-                        BottleMsg
+    case action of
+        BottleMsg msg ->
+            Bottle.update { onBomb = \_ -> Nothing } msg model.bottle
+                |> Component.raiseOutMsg (update { onLeave = onLeave })
+                    withBottle
+                    BottleMsg
 
-            _ ->
-                -- TODO: get rid of this
-                ( Playing model, Cmd.none, Nothing )
+        _ ->
+            -- TODO: get rid of this
+            ( Playing model, Cmd.none, Nothing )
 
 
 
@@ -240,7 +243,7 @@ view model =
         Playing state ->
             viewPlaying (Just Pause) state
 
-        Paused state ->
+        Paused _ ->
             div []
                 [ viewMessage "Paused"
                     (Html.button
@@ -254,6 +257,7 @@ view model =
                 [ viewMessage
                     (if state.won then
                         "You Win!"
+
                      else
                         "Game Over"
                     )
@@ -269,6 +273,7 @@ view model =
                                     )
                                 ]
                                 [ text "Next Level" ]
+
                           else
                             none
                         , Html.button [ onClick Reset ] [ text "Main Menu" ]
@@ -330,7 +335,9 @@ applyNtimes : Int -> (a -> a) -> a -> a
 applyNtimes n f x =
     if n <= 0 then
         x
+
     else if n == 1 then
         f x
+
     else
         f (applyNtimes (n - 1) f x)

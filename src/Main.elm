@@ -1,7 +1,7 @@
 module Main exposing (Model(..), Msg(..), main, subscriptions, update, view, viewSelecting)
 
-import Component
 import Browser
+import Component
 import Html exposing (Html, button, div, h1, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
@@ -62,11 +62,11 @@ update msg model =
 
         ( One state, OneMsg msg_ ) ->
             OnePlayer.update msg_ state
-                |> Component.mapSimple update One OneMsg
+                |> Component.mapSimple One OneMsg
 
         ( Two state, TwoMsg msg_ ) ->
             TwoPlayer.update msg_ state
-                |> Component.mapSimple update Two TwoMsg
+                |> Component.mapSimple Two TwoMsg
 
         ( _, _ ) ->
             ( model, Cmd.none )
