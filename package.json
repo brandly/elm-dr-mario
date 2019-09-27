@@ -1,6 +1,5 @@
 {
   "scripts": {
-    "start": "elm reactor",
     "build": "elm make src/Main.elm --output dist/the.js",
     "html": "cp src/index.html dist",
     "deploy": "npm run build -- --optimize && npm run compress && npm run html && gh-pages --dist dist/",
