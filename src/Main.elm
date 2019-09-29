@@ -7,6 +7,7 @@ import Html.Attributes exposing (style)
 import Menu
 import OnePlayer
 import TwoPlayer
+import TwoPlayer.Game
 
 
 main : Program () Model Msg
@@ -77,7 +78,12 @@ update msg model =
                 |> Tuple.mapSecond (Cmd.map OneMsg)
 
         ( Selecting _, PlayTwo ) ->
-            TwoPlayer.init
+            TwoPlayer.init TwoPlayer.Game.Human
+                |> Tuple.mapFirst Two
+                |> Tuple.mapSecond (Cmd.map TwoMsg)
+
+        ( Selecting _, PlayBot ) ->
+            TwoPlayer.init TwoPlayer.Game.Bot
                 |> Tuple.mapFirst Two
                 |> Tuple.mapSecond (Cmd.map TwoMsg)
 

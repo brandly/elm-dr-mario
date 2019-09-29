@@ -8,14 +8,14 @@ import OnePlayer.Menu as Menu
 import TwoPlayer.Game as Game
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( Init Menu.init, Cmd.none )
+init : Game.Opponent -> ( Model, Cmd Msg )
+init opponent =
+    ( Init opponent Menu.init, Cmd.none )
 
 
 type Model
-    = Init Menu.State
-    | InGame Menu.State Game.Model
+    = Init Game.Opponent Menu.State
+    | InGame Game.Opponent Menu.State Game.Model
 
 
 type Msg
@@ -28,14 +28,15 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
     case ( model, action ) of
-        ( Init menu, Start { level, speed } ) ->
+        ( Init opponent menu, Start { level, speed } ) ->
             Game.init
+                opponent
                 { level = level, speed = speed }
                 { level = level, speed = speed }
-                |> Tuple.mapFirst (InGame menu)
+                |> Tuple.mapFirst (InGame opponent menu)
                 |> Tuple.mapSecond (Cmd.map GameMsg)
 
-        ( Init state, MenuMsg msg ) ->
+        ( Init opponent state, MenuMsg msg ) ->
             state
                 |> Menu.update
                     { onSubmit =
@@ -46,15 +47,15 @@ update action model =
                                 }
                     }
                     msg
-                |> Component.mapOutMsg update Init MenuMsg
+                |> Component.mapOutMsg update (Init opponent) MenuMsg
 
-        ( InGame menu state, GameMsg msg ) ->
+        ( InGame opponent menu state, GameMsg msg ) ->
             state
                 |> Game.update { onLeave = Reset } msg
-                |> Component.mapOutMsg update (InGame menu) GameMsg
+                |> Component.mapOutMsg update (InGame opponent menu) GameMsg
 
-        ( InGame menu _, Reset ) ->
-            ( Init menu, Cmd.none )
+        ( InGame opponent menu _, Reset ) ->
+            ( Init opponent menu, Cmd.none )
 
         ( _, _ ) ->
             ( model, Cmd.none )
@@ -63,19 +64,19 @@ update action model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     case model of
-        Init state ->
+        Init _ state ->
             Sub.map MenuMsg <| Menu.subscriptions state
 
-        InGame _ state ->
+        InGame _ _ state ->
             Sub.map GameMsg <| Game.subscriptions state
 
 
 view : Model -> Html Msg
 view model =
     case model of
-        Init state ->
+        Init _ state ->
             Menu.view state
 
-        InGame _ state ->
+        InGame _ _ state ->
             Game.view state
                 |> Html.map GameMsg
