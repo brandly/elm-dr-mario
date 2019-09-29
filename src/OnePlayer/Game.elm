@@ -187,7 +187,7 @@ update { onLeave } action model =
             else
                 updatePlayState onLeave msg state
 
-        ( Playing state, _ ) ->
+        ( Playing _, _ ) ->
             ( model, Cmd.none, Nothing )
 
         ( Over _, Advance { level, score, speed } ) ->

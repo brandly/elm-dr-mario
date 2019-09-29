@@ -1,10 +1,10 @@
-module Main exposing (Model(..), Msg(..), main, subscriptions, update, view, viewSelecting)
+module Main exposing (Model(..), Msg(..), main, subscriptions, update, view)
 
 import Browser
 import Component
-import Html exposing (Html, button, div, h1, text)
+import Html exposing (Html, div, h1, text)
 import Html.Attributes exposing (style)
-import Html.Events exposing (onClick)
+import Menu
 import OnePlayer
 import TwoPlayer
 
@@ -12,7 +12,7 @@ import TwoPlayer
 main : Program () Model Msg
 main =
     Browser.element
-        { init = \_ -> ( Selecting, Cmd.none )
+        { init = \_ -> ( Selecting Menu.init, Cmd.none )
         , update = update
         , view = view
         , subscriptions = subscriptions
@@ -20,7 +20,7 @@ main =
 
 
 type Model
-    = Selecting
+    = Selecting Menu.State
     | One OnePlayer.Model
     | Two TwoPlayer.Model
 
@@ -28,8 +28,10 @@ type Model
 type Msg
     = OneMsg OnePlayer.Msg
     | TwoMsg TwoPlayer.Msg
+    | MenuMsg Menu.Msg
     | PlayOne
     | PlayTwo
+    | PlayBot
 
 
 subscriptions : Model -> Sub Msg
@@ -43,19 +45,38 @@ subscriptions model =
             TwoPlayer.subscriptions state
                 |> Sub.map TwoMsg
 
-        _ ->
-            Sub.none
+        Selecting state ->
+            Menu.subscriptions state
+                |> Sub.map MenuMsg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( model, msg ) of
-        ( Selecting, PlayOne ) ->
+        ( Selecting state, MenuMsg msg_ ) ->
+            Menu.update
+                { onSubmit =
+                    \selection ->
+                        case selection of
+                            Menu.OnePlayer ->
+                                PlayOne
+
+                            Menu.TwoPlayer ->
+                                PlayTwo
+
+                            Menu.VsBot ->
+                                PlayBot
+                }
+                msg_
+                state
+                |> Component.mapOutMsg update Selecting MenuMsg
+
+        ( Selecting _, PlayOne ) ->
             OnePlayer.init
                 |> Tuple.mapFirst One
                 |> Tuple.mapSecond (Cmd.map OneMsg)
 
-        ( Selecting, PlayTwo ) ->
+        ( Selecting _, PlayTwo ) ->
             TwoPlayer.init
                 |> Tuple.mapFirst Two
                 |> Tuple.mapSecond (Cmd.map TwoMsg)
@@ -81,8 +102,8 @@ view model =
         ]
         [ h1 [] [ text "dr. mario 💊" ]
         , case model of
-            Selecting ->
-                viewSelecting
+            Selecting state ->
+                Menu.view state |> Html.map MenuMsg
 
             One state ->
                 OnePlayer.view state
@@ -91,12 +112,4 @@ view model =
             Two state ->
                 TwoPlayer.view state
                     |> Html.map TwoMsg
-        ]
-
-
-viewSelecting : Html Msg
-viewSelecting =
-    div []
-        [ button [ onClick PlayOne ] [ text "1p" ]
-        , button [ onClick PlayTwo ] [ text "2p" ]
         ]
