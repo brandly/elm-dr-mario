@@ -106,7 +106,7 @@ view model =
         , style "flex-direction" "column"
         , style "align-items" "center"
         ]
-        [ h1 [] [ text "dr. mario 💊" ]
+        [ h1 [] [ text "Dr. MARIO 💊" ]
         , case model of
             Selecting state ->
                 Menu.view state |> Html.map MenuMsg

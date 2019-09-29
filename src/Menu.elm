@@ -132,9 +132,7 @@ btw =
 
 heading : Bool -> String -> Html msg
 heading selected str =
-    h3
-        [ style "text-transform" "uppercase"
-        ]
+    h3 []
         [ text <|
             if selected then
                 ">" ++ str ++ "<"

@@ -213,8 +213,7 @@ btw =
 
 heading : Bool -> String -> Html msg
 heading selected str =
-    h3
-        []
+    h3 []
         [ text <|
             if selected then
                 ">" ++ str ++ "<"
