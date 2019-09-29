@@ -1,5 +1,6 @@
 module TwoPlayer exposing (Model(..), Msg(..), init, subscriptions, update, view)
 
+import Bot
 import Bottle exposing (Speed(..))
 import Component
 import Html exposing (Html)

@@ -144,8 +144,14 @@ update { onLeave } action model =
             let
                 ( creator_, cmd ) =
                     LevelCreator.init state.second.level
+
+                first =
+                    state.first
+
+                state_ =
+                    { state | first = { first | bottle = Bottle.withControls Controls.wasd state.first.bottle } }
             in
-            ( PrepareSecond state creator_
+            ( PrepareSecond state_ creator_
             , Cmd.map CreatorMsg cmd
             , Nothing
             )
