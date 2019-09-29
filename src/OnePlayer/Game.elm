@@ -92,10 +92,9 @@ subscriptions model =
 
 pointsForClearedViruses : Speed -> Int -> Int
 pointsForClearedViruses speed cleared =
-    if cleared > 0 then
-        applyNtimes (cleared - 1)
-            ((*) 2)
-            (case speed of
+    let
+        start =
+            case speed of
                 Low ->
                     100
 
@@ -104,7 +103,9 @@ pointsForClearedViruses speed cleared =
 
                 High ->
                     300
-            )
+    in
+    if cleared > 0 then
+        applyNtimes (cleared - 1) ((*) 2) start
 
     else
         0
