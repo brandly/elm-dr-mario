@@ -164,7 +164,7 @@ update { onLeave } action model =
         ( Paused _, _ ) ->
             ( model, Cmd.none, Nothing )
 
-        ( Playing state, msg ) ->
+        ( Playing state, BottleMsg msg ) ->
             if Bottle.totalViruses state.bottle.contents == 0 then
                 ( Over
                     { won = True
@@ -186,6 +186,9 @@ update { onLeave } action model =
             else
                 updatePlayState onLeave msg state
 
+        ( Playing state, _ ) ->
+            ( model, Cmd.none, Nothing )
+
         ( Over _, Advance { level, score, speed } ) ->
             let
                 ( model_, msg ) =
@@ -200,7 +203,7 @@ update { onLeave } action model =
             ( model, Cmd.none, Nothing )
 
 
-updatePlayState : msg -> Msg -> State -> ( Model, Cmd Msg, Maybe msg )
+updatePlayState : msg -> Bottle.Msg -> State -> ( Model, Cmd Msg, Maybe msg )
 updatePlayState onLeave action ({ bottle, speed, score } as model) =
     let
         withBottle : Bottle.Model -> Model
@@ -218,16 +221,10 @@ updatePlayState onLeave action ({ bottle, speed, score } as model) =
                     , score = score + additionalPoints
                 }
     in
-    case action of
-        BottleMsg msg ->
-            Bottle.update { onBomb = \_ -> Nothing } msg model.bottle
-                |> Component.raiseOutMsg (update { onLeave = onLeave })
-                    withBottle
-                    BottleMsg
-
-        _ ->
-            -- TODO: get rid of this
-            ( Playing model, Cmd.none, Nothing )
+    Bottle.update { onBomb = \_ -> Nothing } action model.bottle
+        |> Component.raiseOutMsg (update { onLeave = onLeave })
+            withBottle
+            BottleMsg
 
 
 
