@@ -7,13 +7,13 @@ module OnePlayer.Menu exposing
     , view
     )
 
-import Bottle exposing (Speed(..))
 import Browser.Events exposing (onKeyDown)
 import Element exposing (Element, px, styled)
 import Html exposing (Html, div, h3, h4, p, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (keyCode)
 import Json.Decode as Decode
+import Speed exposing (Speed(..))
 
 
 type Msg
@@ -238,4 +238,4 @@ viewSpeed ideal real =
           else
             style "" ""
         ]
-        [ (Bottle.speedToString >> text) real ]
+        [ (Speed.toString >> text) real ]

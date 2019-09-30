@@ -1,10 +1,10 @@
 module OnePlayer exposing (Model(..), Msg(..), init, subscriptions, update, view)
 
-import Bottle exposing (Speed(..))
 import Component
 import Html exposing (Html)
 import OnePlayer.Game as Game
 import OnePlayer.Menu as Menu
+import Speed exposing (Speed(..))
 
 
 init : ( Model, Cmd msg )

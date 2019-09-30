@@ -12,9 +12,10 @@ module MatchupCreator exposing
     )
 
 import Bot
-import Bottle exposing (Speed(..))
+import Bottle
 import BottleCreator
 import Controls
+import Speed exposing (Speed(..))
 
 
 type alias Player =

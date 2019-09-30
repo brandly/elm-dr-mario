@@ -7,10 +7,10 @@ module TwoPlayer exposing
     , view
     )
 
-import Bottle exposing (Speed(..))
 import Component
 import Html exposing (Html)
 import OnePlayer.Menu as Menu
+import Speed exposing (Speed(..))
 import TwoPlayer.Game as Game
 
 

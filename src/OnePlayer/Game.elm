@@ -7,7 +7,7 @@ module OnePlayer.Game exposing
     , view
     )
 
-import Bottle exposing (Color(..), Speed(..))
+import Bottle exposing (Color(..))
 import BottleCreator
 import Component
 import Controls
@@ -15,6 +15,7 @@ import Element exposing (Element, none, styled)
 import Html exposing (Html, div, h3, p, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
+import Speed exposing (Speed(..))
 
 
 type alias State =
@@ -304,7 +305,7 @@ viewPlaying pauseMsg { score, bottle, level, speed } =
                 [ h3 [] [ text "level" ]
                 , p [] [ (String.fromInt >> text) level ]
                 , h3 [] [ text "speed" ]
-                , p [] [ (Bottle.speedToString >> text) speed ]
+                , p [] [ (Speed.toString >> text) speed ]
                 , h3 [] [ text "virus" ]
                 , p [] [ text <| String.fromInt (Bottle.totalViruses bottle.contents) ]
                 ]

@@ -8,7 +8,7 @@ module TwoPlayer.Game exposing
     , view
     )
 
-import Bottle exposing (Color(..), Speed(..))
+import Bottle exposing (Color(..))
 import Component
 import Element exposing (Element, none, styled)
 import Html exposing (Html, div, h3, p, span, text)
@@ -23,6 +23,7 @@ import MatchupCreator
         , mapBottle
         , mapPlayer
         )
+import Speed exposing (Speed(..))
 
 
 type Model
@@ -218,8 +219,8 @@ view model =
                             ]
                         , h3 [] [ text "speed" ]
                         , spaceBetween []
-                            [ span [] [ (Bottle.speedToString >> text) first.speed ]
-                            , span [] [ (Bottle.speedToString >> text) second.speed ]
+                            [ span [] [ (Speed.toString >> text) first.speed ]
+                            , span [] [ (Speed.toString >> text) second.speed ]
                             ]
                         , h3 [] [ text "virus" ]
                         , spaceBetween []

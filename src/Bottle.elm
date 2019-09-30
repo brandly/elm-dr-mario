@@ -7,14 +7,12 @@ module Bottle exposing
     , Model
     , Msg(..)
     , Pill(..)
-    , Speed(..)
     , generateEmptyCoords
     , generatePill
     , getColor
     , hasConflict
     , init
     , isCleared
-    , speedToString
     , subscriptions
     , totalViruses
     , update
@@ -37,26 +35,8 @@ import Json.Decode as Decode
 import Random exposing (Generator(..))
 import RandomExtra exposing (selectWithDefault)
 import Set
+import Speed exposing (Speed(..))
 import Time exposing (Posix)
-
-
-type Speed
-    = Low
-    | Med
-    | High
-
-
-speedToString : Speed -> String
-speedToString s =
-    case s of
-        Low ->
-            "Low"
-
-        Med ->
-            "Med"
-
-        High ->
-            "High"
 
 
 type Controls
