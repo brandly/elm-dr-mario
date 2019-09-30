@@ -421,26 +421,19 @@ fall bottle =
     Grid.map
         (\({ coords, state } as cell) ->
             let
-                ( x, y ) =
-                    coords
+                above =
+                    coordsWithDirection coords Up
             in
-            if canFall ( x, y ) bottle then
+            if canFall coords bottle then
                 -- look above
-                if canFall ( x, y - 1 ) bottle then
-                    { cell
-                        | state =
-                            .state <| Grid.findCellAtCoords ( x, y - 1 ) bottle
-                    }
+                if canFall above bottle then
+                    { cell | state = .state <| Grid.findCellAtCoords above bottle }
 
                 else
                     { cell | state = Nothing }
 
-            else if state == Nothing && canFall ( x, y - 1 ) bottle then
-                { cell
-                    | state =
-                        .state <|
-                            Grid.findCellAtCoords ( x, y - 1 ) bottle
-                }
+            else if state == Nothing && canFall above bottle then
+                { cell | state = .state <| Grid.findCellAtCoords above bottle }
 
             else
                 cell
