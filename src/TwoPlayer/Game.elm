@@ -59,8 +59,7 @@ type Model
 
 
 type Msg
-    = FirstBottleMsg Bottle.Msg
-    | SecondBottleMsg Bottle.Msg
+    = BottleMsg BottleMsg
     | CreatorMsg LevelCreator.Msg
     | LevelReady State
     | FirstBomb (List Color)
@@ -68,6 +67,11 @@ type Msg
     | Pause
     | Resume
     | Reset
+
+
+type BottleMsg
+    = FirstBottleMsg Bottle.Msg
+    | SecondBottleMsg Bottle.Msg
 
 
 type alias Options =
@@ -105,9 +109,9 @@ subscriptions model =
         Playing { first, second } ->
             Sub.batch
                 [ Bottle.subscriptions first.speed first.bottle
-                    |> Sub.map FirstBottleMsg
+                    |> Sub.map (FirstBottleMsg >> BottleMsg)
                 , Bottle.subscriptions second.speed second.bottle
-                    |> Sub.map SecondBottleMsg
+                    |> Sub.map (SecondBottleMsg >> BottleMsg)
                 ]
 
         _ ->
@@ -250,7 +254,7 @@ update { onLeave } action model =
             , Nothing
             )
 
-        ( Playing ({ first, second } as state), msg ) ->
+        ( Playing ({ first, second } as state), BottleMsg msg ) ->
             if Bottle.totalViruses first.bottle.contents == 0 || Bottle.hasConflict second.bottle then
                 ( Over
                     { winner = First
@@ -272,6 +276,9 @@ update { onLeave } action model =
             else
                 updatePlayState onLeave msg state
 
+        ( Playing _, _ ) ->
+            model |> withNothing
+
         ( Over _, Reset ) ->
             ( model, Cmd.none, Just onLeave )
 
@@ -279,7 +286,7 @@ update { onLeave } action model =
             model |> withNothing
 
 
-updatePlayState : msg -> Msg -> State -> ( Model, Cmd Msg, Maybe msg )
+updatePlayState : msg -> BottleMsg -> State -> ( Model, Cmd Msg, Maybe msg )
 updatePlayState onLeave action ({ first, second } as model) =
     case action of
         FirstBottleMsg msg ->
@@ -289,7 +296,7 @@ updatePlayState onLeave action ({ first, second } as model) =
                         Playing
                             { model | first = withBottle bottle first }
                     )
-                    FirstBottleMsg
+                    (FirstBottleMsg >> BottleMsg)
 
         SecondBottleMsg msg ->
             Bottle.update { onBomb = SecondBomb >> Just } msg second.bottle
@@ -298,11 +305,7 @@ updatePlayState onLeave action ({ first, second } as model) =
                         Playing
                             { model | second = withBottle bottle second }
                     )
-                    SecondBottleMsg
-
-        _ ->
-            -- TODO: get rid of this
-            ( Playing model, Cmd.none, Nothing )
+                    (SecondBottleMsg >> BottleMsg)
 
 
 
