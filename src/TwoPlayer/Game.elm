@@ -26,14 +26,14 @@ type alias Player =
     }
 
 
+mapBottle : (Bottle.Model -> Bottle.Model) -> Player -> Player
+mapBottle map player =
+    { player | bottle = map player.bottle }
+
+
 type Opponent
     = Human
     | Bot
-
-
-withBottle : Bottle.Model -> Player -> Player
-withBottle newBottle player =
-    { player | bottle = newBottle }
 
 
 type alias State =
@@ -42,9 +42,29 @@ type alias State =
     }
 
 
-type Winner
+type Position
     = First
     | Second
+
+
+getPlayer : Position -> State -> Player
+getPlayer position { first, second } =
+    case position of
+        First ->
+            first
+
+        Second ->
+            second
+
+
+mapPlayer : Position -> (Player -> Player) -> State -> State
+mapPlayer position map state =
+    case position of
+        First ->
+            { state | first = map state.first }
+
+        Second ->
+            { state | second = map state.second }
 
 
 type Model
@@ -53,7 +73,7 @@ type Model
     | Playing State
     | Paused State
     | Over
-        { winner : Winner
+        { winner : Position
         , game : State
         }
 
@@ -62,8 +82,7 @@ type Msg
     = BottleMsg BottleMsg
     | CreatorMsg LevelCreator.Msg
     | LevelReady State
-    | FirstBomb (List Color)
-    | SecondBomb (List Color)
+    | Bomb Position (List Color)
     | Pause
     | Resume
     | Reset
@@ -153,21 +172,21 @@ update { onLeave } action model =
                         msg2
                         (PrepareFirst opponent state creator_)
 
-        ( PrepareFirst opponent _ _, LevelReady ({ first, second } as state) ) ->
+        ( PrepareFirst opponent _ _, LevelReady state ) ->
             let
                 ( creator_, cmd ) =
-                    LevelCreator.init second.level
+                    LevelCreator.init state.second.level
 
-                bottle =
+                withControls bottle =
                     case opponent of
                         Human ->
-                            Bottle.withControls Controls.wasd first.bottle
+                            Bottle.withControls Controls.wasd bottle
 
                         Bot ->
-                            Bottle.withControls Controls.arrows first.bottle
+                            Bottle.withControls Controls.arrows bottle
 
                 state_ =
-                    { state | first = { first | bottle = bottle } }
+                    mapPlayer First (mapBottle withControls) state
             in
             ( PrepareSecond opponent state_ creator_
             , Cmd.map CreatorMsg cmd
@@ -187,13 +206,12 @@ update { onLeave } action model =
                         Bot ->
                             Bottle.withBot Bot.trashBot bottle_
 
+                applyControls bottle_ =
+                    mapPlayer Second (mapBottle control) state
+
                 ( creator_, cmd, maybeMsg ) =
                     LevelCreator.update
-                        { onCreated =
-                            \{ bottle } ->
-                                LevelReady
-                                    { state | second = { second | bottle = control bottle } }
-                        }
+                        { onCreated = applyControls >> LevelReady }
                         msg
                         creator
             in
@@ -232,49 +250,26 @@ update { onLeave } action model =
         ( Paused _, _ ) ->
             model |> withNothing
 
-        ( Playing ({ second } as state), FirstBomb colors ) ->
-            let
-                bottle =
-                    Bottle.withBombs colors second.bottle
-            in
-            ( Playing
-                { state | second = second |> withBottle bottle }
+        ( Playing state, Bomb receiver colors ) ->
+            ( Playing <|
+                mapPlayer receiver
+                    (mapBottle (Bottle.withBombs colors))
+                    state
             , Cmd.none
             , Nothing
             )
 
-        ( Playing ({ first } as state), SecondBomb colors ) ->
-            let
-                bottle =
-                    Bottle.withBombs colors first.bottle
-            in
-            ( Playing
-                { state | first = first |> withBottle bottle }
-            , Cmd.none
-            , Nothing
-            )
+        ( Playing state, BottleMsg msg ) ->
+            case getWinner state of
+                Just winner ->
+                    withNothing <|
+                        Over
+                            { winner = winner
+                            , game = state
+                            }
 
-        ( Playing ({ first, second } as state), BottleMsg msg ) ->
-            if Bottle.totalViruses first.bottle.contents == 0 || Bottle.hasConflict second.bottle then
-                ( Over
-                    { winner = First
-                    , game = state
-                    }
-                , Cmd.none
-                , Nothing
-                )
-
-            else if Bottle.totalViruses second.bottle.contents == 0 || Bottle.hasConflict first.bottle then
-                ( Over
-                    { winner = Second
-                    , game = state
-                    }
-                , Cmd.none
-                , Nothing
-                )
-
-            else
-                updatePlayState onLeave msg state
+                Nothing ->
+                    updatePlayState onLeave msg state
 
         ( Playing _, _ ) ->
             model |> withNothing
@@ -286,24 +281,36 @@ update { onLeave } action model =
             model |> withNothing
 
 
+getWinner : State -> Maybe Position
+getWinner { first, second } =
+    if Bottle.totalViruses first.bottle.contents == 0 || Bottle.hasConflict second.bottle then
+        Just First
+
+    else if Bottle.totalViruses second.bottle.contents == 0 || Bottle.hasConflict first.bottle then
+        Just Second
+
+    else
+        Nothing
+
+
 updatePlayState : msg -> BottleMsg -> State -> ( Model, Cmd Msg, Maybe msg )
 updatePlayState onLeave action ({ first, second } as model) =
     case action of
         FirstBottleMsg msg ->
-            Bottle.update { onBomb = FirstBomb >> Just } msg first.bottle
+            Bottle.update { onBomb = Bomb Second >> Just } msg first.bottle
                 |> Component.raiseOutMsg (update { onLeave = onLeave })
                     (\bottle ->
                         Playing
-                            { model | first = withBottle bottle first }
+                            { model | first = mapBottle (\_ -> bottle) first }
                     )
                     (FirstBottleMsg >> BottleMsg)
 
         SecondBottleMsg msg ->
-            Bottle.update { onBomb = SecondBomb >> Just } msg second.bottle
+            Bottle.update { onBomb = Bomb First >> Just } msg second.bottle
                 |> Component.raiseOutMsg (update { onLeave = onLeave })
                     (\bottle ->
                         Playing
-                            { model | second = withBottle bottle second }
+                            { model | second = mapBottle (\_ -> bottle) second }
                     )
                     (SecondBottleMsg >> BottleMsg)
 
