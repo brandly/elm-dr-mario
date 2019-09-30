@@ -120,12 +120,13 @@ subscriptions model =
 
 update : { onLeave : msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
 update { onLeave } action model =
+    let
+        withNothing s =
+            ( s, Cmd.none, Nothing )
+    in
     case ( model, action ) of
-        ( PrepareFirst opponent state creator, CreatorMsg msg ) ->
+        ( PrepareFirst opponent ({ first, second } as state) creator, CreatorMsg msg ) ->
             let
-                first =
-                    state.first
-
                 ( creator_, cmd, maybeMsg ) =
                     LevelCreator.update
                         { onCreated =
@@ -148,21 +149,18 @@ update { onLeave } action model =
                         msg2
                         (PrepareFirst opponent state creator_)
 
-        ( PrepareFirst opponent _ _, LevelReady state ) ->
+        ( PrepareFirst opponent _ _, LevelReady ({ first, second } as state) ) ->
             let
                 ( creator_, cmd ) =
-                    LevelCreator.init state.second.level
-
-                first =
-                    state.first
+                    LevelCreator.init second.level
 
                 bottle =
                     case opponent of
                         Human ->
-                            Bottle.withControls Controls.wasd state.first.bottle
+                            Bottle.withControls Controls.wasd first.bottle
 
                         Bot ->
-                            Bottle.withControls Controls.arrows state.first.bottle
+                            Bottle.withControls Controls.arrows first.bottle
 
                 state_ =
                     { state | first = { first | bottle = bottle } }
@@ -173,13 +171,10 @@ update { onLeave } action model =
             )
 
         ( PrepareFirst _ _ _, _ ) ->
-            ( model, Cmd.none, Nothing )
+            model |> withNothing
 
-        ( PrepareSecond opponent state creator, CreatorMsg msg ) ->
+        ( PrepareSecond opponent ({ first, second } as state) creator, CreatorMsg msg ) ->
             let
-                second =
-                    state.second
-
                 control bottle_ =
                     case opponent of
                         Human ->
@@ -198,9 +193,9 @@ update { onLeave } action model =
                         msg
                         creator
             in
-            if state.first.level == state.second.level then
+            if first.level == second.level then
                 ( Playing
-                    { state | second = { second | bottle = control state.first.bottle } }
+                    { state | second = { second | bottle = control first.bottle } }
                 , Cmd.none
                 , Nothing
                 )
@@ -219,38 +214,38 @@ update { onLeave } action model =
                             (PrepareSecond opponent state creator_)
 
         ( PrepareSecond _ _ _, LevelReady state ) ->
-            ( Playing state, Cmd.none, Nothing )
+            Playing state |> withNothing
 
         ( PrepareSecond _ _ _, _ ) ->
-            ( model, Cmd.none, Nothing )
+            model |> withNothing
 
         ( Playing state, Pause ) ->
-            ( Paused state, Cmd.none, Nothing )
+            Paused state |> withNothing
 
         ( Paused state, Resume ) ->
-            ( Playing state, Cmd.none, Nothing )
+            Playing state |> withNothing
 
         ( Paused _, _ ) ->
-            ( model, Cmd.none, Nothing )
+            model |> withNothing
 
-        ( Playing state, FirstBomb colors ) ->
+        ( Playing ({ second } as state), FirstBomb colors ) ->
+            let
+                bottle =
+                    Bottle.withBombs colors second.bottle
+            in
             ( Playing
-                { state
-                    | second =
-                        state.second
-                            |> withBottle (Bottle.withBombs colors state.second.bottle)
-                }
+                { state | second = second |> withBottle bottle }
             , Cmd.none
             , Nothing
             )
 
-        ( Playing state, SecondBomb colors ) ->
+        ( Playing ({ first } as state), SecondBomb colors ) ->
+            let
+                bottle =
+                    Bottle.withBombs colors first.bottle
+            in
             ( Playing
-                { state
-                    | first =
-                        state.first
-                            |> withBottle (Bottle.withBombs colors state.first.bottle)
-                }
+                { state | first = first |> withBottle bottle }
             , Cmd.none
             , Nothing
             )
@@ -281,7 +276,7 @@ update { onLeave } action model =
             ( model, Cmd.none, Just onLeave )
 
         ( Over _, _ ) ->
-            ( model, Cmd.none, Nothing )
+            model |> withNothing
 
 
 updatePlayState : msg -> Msg -> State -> ( Model, Cmd Msg, Maybe msg )
@@ -323,32 +318,32 @@ view model =
         PrepareSecond _ _ _ ->
             div [] [ text "💊💊💊" ]
 
-        Playing state ->
+        Playing { first, second } ->
             div []
                 [ div
                     [ style "display" "flex"
                     , style "flex-direction" "row"
                     ]
-                    [ viewPlayer state.first
+                    [ viewPlayer first
                     , div [ style "margin" "0 12px" ]
                         -- TODO: displays win count
                         [ h3 [] [ text "level" ]
                         , spaceBetween []
-                            [ span [] [ (String.fromInt >> text) state.first.level ]
-                            , span [] [ (String.fromInt >> text) state.second.level ]
+                            [ span [] [ (String.fromInt >> text) first.level ]
+                            , span [] [ (String.fromInt >> text) second.level ]
                             ]
                         , h3 [] [ text "speed" ]
                         , spaceBetween []
-                            [ span [] [ (Bottle.speedToString >> text) state.first.speed ]
-                            , span [] [ (Bottle.speedToString >> text) state.second.speed ]
+                            [ span [] [ (Bottle.speedToString >> text) first.speed ]
+                            , span [] [ (Bottle.speedToString >> text) second.speed ]
                             ]
                         , h3 [] [ text "virus" ]
                         , spaceBetween []
-                            [ span [] [ text <| displayViruses state.first ]
-                            , span [] [ text <| displayViruses state.second ]
+                            [ span [] [ text <| displayViruses first ]
+                            , span [] [ text <| displayViruses second ]
                             ]
                         ]
-                    , viewPlayer state.second
+                    , viewPlayer second
                     ]
                 ]
 

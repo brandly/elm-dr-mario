@@ -5,4 +5,5 @@ gh-pages/
 
 node_modules/
 *.log
+.DS_Store
 
