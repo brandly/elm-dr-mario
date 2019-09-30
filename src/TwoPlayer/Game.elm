@@ -1,7 +1,6 @@
 module TwoPlayer.Game exposing
     ( Model(..)
     , Msg(..)
-    , Opponent(..)
     , init
     , subscriptions
     , update
@@ -16,72 +15,31 @@ import Element exposing (Element, none, styled)
 import Html exposing (Html, div, h3, p, span, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
-import LevelCreator
-
-
-type alias Player =
-    { bottle : Bottle.Model
-    , level : Int
-    , speed : Speed
-    }
-
-
-mapBottle : (Bottle.Model -> Bottle.Model) -> Player -> Player
-mapBottle map player =
-    { player | bottle = map player.bottle }
-
-
-type Opponent
-    = Human
-    | Bot
-
-
-type alias State =
-    { first : Player
-    , second : Player
-    }
-
-
-type Position
-    = First
-    | Second
-
-
-getPlayer : Position -> State -> Player
-getPlayer position { first, second } =
-    case position of
-        First ->
-            first
-
-        Second ->
-            second
-
-
-mapPlayer : Position -> (Player -> Player) -> State -> State
-mapPlayer position map state =
-    case position of
-        First ->
-            { state | first = map state.first }
-
-        Second ->
-            { state | second = map state.second }
+import MatchupCreator
+    exposing
+        ( Matchup
+        , Opponent(..)
+        , Player
+        , Position(..)
+        , mapBottle
+        , mapPlayer
+        )
 
 
 type Model
-    = PrepareFirst Opponent State LevelCreator.Model
-    | PrepareSecond Opponent State LevelCreator.Model
-    | Playing State
-    | Paused State
+    = Prepare MatchupCreator.Model
+    | Playing Matchup
+    | Paused Matchup
     | Over
         { winner : Position
-        , game : State
+        , game : Matchup
         }
 
 
 type Msg
     = BottleMsg BottleMsg
-    | CreatorMsg LevelCreator.Msg
-    | LevelReady State
+    | CreatorMsg MatchupCreator.Msg
+    | MatchupReady Matchup
     | Bomb Position (List Color)
     | Pause
     | Resume
@@ -103,21 +61,9 @@ init : Opponent -> Options -> Options -> ( Model, Cmd Msg )
 init opponent first second =
     let
         ( creator, cmd ) =
-            LevelCreator.init first.level
-
-        withOpts : Options -> Player
-        withOpts opts =
-            { level = opts.level
-            , speed = opts.speed
-            , bottle = Bottle.init
-            }
+            MatchupCreator.init opponent first second
     in
-    ( PrepareFirst
-        opponent
-        { first = withOpts first
-        , second = withOpts second
-        }
-        creator
+    ( Prepare creator
     , Cmd.map CreatorMsg cmd
     )
 
@@ -148,101 +94,16 @@ update { onLeave } action model =
             ( s, Cmd.none, Nothing )
     in
     case ( model, action ) of
-        ( PrepareFirst opponent ({ first, second } as state) creator, CreatorMsg msg ) ->
-            let
-                ( creator_, cmd, maybeMsg ) =
-                    LevelCreator.update
-                        { onCreated =
-                            \{ bottle } ->
-                                LevelReady
-                                    { state | first = { first | bottle = bottle } }
-                        }
-                        msg
-                        creator
-            in
-            case maybeMsg of
-                Nothing ->
-                    ( PrepareFirst opponent state creator_
-                    , Cmd.map CreatorMsg cmd
-                    , Nothing
-                    )
+        ( Prepare creator, CreatorMsg msg ) ->
+            MatchupCreator.update { onCreated = MatchupReady } msg creator
+                |> Component.raiseOutMsg (update { onLeave = onLeave })
+                    Prepare
+                    CreatorMsg
 
-                Just msg2 ->
-                    update { onLeave = onLeave }
-                        msg2
-                        (PrepareFirst opponent state creator_)
+        ( Prepare _, MatchupReady matchup ) ->
+            Playing matchup |> withNothing
 
-        ( PrepareFirst opponent _ _, LevelReady state ) ->
-            let
-                ( creator_, cmd ) =
-                    LevelCreator.init state.second.level
-
-                withControls bottle =
-                    case opponent of
-                        Human ->
-                            Bottle.withControls Controls.wasd bottle
-
-                        Bot ->
-                            Bottle.withControls Controls.arrows bottle
-
-                state_ =
-                    mapPlayer First (mapBottle withControls) state
-            in
-            ( PrepareSecond opponent state_ creator_
-            , Cmd.map CreatorMsg cmd
-            , Nothing
-            )
-
-        ( PrepareFirst _ _ _, _ ) ->
-            model |> withNothing
-
-        ( PrepareSecond opponent ({ first, second } as state) creator, CreatorMsg msg ) ->
-            if first.level == second.level then
-                update { onLeave = onLeave }
-                    -- reuse generated bottle so the game is fair
-                    (LevelReady { state | second = { second | bottle = first.bottle } })
-                    (PrepareSecond opponent state creator)
-
-            else
-                let
-                    ( creator_, cmd, maybeMsg ) =
-                        LevelCreator.update
-                            { onCreated =
-                                \{ bottle } ->
-                                    LevelReady
-                                        { state | second = { second | bottle = bottle } }
-                            }
-                            msg
-                            creator
-                in
-                case maybeMsg of
-                    Nothing ->
-                        ( PrepareSecond opponent state creator_
-                        , Cmd.map CreatorMsg cmd
-                        , Nothing
-                        )
-
-                    Just msg2 ->
-                        update { onLeave = onLeave }
-                            msg2
-                            (PrepareSecond opponent state creator_)
-
-        ( PrepareSecond opponent _ _, LevelReady state ) ->
-            let
-                withControls bottle_ =
-                    case opponent of
-                        Human ->
-                            Bottle.withControls Controls.arrows bottle_
-
-                        Bot ->
-                            Bottle.withBot Bot.trashBot bottle_
-
-                state_ =
-                    mapPlayer Second (mapBottle withControls) state
-            in
-            Playing state_ |> withNothing
-
-        ( PrepareSecond _ _ _, _ ) ->
+        ( Prepare _, _ ) ->
             model |> withNothing
 
         ( Playing state, Pause ) ->
@@ -285,7 +146,7 @@ update { onLeave } action model =
             model |> withNothing
 
 
-getWinner : State -> Maybe Position
+getWinner : Matchup -> Maybe Position
 getWinner { first, second } =
     if Bottle.totalViruses first.bottle.contents == 0 || Bottle.hasConflict second.bottle then
         Just First
@@ -297,7 +158,7 @@ getWinner { first, second } =
         Nothing
 
 
-updatePlayState : msg -> BottleMsg -> State -> ( Model, Cmd Msg, Maybe msg )
+updatePlayState : msg -> BottleMsg -> Matchup -> ( Model, Cmd Msg, Maybe msg )
 updatePlayState onLeave action ({ first, second } as model) =
     case action of
         FirstBottleMsg msg ->
@@ -326,10 +187,7 @@ updatePlayState onLeave action ({ first, second } as model) =
 view : Model -> Html Msg
 view model =
     case model of
-        PrepareFirst _ _ _ ->
-            div [] [ text "💊💊💊" ]
-
-        PrepareSecond _ _ _ ->
+        Prepare _ ->
             div [] [ text "💊💊💊" ]
 
         Playing { first, second } ->

@@ -8,13 +8,13 @@ module OnePlayer.Game exposing
     )
 
 import Bottle exposing (Color(..), Speed(..))
+import BottleCreator
 import Component
 import Controls
 import Element exposing (Element, none, styled)
 import Html exposing (Html, div, h3, p, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
-import LevelCreator
 
 
 type alias State =
@@ -29,7 +29,7 @@ type Model
     = PrepareGame
         { score : Int
         , speed : Speed
-        , creator : LevelCreator.Model
+        , creator : BottleCreator.Model
         }
     | Playing State
     | Paused State
@@ -41,7 +41,7 @@ type Model
 
 type Msg
     = BottleMsg Bottle.Msg
-    | CreatorMsg LevelCreator.Msg
+    | CreatorMsg BottleCreator.Msg
     | LevelReady State
     | Advance
         { level : Int
@@ -62,7 +62,7 @@ initWithScore : Int -> Speed -> Int -> ( Model, Cmd Msg )
 initWithScore level speed score =
     let
         ( creator, cmd ) =
-            LevelCreator.init level
+            BottleCreator.init level
     in
     ( PrepareGame
         { creator = creator
@@ -121,7 +121,7 @@ update { onLeave } action model =
         ( PrepareGame ({ score, creator, speed } as state), CreatorMsg msg ) ->
             let
                 ( creator_, cmd, maybeMsg ) =
-                    LevelCreator.update
+                    BottleCreator.update
                         { onCreated =
                             \{ level, bottle } ->
                                 LevelReady

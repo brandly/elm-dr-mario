@@ -4,18 +4,19 @@ import Bot
 import Bottle exposing (Speed(..))
 import Component
 import Html exposing (Html)
+import MatchupCreator exposing (Opponent(..))
 import OnePlayer.Menu as Menu
 import TwoPlayer.Game as Game
 
 
-init : Game.Opponent -> ( Model, Cmd Msg )
+init : Opponent -> ( Model, Cmd Msg )
 init opponent =
     ( Init opponent Menu.init, Cmd.none )
 
 
 type Model
-    = Init Game.Opponent Menu.State
-    | InGame Game.Opponent Menu.State Game.Model
+    = Init Opponent Menu.State
+    | InGame Opponent Menu.State Game.Model
 
 
 type Msg

@@ -1,4 +1,4 @@
-module LevelCreator exposing
+module BottleCreator exposing
     ( Model
     , Msg(..)
     , init
