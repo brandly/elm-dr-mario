@@ -14,12 +14,7 @@ module MatchupCreator exposing
 import Bot
 import Bottle exposing (Color(..), Speed(..))
 import BottleCreator
-import Component
 import Controls
-import Element exposing (Element, none, styled)
-import Html exposing (Html, div, h3, p, span, text)
-import Html.Attributes exposing (style)
-import Html.Events exposing (onClick)
 
 
 type alias Player =
@@ -50,16 +45,6 @@ type Position
     | Second
 
 
-getPlayer : Position -> Matchup -> Player
-getPlayer position { first, second } =
-    case position of
-        First ->
-            first
-
-        Second ->
-            second
-
-
 mapPlayer : Position -> (Player -> Player) -> Matchup -> Matchup
 mapPlayer position map state =
     case position of
@@ -79,11 +64,6 @@ type Model
 type Msg
     = CreatorMsg BottleCreator.Msg
     | Ready Matchup
-
-
-type BottleMsg
-    = FirstBottleMsg Bottle.Msg
-    | SecondBottleMsg Bottle.Msg
 
 
 type alias Options =
@@ -126,7 +106,7 @@ update { onCreated } action model =
             ( s, Cmd.none, Nothing )
     in
     case ( model, action ) of
-        ( PrepareFirst opponent ({ first, second } as state) creator, CreatorMsg msg ) ->
+        ( PrepareFirst opponent ({ first } as state) creator, CreatorMsg msg ) ->
             let
                 ( creator_, cmd, maybeMsg ) =
                     BottleCreator.update

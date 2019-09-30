@@ -7,10 +7,8 @@ module TwoPlayer.Game exposing
     , view
     )
 
-import Bot
 import Bottle exposing (Color(..), Speed(..))
 import Component
-import Controls
 import Element exposing (Element, none, styled)
 import Html exposing (Html, div, h3, p, span, text)
 import Html.Attributes exposing (style)

@@ -71,13 +71,6 @@ update events msg ({ selection } as state) =
     let
         withNothing s =
             ( s, Cmd.none, Nothing )
-
-        other =
-            if selection == OnePlayer then
-                VsBot
-
-            else
-                OnePlayer
     in
     case ( selection, msg ) of
         ( OnePlayer, Up ) ->

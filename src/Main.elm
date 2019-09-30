@@ -8,7 +8,6 @@ import MatchupCreator exposing (Opponent(..))
 import Menu
 import OnePlayer
 import TwoPlayer
-import TwoPlayer.Game
 
 
 main : Program () Model Msg
