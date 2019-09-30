@@ -2,8 +2,14 @@
 
 take a look at [the nintendo instruction booklet](https://www.nintendo.co.jp/clv/manuals/en/pdf/CLV-P-NAAXE.pdf)
 
+## dev
+
 ```shell
 $ npm install
 $ npm start
 $ open dist/index.html
 ```
+
+## structure
+
+![tree](https://github.com/brandly/elm-dr-mario/blob/master/dep-tree.svg)
