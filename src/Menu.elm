@@ -8,7 +8,6 @@ module Menu exposing
     , view
     )
 
-import Bottle exposing (Speed(..))
 import Browser.Events exposing (onKeyDown)
 import Element exposing (Element, styled)
 import Html exposing (Html, div, h3, p, text)

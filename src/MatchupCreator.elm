@@ -12,7 +12,7 @@ module MatchupCreator exposing
     )
 
 import Bot
-import Bottle exposing (Color(..), Speed(..))
+import Bottle exposing (Speed(..))
 import BottleCreator
 import Controls
 

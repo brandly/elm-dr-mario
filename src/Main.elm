@@ -4,10 +4,10 @@ import Browser
 import Component
 import Html exposing (Html, div, h1, text)
 import Html.Attributes exposing (style)
-import MatchupCreator exposing (Opponent(..))
 import Menu
 import OnePlayer
 import TwoPlayer
+import TwoPlayer.Game
 
 
 main : Program () Model Msg
@@ -78,12 +78,12 @@ update msg model =
                 |> Tuple.mapSecond (Cmd.map OneMsg)
 
         ( Selecting _, PlayTwo ) ->
-            TwoPlayer.init Human
+            TwoPlayer.init TwoPlayer.Game.VsHuman
                 |> Tuple.mapFirst Two
                 |> Tuple.mapSecond (Cmd.map TwoMsg)
 
         ( Selecting _, PlayBot ) ->
-            TwoPlayer.init Bot
+            TwoPlayer.init TwoPlayer.Game.VsBot
                 |> Tuple.mapFirst Two
                 |> Tuple.mapSecond (Cmd.map TwoMsg)
 

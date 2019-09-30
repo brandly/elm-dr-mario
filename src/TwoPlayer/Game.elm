@@ -1,5 +1,6 @@
 module TwoPlayer.Game exposing
-    ( Model(..)
+    ( GameType(..)
+    , Model(..)
     , Msg(..)
     , init
     , subscriptions
@@ -55,9 +56,22 @@ type alias Options =
     }
 
 
-init : Opponent -> Options -> Options -> ( Model, Cmd Msg )
-init opponent first second =
+type GameType
+    = VsHuman
+    | VsBot
+
+
+init : GameType -> Options -> Options -> ( Model, Cmd Msg )
+init type_ first second =
     let
+        opponent =
+            case type_ of
+                VsHuman ->
+                    Human
+
+                VsBot ->
+                    Bot
+
         ( creator, cmd ) =
             MatchupCreator.init opponent first second
     in

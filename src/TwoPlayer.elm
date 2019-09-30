@@ -1,21 +1,27 @@
-module TwoPlayer exposing (Model(..), Msg(..), init, subscriptions, update, view)
+module TwoPlayer exposing
+    ( Model(..)
+    , Msg(..)
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
 import Bottle exposing (Speed(..))
 import Component
 import Html exposing (Html)
-import MatchupCreator exposing (Opponent(..))
 import OnePlayer.Menu as Menu
 import TwoPlayer.Game as Game
 
 
-init : Opponent -> ( Model, Cmd Msg )
-init opponent =
-    ( Init opponent Menu.init, Cmd.none )
+init : Game.GameType -> ( Model, Cmd Msg )
+init type_ =
+    ( Init type_ Menu.init, Cmd.none )
 
 
 type Model
-    = Init Opponent Menu.State
-    | InGame Opponent Menu.State Game.Model
+    = Init Game.GameType Menu.State
+    | InGame Game.GameType Menu.State Game.Model
 
 
 type Msg
