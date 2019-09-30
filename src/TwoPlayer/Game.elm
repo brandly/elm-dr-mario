@@ -197,32 +197,24 @@ update { onLeave } action model =
             model |> withNothing
 
         ( PrepareSecond opponent ({ first, second } as state) creator, CreatorMsg msg ) ->
-            let
-                control bottle_ =
-                    case opponent of
-                        Human ->
-                            Bottle.withControls Controls.arrows bottle_
-
-                        Bot ->
-                            Bottle.withBot Bot.trashBot bottle_
-
-                applyControls bottle_ =
-                    mapPlayer Second (mapBottle control) state
-
-                ( creator_, cmd, maybeMsg ) =
-                    LevelCreator.update
-                        { onCreated = applyControls >> LevelReady }
-                        msg
-                        creator
-            in
             if first.level == second.level then
-                ( Playing
-                    { state | second = { second | bottle = control first.bottle } }
-                , Cmd.none
-                , Nothing
-                )
+                update { onLeave = onLeave }
+                    -- reuse generated bottle so the game is fair
+                    (LevelReady { state | second = { second | bottle = first.bottle } })
+                    (PrepareSecond opponent state creator)
 
             else
+                let
+                    ( creator_, cmd, maybeMsg ) =
+                        LevelCreator.update
+                            { onCreated =
+                                \{ bottle } ->
+                                    LevelReady
+                                        { state | second = { second | bottle = bottle } }
+                            }
+                            msg
+                            creator
+                in
                 case maybeMsg of
                     Nothing ->
                         ( PrepareSecond opponent state creator_
@@ -235,8 +227,20 @@ update { onLeave } action model =
                             msg2
                             (PrepareSecond opponent state creator_)
 
-        ( PrepareSecond _ _ _, LevelReady state ) ->
-            Playing state |> withNothing
+        ( PrepareSecond opponent _ _, LevelReady state ) ->
+            let
+                withControls bottle_ =
+                    case opponent of
+                        Human ->
+                            Bottle.withControls Controls.arrows bottle_
+
+                        Bot ->
+                            Bottle.withBot Bot.trashBot bottle_
+
+                state_ =
+                    mapPlayer Second (mapBottle withControls) state
+            in
+            Playing state_ |> withNothing
 
         ( PrepareSecond _ _ _, _ ) ->
             model |> withNothing
