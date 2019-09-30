@@ -4,6 +4,6 @@ take a look at [the nintendo instruction booklet](https://www.nintendo.co.jp/clv
 
 ```shell
 $ npm install
-$ npm run build
+$ npm start
 $ open dist/index.html
 ```
