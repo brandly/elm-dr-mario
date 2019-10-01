@@ -408,28 +408,19 @@ sweep ({ contents } as model) =
     let
         coordsLosingDependent =
             contents
-                |> Grid.filter
-                    (\{ coords, state } ->
-                        case state of
-                            Just ( _, Pill (Just _) ) ->
-                                if isCleared coords contents then
-                                    True
-
-                                else
-                                    False
-
-                            _ ->
-                                False
-                    )
-                |> List.map
+                |> Grid.filterMap
                     (\{ coords, state } ->
                         case state of
                             Just ( _, Pill (Just dependent) ) ->
-                                coordsWithDirection coords dependent
+                                if isCleared coords contents then
+                                    Just <|
+                                        coordsWithDirection coords dependent
+
+                                else
+                                    Nothing
 
                             _ ->
-                                -- Shouldn't have made it thru the preceding filter
-                                ( -1, -1 )
+                                Nothing
                     )
                 |> Set.fromList
 
