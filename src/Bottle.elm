@@ -164,7 +164,7 @@ type Direction
 subscriptions : Speed -> Model -> Sub Msg
 subscriptions speed model =
     Sub.batch
-        [ Time.every (tickForSpeed speed) TickTock
+        [ Time.every (Speed.tick speed) TickTock
         , case model.controls of
             Keyboard controls ->
                 onKeyDown (Decode.map (controls >> KeyDown) keyCode)
@@ -174,21 +174,8 @@ subscriptions speed model =
                     direction =
                         bot model.contents model.mode
                 in
-                Time.every (tickForSpeed speed / 4) (\_ -> SetGoal direction)
+                Time.every (Speed.tick speed / 4) (\_ -> SetGoal direction)
         ]
-
-
-tickForSpeed : Speed -> Float
-tickForSpeed speed =
-    case speed of
-        High ->
-            300
-
-        Med ->
-            700
-
-        Low ->
-            1000
 
 
 

@@ -18,3 +18,16 @@ toString s =
 
         High ->
             "High"
+
+
+tick : Speed -> Float
+tick speed =
+    case speed of
+        High ->
+            300
+
+        Med ->
+            700
+
+        Low ->
+            1000
