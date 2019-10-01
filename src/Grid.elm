@@ -1,22 +1,22 @@
-module Grid
-    exposing
-        ( Cell
-        , Column
-        , Coords
-        , Grid
-        , below
-        , difference
-        , filter
-        , findCellAtCoords
-        , fromDimensions
-        , height
-        , isEmpty
-        , map
-        , setState
-        , topRow
-        , width
-        , zip
-        )
+module Grid exposing
+    ( Cell
+    , Column
+    , Coords
+    , Grid
+    , below
+    , difference
+    , filter
+    , filterMap
+    , findCellAtCoords
+    , fromDimensions
+    , height
+    , isEmpty
+    , map
+    , setState
+    , topRow
+    , width
+    , zip
+    )
 
 
 type alias Cell val =
@@ -45,8 +45,8 @@ fromDimensions width_ height_ =
             List.range 1 height_
                 |> List.map (\y -> Cell ( x, y ) Nothing)
     in
-        List.range 1 width_
-            |> List.map makeColumn
+    List.range 1 width_
+        |> List.map makeColumn
 
 
 width : Grid val -> Int
@@ -74,6 +74,11 @@ filter predicate grid =
     toList grid |> List.filter predicate
 
 
+filterMap : (Cell a -> Maybe b) -> Grid a -> List b
+filterMap predicate grid =
+    toList grid |> List.filterMap predicate
+
+
 difference : (Maybe val -> Maybe val -> Bool) -> Grid val -> Grid val -> List (Cell val)
 difference diff a b =
     zip (toList a) (toList b)
@@ -81,6 +86,7 @@ difference diff a b =
             (\( y, z ) ->
                 if diff y.state z.state then
                     Just y
+
                 else
                     Nothing
             )
@@ -117,7 +123,7 @@ isEmpty coords grid =
     findCellAtCoords coords grid |> (.state >> (==) Nothing)
 
 
-map : (Cell val -> Cell val) -> Grid val -> Grid val
+map : (Cell a -> Cell b) -> Grid a -> Grid b
 map f grid =
     List.map (List.map f) grid
 
@@ -136,6 +142,7 @@ updateCellAtCoords update coords grid =
         (\cell ->
             if cell.coords == coords then
                 update cell
+
             else
                 cell
         )
@@ -168,4 +175,4 @@ topRow grid =
                 _ ->
                     result
     in
-        go [] (List.map List.head grid)
+    go [] (List.map List.head grid)
