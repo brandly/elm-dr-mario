@@ -202,13 +202,13 @@ update { onBomb } msg model =
                 Nothing
             )
 
-        ( PlacingPill pill ( x, y ), KeyDown key ) ->
+        ( PlacingPill pill coords, KeyDown key ) ->
             let
                 moveIfAvailable : Pill -> Grid.Coords -> ( Model, Cmd Msg, Maybe msg )
-                moveIfAvailable pill_ coords =
+                moveIfAvailable pill_ coords_ =
                     withNothing
-                        (if isAvailable coords pill_ model.contents then
-                            { model | mode = PlacingPill pill_ coords }
+                        (if isAvailable coords_ pill_ model.contents then
+                            { model | mode = PlacingPill pill_ coords_ }
 
                          else
                             model
@@ -225,16 +225,11 @@ update { onBomb } msg model =
                                 Vertical a b ->
                                     Horizontal b a
                     in
-                    moveIfAvailable newPill ( x, y )
+                    moveIfAvailable newPill coords
 
-                Just Left ->
-                    moveIfAvailable pill ( x - 1, y )
-
-                Just Right ->
-                    moveIfAvailable pill ( x + 1, y )
-
-                Just Down ->
-                    moveIfAvailable pill ( x, y + 1 )
+                Just direction ->
+                    moveIfAvailable pill
+                        (coordsWithDirection coords direction)
 
                 Nothing ->
                     withNothing model
@@ -282,16 +277,16 @@ withNothing model =
 advance : Model -> ( Model, Cmd Msg, Maybe msg )
 advance model =
     case model.mode of
-        PlacingPill pill ( x, y ) ->
+        PlacingPill pill coords ->
             let
                 newCoords =
-                    ( x, y + 1 )
+                    coordsWithDirection coords Down
 
                 afterPill : Pill -> Grid.Coords -> Model
-                afterPill pill_ coords =
+                afterPill pill_ coords_ =
                     let
                         newContents =
-                            addPill pill_ coords model.contents
+                            addPill pill_ coords_ model.contents
 
                         modify =
                             if canSweep newContents then
@@ -311,7 +306,7 @@ advance model =
                     { model | mode = PlacingPill pill newCoords }
 
                  else
-                    afterPill pill ( x, y )
+                    afterPill pill coords
                 )
 
         Falling _ ->
