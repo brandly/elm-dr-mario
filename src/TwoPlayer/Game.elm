@@ -269,9 +269,7 @@ viewPlayer { bottle } =
         , style "align-items" "center"
         ]
         [ div [ style "display" "flex", style "margin-bottom" "18px" ]
-            [ (Tuple.first >> Bottle.viewPill (Just Bottle.Right)) bottle.next
-            , (Tuple.second >> Bottle.viewPill (Just Bottle.Left)) bottle.next
-            ]
+            (Bottle.viewPill bottle.next)
         , Bottle.view bottle
         ]
 

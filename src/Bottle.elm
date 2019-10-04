@@ -746,7 +746,7 @@ view { contents, mode, goal } =
                                         div cellStyle []
 
                                     Just ( color, Pill dependent ) ->
-                                        viewPill dependent color
+                                        viewPillCell dependent color
 
                                     Just ( color, Virus ) ->
                                         viewVirus color
@@ -765,8 +765,8 @@ view { contents, mode, goal } =
         ]
 
 
-viewPill : Maybe Dependent -> Color -> Html msg
-viewPill dependent color =
+viewPillCell : Maybe Dependent -> Color -> Html msg
+viewPillCell dependent color =
     viewColor color
         8
         (case dependent of
@@ -786,6 +786,13 @@ viewPill dependent color =
                 []
         )
         []
+
+
+viewPill : ( Color, Color ) -> List (Html msg)
+viewPill ( left, right ) =
+    [ viewPillCell (Just Right) left
+    , viewPillCell (Just Left) right
+    ]
 
 
 viewVirus : Color -> Html msg

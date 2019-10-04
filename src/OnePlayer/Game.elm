@@ -297,10 +297,7 @@ viewPlaying pauseMsg { score, bottle, level, speed } =
         , columnEl []
             [ h3 [] [ text "next" ]
             , div [ style "display" "flex" ]
-                -- TODO: there should be a nicer fn that hides the Just Left/Right
-                [ (Tuple.first >> Bottle.viewPill (Just Bottle.Right)) bottle.next
-                , (Tuple.second >> Bottle.viewPill (Just Bottle.Left)) bottle.next
-                ]
+                (Bottle.viewPill bottle.next)
             , div [ style "margin" "72px 0" ]
                 [ h3 [] [ text "level" ]
                 , p [] [ (String.fromInt >> text) level ]
