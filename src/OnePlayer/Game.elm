@@ -7,7 +7,7 @@ module OnePlayer.Game exposing
     , view
     )
 
-import Bottle exposing (Color(..))
+import Bottle
 import BottleCreator
 import Component
 import Controls

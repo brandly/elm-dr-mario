@@ -1,7 +1,7 @@
 module Menu exposing
-    ( Msg(..)
+    ( Model
+    , Msg(..)
     , Selection(..)
-    , State
     , init
     , subscriptions
     , update
@@ -29,17 +29,17 @@ type Selection
     | VsBot
 
 
-type alias State =
+type alias Model =
     { selection : Selection
     }
 
 
-init : State
+init : Model
 init =
     { selection = OnePlayer }
 
 
-subscriptions : State -> Sub Msg
+subscriptions : Model -> Sub Msg
 subscriptions _ =
     onKeyDown
         (Decode.map
@@ -64,8 +64,8 @@ subscriptions _ =
 update :
     { onSubmit : Selection -> msg }
     -> Msg
-    -> State
-    -> ( State, Cmd Msg, Maybe msg )
+    -> Model
+    -> ( Model, Cmd Msg, Maybe msg )
 update events msg ({ selection } as state) =
     let
         withNothing s =
@@ -100,7 +100,7 @@ update events msg ({ selection } as state) =
             withNothing state
 
 
-view : State -> Html msg
+view : Model -> Html msg
 view { selection } =
     div
         [ style "width" "420px"

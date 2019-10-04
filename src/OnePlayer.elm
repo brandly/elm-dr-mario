@@ -13,7 +13,7 @@ init =
 
 
 type Model
-    = Init Menu.State
+    = Init Menu.Model
     | InGame Game.Model
 
 

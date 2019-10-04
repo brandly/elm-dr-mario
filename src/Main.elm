@@ -21,15 +21,15 @@ main =
 
 
 type Model
-    = Selecting Menu.State
+    = Selecting Menu.Model
     | One OnePlayer.Model
     | Two TwoPlayer.Model
 
 
 type Msg
-    = OneMsg OnePlayer.Msg
+    = MenuMsg Menu.Msg
+    | OneMsg OnePlayer.Msg
     | TwoMsg TwoPlayer.Msg
-    | MenuMsg Menu.Msg
     | PlayOne
     | PlayTwo
     | PlayBot

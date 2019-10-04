@@ -1,6 +1,6 @@
 module OnePlayer.Menu exposing
-    ( Msg(..)
-    , State
+    ( Model
+    , Msg(..)
     , init
     , subscriptions
     , update
@@ -30,19 +30,19 @@ type Selection
     | Level
 
 
-type alias State =
+type alias Model =
     { level : Int
     , speed : Speed
     , selecting : Selection
     }
 
 
-init : State
+init : Model
 init =
     { level = 10, speed = Med, selecting = Level }
 
 
-subscriptions : State -> Sub Msg
+subscriptions : Model -> Sub Msg
 subscriptions _ =
     onKeyDown
         (Decode.map
@@ -73,8 +73,8 @@ subscriptions _ =
 update :
     { onSubmit : { level : Int, speed : Speed } -> msg }
     -> Msg
-    -> State
-    -> ( State, Cmd Msg, Maybe msg )
+    -> Model
+    -> ( Model, Cmd Msg, Maybe msg )
 update events msg ({ selecting, speed } as state) =
     let
         other : Selection
@@ -138,7 +138,7 @@ update events msg ({ selecting, speed } as state) =
             withNothing state
 
 
-view : State -> Html msg
+view : Model -> Html msg
 view { level, speed, selecting } =
     div
         [ style "width" "420px", style "max-width" "100%" ]

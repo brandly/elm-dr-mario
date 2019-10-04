@@ -20,8 +20,8 @@ init type_ =
 
 
 type Model
-    = Init Game.GameType Menu.State
-    | InGame Game.GameType Menu.State Game.Model
+    = Init Game.GameType Menu.Model
+    | InGame Game.GameType Menu.Model Game.Model
 
 
 type Msg
