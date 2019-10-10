@@ -69,8 +69,8 @@ type alias Pill =
 
 
 type Orientation
-    = Horizontal Color Color
-    | Vertical Color Color
+    = Horizontal ( Color, Color )
+    | Vertical ( Color, Color )
 
 
 type Type
@@ -201,14 +201,10 @@ update : { onBomb : List Color -> Maybe msg } -> Msg -> Model -> ( Model, Cmd Ms
 update props msg model =
     case ( model.mode, msg ) of
         ( Falling cleared, NewPill next ) ->
-            let
-                ( a, b ) =
-                    model.next
-            in
             ( { model
                 | mode =
                     PlacingPill
-                        { orientation = Horizontal a b
+                        { orientation = Horizontal model.next
                         , coords = ( 4, 0 )
                         }
                 , next = next
@@ -240,11 +236,11 @@ update props msg model =
                             (\o ->
                                 -- TODO: Pill.flip?
                                 case o of
-                                    Horizontal a b ->
-                                        Vertical a b
+                                    Horizontal pair ->
+                                        Vertical pair
 
-                                    Vertical a b ->
-                                        Horizontal b a
+                                    Vertical ( a, b ) ->
+                                        Horizontal ( b, a )
                             )
                             pill
                         )
@@ -396,10 +392,10 @@ colorCoords pill =
     let
         ( ( a_color, a_dep ), ( b_color, b_dep ) ) =
             case pill.orientation of
-                Horizontal a b ->
+                Horizontal ( a, b ) ->
                     ( ( a, Right ), ( b, Left ) )
 
-                Vertical a b ->
+                Vertical ( a, b ) ->
                     ( ( a, Down ), ( b, Up ) )
     in
     case pillCoordsPair pill of
@@ -555,10 +551,10 @@ pillCoordsPair pill =
             pill.coords
     in
     case pill.orientation of
-        Horizontal _ _ ->
+        Horizontal _ ->
             [ ( x, y + 1 ), ( x + 1, y + 1 ) ]
 
-        Vertical _ _ ->
+        Vertical _ ->
             [ ( x, y ), ( x, y + 1 ) ]
 
 
@@ -573,10 +569,10 @@ isAvailable pill grid =
 
         withinRight =
             case pill.orientation of
-                Vertical _ _ ->
+                Vertical _ ->
                     x <= Grid.width grid
 
-                Horizontal _ _ ->
+                Horizontal _ ->
                     x < Grid.width grid
 
         inBottle =

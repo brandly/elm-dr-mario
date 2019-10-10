@@ -37,11 +37,11 @@ placingPill bottle { orientation, coords } =
     let
         ( color_a, color_b ) =
             case orientation of
-                Vertical a b ->
-                    ( a, b )
+                Vertical pair ->
+                    pair
 
-                Horizontal a b ->
-                    ( a, b )
+                Horizontal pair ->
+                    pair
 
         options : List ( Int, Orientation )
         options =
@@ -84,7 +84,7 @@ placingPill bottle { orientation, coords } =
             (List.range minX maxX
                 |> List.map
                     (\x ->
-                        ( x, Vertical color_a color_b )
+                        ( x, Vertical ( color_a, color_b ) )
                     )
             )
                 ++ (if color_a == color_b then
@@ -92,10 +92,10 @@ placingPill bottle { orientation, coords } =
 
                     else
                         List.range minX (maxX - 1)
-                            |> List.map (\x -> ( x, Horizontal color_b color_a ))
+                            |> List.map (\x -> ( x, Horizontal ( color_b, color_a ) ))
                    )
                 ++ (List.range minX (maxX - 1)
-                        |> List.map (\x -> ( x, Horizontal color_a color_b ))
+                        |> List.map (\x -> ( x, Horizontal ( color_a, color_b ) ))
                    )
 
         peaks : List (Grid.Cell Contents)
@@ -151,10 +151,10 @@ placingPill bottle { orientation, coords } =
 
             else
                 case orientation of
-                    Horizontal _ _ ->
+                    Horizontal _ ->
                         0
 
-                    Vertical a b ->
+                    Vertical ( a, b ) ->
                         if a == b then
                             1
 
@@ -167,10 +167,10 @@ placingPill bottle { orientation, coords } =
                 (\( x, orientation_ ) ->
                     orientationBonus orientation_
                         + (case orientation_ of
-                            Horizontal a b ->
+                            Horizontal ( a, b ) ->
                                 colorIndexScore a x + colorIndexScore b (x + 1)
 
-                            Vertical a b ->
+                            Vertical ( a, b ) ->
                                 if a == b then
                                     colorIndexScore a x + colorIndexScore b x
 
