@@ -185,11 +185,7 @@ update props msg model =
     case ( model.mode, msg ) of
         ( Falling cleared, NewPill next ) ->
             ( { model
-                | mode =
-                    PlacingPill
-                        { orientation = Horizontal model.next
-                        , coords = ( 4, 0 )
-                        }
+                | mode = PlacingPill (Pill.fromColors model.next)
                 , next = next
               }
             , Cmd.none

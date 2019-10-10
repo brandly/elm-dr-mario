@@ -3,17 +3,25 @@ module Pill exposing
     , Orientation(..)
     , Pill
     , coordsPair
+    , fromColors
     , mapCoords
     , mapOrientation
     , turnRight
     )
 
-import Grid
+import Grid exposing (Coords)
 
 
 type alias Pill =
     { orientation : Orientation
-    , coords : Grid.Coords
+    , coords : Coords
+    }
+
+
+fromColors : ( Color, Color ) -> Pill
+fromColors colors =
+    { orientation = Horizontal colors
+    , coords = ( 4, 0 )
     }
 
 
@@ -28,7 +36,7 @@ type Color
     | Yellow
 
 
-mapCoords : (Grid.Coords -> Grid.Coords) -> Pill -> Pill
+mapCoords : (Coords -> Coords) -> Pill -> Pill
 mapCoords map { orientation, coords } =
     { orientation = orientation, coords = map coords }
 
@@ -52,7 +60,7 @@ turnRight pill =
         pill
 
 
-coordsPair : Pill -> List Grid.Coords
+coordsPair : Pill -> List Coords
 coordsPair pill =
     let
         ( x, y ) =
