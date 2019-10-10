@@ -1,13 +1,10 @@
 module Bottle exposing
     ( Bottle
-    , Color(..)
     , Contents
     , Direction(..)
     , Mode(..)
     , Model
     , Msg(..)
-    , Orientation(..)
-    , Pill
     , generateEmptyCoords
     , generatePill
     , getColor
@@ -33,6 +30,7 @@ import Html exposing (Html, div, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (keyCode)
 import Json.Decode as Decode
+import Pill exposing (Color(..), Orientation(..), Pill)
 import Random exposing (Generator(..))
 import RandomExtra exposing (selectWithDefault)
 import Set
@@ -62,17 +60,6 @@ type Mode
     | Bombing
 
 
-type alias Pill =
-    { orientation : Orientation
-    , coords : Grid.Coords
-    }
-
-
-type Orientation
-    = Horizontal ( Color, Color )
-    | Vertical ( Color, Color )
-
-
 type Type
     = Virus
       -- TODO: rename to `Pill` once files are broken up?
@@ -81,12 +68,6 @@ type Type
 
 type alias Dependent =
     Direction
-
-
-type Color
-    = Red
-    | Blue
-    | Yellow
 
 
 getColor : Int -> Color
@@ -161,7 +142,9 @@ withBombs colors model =
     { model | bombs = model.bombs ++ colors }
 
 
-type Msg
+type
+    Msg
+    -- TODO: Pill?
     = NewPill ( Color, Color )
     | KeyDown (Maybe Direction)
     | TickTock Posix
@@ -231,23 +214,11 @@ update props msg model =
             in
             case key of
                 Just Up ->
-                    moveIfAvailable
-                        (mapOrientation
-                            (\o ->
-                                -- TODO: Pill.flip?
-                                case o of
-                                    Horizontal pair ->
-                                        Vertical pair
-
-                                    Vertical ( a, b ) ->
-                                        Horizontal ( b, a )
-                            )
-                            pill
-                        )
+                    moveIfAvailable (Pill.turnRight pill)
 
                 Just direction ->
                     moveIfAvailable
-                        (mapCoords (coordsWithDirection direction) pill)
+                        (Pill.mapCoords (coordsWithDirection direction) pill)
 
                 Nothing ->
                     withNothing model
@@ -287,16 +258,6 @@ update props msg model =
             withNothing model
 
 
-mapCoords : (Grid.Coords -> Grid.Coords) -> Pill -> Pill
-mapCoords map { orientation, coords } =
-    { orientation = orientation, coords = map coords }
-
-
-mapOrientation : (Orientation -> Orientation) -> Pill -> Pill
-mapOrientation map { orientation, coords } =
-    { orientation = map orientation, coords = coords }
-
-
 withNothing : Model -> ( Model, Cmd Msg, Maybe msg )
 withNothing model =
     ( model, Cmd.none, Nothing )
@@ -308,7 +269,7 @@ advance model =
         PlacingPill pill ->
             let
                 newPill =
-                    mapCoords (coordsWithDirection Down) pill
+                    Pill.mapCoords (coordsWithDirection Down) pill
 
                 afterPill : Pill -> Model
                 afterPill pill_ =
@@ -398,7 +359,7 @@ colorCoords pill =
                 Vertical ( a, b ) ->
                     ( ( a, Down ), ( b, Up ) )
     in
-    case pillCoordsPair pill of
+    case Pill.coordsPair pill of
         first :: second :: [] ->
             [ ( first, a_color, a_dep ), ( second, b_color, b_dep ) ]
 
@@ -544,20 +505,6 @@ coordsWithDirection direction ( x, y ) =
 -- QUERIES
 
 
-pillCoordsPair : Pill -> List Grid.Coords
-pillCoordsPair pill =
-    let
-        ( x, y ) =
-            pill.coords
-    in
-    case pill.orientation of
-        Horizontal _ ->
-            [ ( x, y + 1 ), ( x + 1, y + 1 ) ]
-
-        Vertical _ ->
-            [ ( x, y ), ( x, y + 1 ) ]
-
-
 isAvailable : Pill -> Bottle -> Bool
 isAvailable pill grid =
     let
@@ -581,7 +528,7 @@ isAvailable pill grid =
                 && aboveBottom
 
         noOccupant =
-            pillCoordsPair pill
+            Pill.coordsPair pill
                 |> List.map (\p -> Grid.isEmpty p grid)
                 |> List.all identity
     in
@@ -707,7 +654,7 @@ hasConflict : Model -> Bool
 hasConflict { mode, contents } =
     case mode of
         PlacingPill pill ->
-            pillCoordsPair pill
+            Pill.coordsPair pill
                 |> List.map (\p -> Grid.isEmpty p contents)
                 |> List.any not
 

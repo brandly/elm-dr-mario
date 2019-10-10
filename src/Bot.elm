@@ -4,15 +4,13 @@ import Array
 import Bottle
     exposing
         ( Bottle
-        , Color(..)
         , Contents
         , Direction(..)
         , Mode(..)
-        , Orientation(..)
-        , Pill
         )
 import Grid exposing (Cell, Coords)
 import List.Extra
+import Pill exposing (Color(..), Orientation(..), Pill)
 
 
 type alias Decision =

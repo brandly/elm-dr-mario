@@ -8,7 +8,7 @@ module TwoPlayer.Game exposing
     , view
     )
 
-import Bottle exposing (Color(..))
+import Bottle
 import Component
 import Element exposing (Element, none, styled)
 import Html exposing (Html, div, h3, p, span, text)
@@ -23,6 +23,7 @@ import MatchupCreator
         , mapBottle
         , mapPlayer
         )
+import Pill exposing (Color(..))
 import Speed exposing (Speed(..))
 
 

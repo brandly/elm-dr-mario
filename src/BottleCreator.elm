@@ -5,8 +5,9 @@ module BottleCreator exposing
     , update
     )
 
-import Bottle exposing (Bottle, Color(..))
+import Bottle exposing (Bottle)
 import Grid
+import Pill exposing (Color(..))
 import Random exposing (Generator(..))
 
 
