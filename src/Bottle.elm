@@ -6,7 +6,8 @@ module Bottle exposing
     , Mode(..)
     , Model
     , Msg(..)
-    , Pill(..)
+    , Orientation(..)
+    , Pill
     , generateEmptyCoords
     , generatePill
     , getColor
@@ -39,29 +40,43 @@ import Speed exposing (Speed(..))
 import Time exposing (Posix)
 
 
+
+-- split Bottle (just a data structure?) from like Environment
+-- bot goes Env -> Decision
+-- things get more readable?
+-- should only be a `goal` when Bot is in control
+
+
 type Controls
     = Keyboard (Int -> Maybe Direction)
     | Bot BotInterface
 
 
 type alias BotInterface =
-    Bottle -> Mode -> ( Maybe Direction, Maybe ( Int, Pill ) )
+    Bottle -> Mode -> ( Maybe Direction, Maybe ( Int, Orientation ) )
 
 
 type Mode
-    = PlacingPill Pill Grid.Coords
+    = PlacingPill Pill
     | Falling (List Color)
     | Bombing
 
 
-type Pill
+type alias Pill =
+    { orientation : Orientation
+    , coords : Grid.Coords
+    }
+
+
+type Orientation
     = Horizontal Color Color
     | Vertical Color Color
 
 
 type Type
     = Virus
-    | Pill (Maybe Dependent)
+      -- TODO: rename to `Pill` once files are broken up?
+    | PillType (Maybe Dependent)
 
 
 type alias Dependent =
@@ -101,7 +116,7 @@ type alias Model =
     , next : ( Color, Color )
     , controls : Controls
     , bombs : List Color
-    , goal : Maybe ( Int, Pill )
+    , goal : Maybe ( Int, Orientation )
     }
 
 
@@ -151,7 +166,7 @@ type Msg
     | KeyDown (Maybe Direction)
     | TickTock Posix
     | Bomb Color Int
-    | SetGoal ( Maybe Direction, Maybe ( Int, Pill ) )
+    | SetGoal ( Maybe Direction, Maybe ( Int, Orientation ) )
 
 
 type Direction
@@ -183,7 +198,7 @@ subscriptions speed model =
 
 
 update : { onBomb : List Color -> Maybe msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
-update { onBomb } msg model =
+update props msg model =
     case ( model.mode, msg ) of
         ( Falling cleared, NewPill next ) ->
             let
@@ -191,24 +206,28 @@ update { onBomb } msg model =
                     model.next
             in
             ( { model
-                | mode = PlacingPill (Horizontal a b) ( 4, 0 )
+                | mode =
+                    PlacingPill
+                        { orientation = Horizontal a b
+                        , coords = ( 4, 0 )
+                        }
                 , next = next
               }
             , Cmd.none
             , if List.length cleared > 1 then
-                onBomb cleared
+                props.onBomb cleared
 
               else
                 Nothing
             )
 
-        ( PlacingPill pill coords, KeyDown key ) ->
+        ( PlacingPill pill, KeyDown key ) ->
             let
-                moveIfAvailable : Pill -> Grid.Coords -> ( Model, Cmd Msg, Maybe msg )
-                moveIfAvailable pill_ coords_ =
+                moveIfAvailable : Pill -> ( Model, Cmd Msg, Maybe msg )
+                moveIfAvailable pill_ =
                     withNothing
-                        (if isAvailable coords_ pill_ model.contents then
-                            { model | mode = PlacingPill pill_ coords_ }
+                        (if isAvailable pill_ model.contents then
+                            { model | mode = PlacingPill pill_ }
 
                          else
                             model
@@ -216,20 +235,23 @@ update { onBomb } msg model =
             in
             case key of
                 Just Up ->
-                    let
-                        newPill =
-                            case pill of
-                                Horizontal a b ->
-                                    Vertical a b
+                    moveIfAvailable
+                        (mapOrientation
+                            (\o ->
+                                -- TODO: Pill.flip?
+                                case o of
+                                    Horizontal a b ->
+                                        Vertical a b
 
-                                Vertical a b ->
-                                    Horizontal b a
-                    in
-                    moveIfAvailable newPill coords
+                                    Vertical a b ->
+                                        Horizontal b a
+                            )
+                            pill
+                        )
 
                 Just direction ->
-                    moveIfAvailable pill
-                        (coordsWithDirection coords direction)
+                    moveIfAvailable
+                        (mapCoords (coordsWithDirection direction) pill)
 
                 Nothing ->
                     withNothing model
@@ -238,7 +260,7 @@ update { onBomb } msg model =
             withNothing model
 
         ( _, SetGoal ( key, goal ) ) ->
-            update { onBomb = onBomb } (KeyDown key) { model | goal = goal }
+            update props (KeyDown key) { model | goal = goal }
 
         ( _, TickTock _ ) ->
             advance model
@@ -247,7 +269,7 @@ update { onBomb } msg model =
             let
                 contents =
                     Grid.setState
-                        ( color, Pill Nothing )
+                        ( color, PillType Nothing )
                         ( x, 1 )
                         model.contents
 
@@ -269,6 +291,16 @@ update { onBomb } msg model =
             withNothing model
 
 
+mapCoords : (Grid.Coords -> Grid.Coords) -> Pill -> Pill
+mapCoords map { orientation, coords } =
+    { orientation = orientation, coords = map coords }
+
+
+mapOrientation : (Orientation -> Orientation) -> Pill -> Pill
+mapOrientation map { orientation, coords } =
+    { orientation = map orientation, coords = coords }
+
+
 withNothing : Model -> ( Model, Cmd Msg, Maybe msg )
 withNothing model =
     ( model, Cmd.none, Nothing )
@@ -277,16 +309,16 @@ withNothing model =
 advance : Model -> ( Model, Cmd Msg, Maybe msg )
 advance model =
     case model.mode of
-        PlacingPill pill coords ->
+        PlacingPill pill ->
             let
-                newCoords =
-                    coordsWithDirection coords Down
+                newPill =
+                    mapCoords (coordsWithDirection Down) pill
 
-                afterPill : Pill -> Grid.Coords -> Model
-                afterPill pill_ coords_ =
+                afterPill : Pill -> Model
+                afterPill pill_ =
                     let
                         newContents =
-                            addPill pill_ coords_ model.contents
+                            addPill pill_ model.contents
 
                         modify =
                             if canSweep newContents then
@@ -302,11 +334,11 @@ advance model =
                         }
             in
             withNothing
-                (if isAvailable newCoords pill model.contents then
-                    { model | mode = PlacingPill pill newCoords }
+                (if isAvailable newPill model.contents then
+                    { model | mode = PlacingPill newPill }
 
                  else
-                    afterPill pill coords
+                    afterPill pill
                 )
 
         Falling _ ->
@@ -349,28 +381,28 @@ advance model =
                     ( model, Cmd.none, Nothing )
 
 
-addPill : Pill -> Grid.Coords -> Bottle -> Bottle
-addPill pill coords bottle =
-    colorCoords pill coords
+addPill : Pill -> Bottle -> Bottle
+addPill pill bottle =
+    colorCoords pill
         |> List.foldl
             (\( coords_, color, dependent ) grid ->
-                Grid.setState ( color, Pill (Just dependent) ) coords_ grid
+                Grid.setState ( color, PillType (Just dependent) ) coords_ grid
             )
             bottle
 
 
-colorCoords : Pill -> Grid.Coords -> List ( Grid.Coords, Color, Dependent )
-colorCoords pill coords =
+colorCoords : Pill -> List ( Grid.Coords, Color, Dependent )
+colorCoords pill =
     let
         ( ( a_color, a_dep ), ( b_color, b_dep ) ) =
-            case pill of
+            case pill.orientation of
                 Horizontal a b ->
                     ( ( a, Right ), ( b, Left ) )
 
                 Vertical a b ->
                     ( ( a, Down ), ( b, Up ) )
     in
-    case pillCoordsPair pill coords of
+    case pillCoordsPair pill of
         first :: second :: [] ->
             [ ( first, a_color, a_dep ), ( second, b_color, b_dep ) ]
 
@@ -384,7 +416,7 @@ fall bottle =
         (\({ coords, state } as cell) ->
             let
                 above =
-                    coordsWithDirection coords Up
+                    coordsWithDirection Up coords
             in
             if canFall coords bottle then
                 -- look above
@@ -411,10 +443,10 @@ sweep ({ contents } as model) =
                 |> Grid.filterMap
                     (\{ coords, state } ->
                         case state of
-                            Just ( _, Pill (Just dependent) ) ->
+                            Just ( _, PillType (Just dependent) ) ->
                                 if isCleared coords contents then
                                     Just <|
-                                        coordsWithDirection coords dependent
+                                        coordsWithDirection dependent coords
 
                                 else
                                     Nothing
@@ -433,7 +465,7 @@ sweep ({ contents } as model) =
                     else if Set.member coords coordsLosingDependent then
                         case state of
                             Just ( color, _ ) ->
-                                { cell | state = Just ( color, Pill Nothing ) }
+                                { cell | state = Just ( color, PillType Nothing ) }
 
                             Nothing ->
                                 cell
@@ -492,8 +524,12 @@ sweep ({ contents } as model) =
     { model | contents = swept, mode = Falling (alreadyCleared ++ clearedLines diff) }
 
 
-coordsWithDirection : Grid.Coords -> Direction -> Grid.Coords
-coordsWithDirection ( x, y ) direction =
+
+-- TODO: reverse arg order
+
+
+coordsWithDirection : Direction -> Grid.Coords -> Grid.Coords
+coordsWithDirection direction ( x, y ) =
     case direction of
         Up ->
             ( x, y - 1 )
@@ -512,9 +548,13 @@ coordsWithDirection ( x, y ) direction =
 -- QUERIES
 
 
-pillCoordsPair : Pill -> Grid.Coords -> List Grid.Coords
-pillCoordsPair pill ( x, y ) =
-    case pill of
+pillCoordsPair : Pill -> List Grid.Coords
+pillCoordsPair pill =
+    let
+        ( x, y ) =
+            pill.coords
+    in
+    case pill.orientation of
         Horizontal _ _ ->
             [ ( x, y + 1 ), ( x + 1, y + 1 ) ]
 
@@ -522,14 +562,17 @@ pillCoordsPair pill ( x, y ) =
             [ ( x, y ), ( x, y + 1 ) ]
 
 
-isAvailable : Grid.Coords -> Pill -> Bottle -> Bool
-isAvailable (( x, y ) as coords) pill grid =
+isAvailable : Pill -> Bottle -> Bool
+isAvailable pill grid =
     let
+        ( x, y ) =
+            pill.coords
+
         aboveBottom =
             y < Grid.height grid
 
         withinRight =
-            case pill of
+            case pill.orientation of
                 Vertical _ _ ->
                     x <= Grid.width grid
 
@@ -542,7 +585,7 @@ isAvailable (( x, y ) as coords) pill grid =
                 && aboveBottom
 
         noOccupant =
-            pillCoordsPair pill coords
+            pillCoordsPair pill
                 |> List.map (\p -> Grid.isEmpty p grid)
                 |> List.all identity
     in
@@ -576,30 +619,30 @@ canFall coords bottle =
                         Nothing ->
                             True
 
-                        Just ( _, Pill Nothing ) ->
+                        Just ( _, PillType Nothing ) ->
                             hasRoom tail
 
-                        Just ( _, Pill _ ) ->
+                        Just ( _, PillType _ ) ->
                             canFall head.coords bottle
 
                         Just ( _, Virus ) ->
                             False
     in
     case cell.state of
-        Just ( _, Pill Nothing ) ->
+        Just ( _, PillType Nothing ) ->
             Grid.below coords bottle |> hasRoom
 
-        Just ( _, Pill (Just Up) ) ->
+        Just ( _, PillType (Just Up) ) ->
             Grid.below coords bottle |> hasRoom
 
-        Just ( _, Pill (Just Down) ) ->
-            canFall (coordsWithDirection coords Down) bottle
+        Just ( _, PillType (Just Down) ) ->
+            canFall (coordsWithDirection Down coords) bottle
 
-        Just ( _, Pill (Just dependent) ) ->
+        Just ( _, PillType (Just dependent) ) ->
             -- Left or Right
             (Grid.below coords bottle |> hasRoom)
                 && (bottle
-                        |> Grid.below (coordsWithDirection coords dependent)
+                        |> Grid.below (coordsWithDirection dependent coords)
                         |> hasRoom
                    )
 
@@ -667,8 +710,8 @@ totalViruses contents =
 hasConflict : Model -> Bool
 hasConflict { mode, contents } =
     case mode of
-        PlacingPill pill coords ->
-            pillCoordsPair pill coords
+        PlacingPill pill ->
+            pillCoordsPair pill
                 |> List.map (\p -> Grid.isEmpty p contents)
                 |> List.any not
 
@@ -745,7 +788,7 @@ view { contents, mode, goal } =
                                     Nothing ->
                                         div cellStyle []
 
-                                    Just ( color, Pill dependent ) ->
+                                    Just ( color, PillType dependent ) ->
                                         viewPillCell dependent color
 
                                     Just ( color, Virus ) ->
@@ -755,8 +798,8 @@ view { contents, mode, goal } =
                         )
                 )
                 (case mode of
-                    PlacingPill pill coords ->
-                        addPill pill coords contents
+                    PlacingPill pill ->
+                        addPill pill contents
 
                     _ ->
                         contents

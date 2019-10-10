@@ -8,14 +8,15 @@ import Bottle
         , Contents
         , Direction(..)
         , Mode(..)
-        , Pill(..)
+        , Orientation(..)
+        , Pill
         )
 import Grid exposing (Cell, Coords)
 import List.Extra
 
 
 type alias Decision =
-    ( Maybe Direction, Maybe ( Int, Pill ) )
+    ( Maybe Direction, Maybe ( Int, Orientation ) )
 
 
 trashBot : Bottle -> Mode -> Decision
@@ -27,22 +28,22 @@ trashBot bottle mode =
         Bombing ->
             ( Nothing, Nothing )
 
-        PlacingPill pill coords ->
-            placingPill bottle pill coords
+        PlacingPill pill ->
+            placingPill bottle pill
 
 
-placingPill : Bottle -> Pill -> Coords -> Decision
-placingPill bottle pill coords =
+placingPill : Bottle -> Pill -> Decision
+placingPill bottle { orientation, coords } =
     let
         ( color_a, color_b ) =
-            case pill of
+            case orientation of
                 Vertical a b ->
                     ( a, b )
 
                 Horizontal a b ->
                     ( a, b )
 
-        options : List ( Int, Pill )
+        options : List ( Int, Orientation )
         options =
             let
                 heads : List (Cell Contents)
@@ -143,13 +144,13 @@ placingPill bottle pill coords =
                     else
                         scoring.conflict
 
-        orientationBonus : Pill -> Int
+        orientationBonus : Orientation -> Int
         orientationBonus o =
-            if o == pill then
+            if o == orientation then
                 2
 
             else
-                case pill of
+                case orientation of
                     Horizontal _ _ ->
                         0
 
@@ -163,9 +164,9 @@ placingPill bottle pill coords =
         scores : List Int
         scores =
             List.map
-                (\( x, orientation ) ->
-                    orientationBonus orientation
-                        + (case orientation of
+                (\( x, orientation_ ) ->
+                    orientationBonus orientation_
+                        + (case orientation_ of
                             Horizontal a b ->
                                 colorIndexScore a x + colorIndexScore b (x + 1)
 
@@ -179,20 +180,20 @@ placingPill bottle pill coords =
                 )
                 options
 
-        choice : Maybe ( Int, Pill )
+        choice : Maybe ( Int, Orientation )
         choice =
             Grid.zip scores options
                 |> List.sortBy (Tuple.first >> (\a -> -a))
                 |> List.map Tuple.second
                 |> List.head
 
-        withGoal : Maybe Direction -> ( Maybe Direction, Maybe ( Int, Pill ) )
+        withGoal : Maybe Direction -> ( Maybe Direction, Maybe ( Int, Orientation ) )
         withGoal dir =
             ( dir, choice )
     in
     case ( choice, coords ) of
         ( Just ( aimX, pill_ ), ( x, _ ) ) ->
-            if pill_ /= pill then
+            if pill_ /= orientation then
                 withGoal <| Just Up
 
             else if aimX > x then
