@@ -32,11 +32,6 @@ import Speed exposing (Speed(..))
 import Time exposing (Posix)
 
 
-
--- things get more readable?
--- should only be a `goal` when Bot is in control
-
-
 type Controls
     = Keyboard (Int -> Maybe Direction)
     | Bot BotInterface
