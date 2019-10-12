@@ -1,6 +1,6 @@
 module Controls exposing (arrows, wasd)
 
-import Bottle exposing (Direction(..))
+import Direction exposing (Direction(..))
 
 
 arrows : Int -> Maybe Direction

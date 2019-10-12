@@ -6,28 +6,28 @@ module MatchupCreator exposing
     , Player
     , Position(..)
     , init
-    , mapBottle
+    , mapEnv
     , mapPlayer
     , update
     )
 
 import Bot
-import Bottle
-import BottleCreator
 import Controls
+import Env
+import EnvCreator
 import Speed exposing (Speed(..))
 
 
 type alias Player =
-    { bottle : Bottle.Model
+    { env : Env.Model
     , level : Int
     , speed : Speed
     }
 
 
-mapBottle : (Bottle.Model -> Bottle.Model) -> Player -> Player
-mapBottle map player =
-    { player | bottle = map player.bottle }
+mapEnv : (Env.Model -> Env.Model) -> Player -> Player
+mapEnv map player =
+    { player | env = map player.env }
 
 
 type Opponent
@@ -57,13 +57,13 @@ mapPlayer position map state =
 
 
 type Model
-    = PrepareFirst Opponent Matchup BottleCreator.Model
-    | PrepareSecond Opponent Matchup BottleCreator.Model
+    = PrepareFirst Opponent Matchup EnvCreator.Model
+    | PrepareSecond Opponent Matchup EnvCreator.Model
     | Created Matchup
 
 
 type Msg
-    = CreatorMsg BottleCreator.Msg
+    = CreatorMsg EnvCreator.Msg
     | Ready Matchup
 
 
@@ -77,13 +77,13 @@ init : Opponent -> Options -> Options -> ( Model, Cmd Msg )
 init opponent first second =
     let
         ( creator, cmd ) =
-            BottleCreator.init first.level
+            EnvCreator.init first.level
 
         withOpts : Options -> Player
         withOpts opts =
             { level = opts.level
             , speed = opts.speed
-            , bottle = Bottle.init
+            , env = Env.init
             }
     in
     ( PrepareFirst
@@ -110,11 +110,11 @@ update { onCreated } action model =
         ( PrepareFirst opponent ({ first } as state) creator, CreatorMsg msg ) ->
             let
                 ( creator_, cmd, maybeMsg ) =
-                    BottleCreator.update
+                    EnvCreator.update
                         { onCreated =
-                            \{ bottle } ->
+                            \{ env } ->
                                 Ready
-                                    { state | first = { first | bottle = bottle } }
+                                    { state | first = { first | env = env } }
                         }
                         msg
                         creator
@@ -134,18 +134,18 @@ update { onCreated } action model =
         ( PrepareFirst opponent _ _, Ready state ) ->
             let
                 ( creator_, cmd ) =
-                    BottleCreator.init state.second.level
+                    EnvCreator.init state.second.level
 
-                withControls bottle =
+                withControls env =
                     case opponent of
                         Human ->
-                            Bottle.withControls Controls.wasd bottle
+                            Env.withControls Controls.wasd env
 
                         Bot ->
-                            Bottle.withControls Controls.arrows bottle
+                            Env.withControls Controls.arrows env
 
                 state_ =
-                    mapPlayer First (mapBottle withControls) state
+                    mapPlayer First (mapEnv withControls) state
             in
             ( PrepareSecond opponent state_ creator_
             , Cmd.map CreatorMsg cmd
@@ -155,18 +155,18 @@ update { onCreated } action model =
         ( PrepareSecond opponent ({ first, second } as state) creator, CreatorMsg msg ) ->
             if first.level == second.level then
                 update { onCreated = onCreated }
-                    -- reuse generated bottle so the game is fair
-                    (Ready { state | second = { second | bottle = first.bottle } })
+                    -- reuse generated env so the game is fair
+                    (Ready { state | second = { second | env = first.env } })
                     (PrepareSecond opponent state creator)
 
             else
                 let
                     ( creator_, cmd, maybeMsg ) =
-                        BottleCreator.update
+                        EnvCreator.update
                             { onCreated =
-                                \{ bottle } ->
+                                \{ env } ->
                                     Ready
-                                        { state | second = { second | bottle = bottle } }
+                                        { state | second = { second | env = env } }
                             }
                             msg
                             creator
@@ -188,13 +188,13 @@ update { onCreated } action model =
                 withControls bottle_ =
                     case opponent of
                         Human ->
-                            Bottle.withControls Controls.arrows bottle_
+                            Env.withControls Controls.arrows bottle_
 
                         Bot ->
-                            Bottle.withBot Bot.trashBot bottle_
+                            Env.withBot Bot.trashBot bottle_
 
                 state_ =
-                    mapPlayer Second (mapBottle withControls) state
+                    mapPlayer Second (mapEnv withControls) state
             in
             ( Created state_, Cmd.none, Just (onCreated state_) )
 

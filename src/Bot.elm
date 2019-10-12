@@ -1,25 +1,20 @@
 module Bot exposing (trashBot)
 
 import Array
-import Bottle
-    exposing
-        ( Bottle
-        , Color(..)
-        , Contents
-        , Direction(..)
-        , Mode(..)
-        , Pill(..)
-        )
-import Grid exposing (Cell, Coords)
+import Bottle exposing (Bottle, Contents)
+import Direction exposing (Direction(..))
+import Env exposing (Mode(..))
+import Grid exposing (Cell)
 import List.Extra
+import Pill exposing (Color(..), Orientation(..), Pill)
 
 
 type alias Decision =
-    ( Maybe Direction, Maybe ( Int, Pill ) )
+    ( Maybe Direction, Maybe ( Int, Orientation ) )
 
 
-trashBot : Bottle -> Mode -> Decision
-trashBot bottle mode =
+trashBot : Env.Model -> Decision
+trashBot { bottle, mode } =
     case mode of
         Falling _ ->
             ( Nothing, Nothing )
@@ -27,22 +22,22 @@ trashBot bottle mode =
         Bombing ->
             ( Nothing, Nothing )
 
-        PlacingPill pill coords ->
-            placingPill bottle pill coords
+        PlacingPill pill ->
+            placingPill bottle pill
 
 
-placingPill : Bottle -> Pill -> Coords -> Decision
-placingPill bottle pill coords =
+placingPill : Bottle -> Pill -> Decision
+placingPill bottle { orientation, coords } =
     let
         ( color_a, color_b ) =
-            case pill of
-                Vertical a b ->
-                    ( a, b )
+            case orientation of
+                Vertical pair ->
+                    pair
 
-                Horizontal a b ->
-                    ( a, b )
+                Horizontal pair ->
+                    pair
 
-        options : List ( Int, Pill )
+        options : List ( Int, Orientation )
         options =
             let
                 heads : List (Cell Contents)
@@ -83,7 +78,7 @@ placingPill bottle pill coords =
             (List.range minX maxX
                 |> List.map
                     (\x ->
-                        ( x, Vertical color_a color_b )
+                        ( x, Vertical ( color_a, color_b ) )
                     )
             )
                 ++ (if color_a == color_b then
@@ -91,10 +86,10 @@ placingPill bottle pill coords =
 
                     else
                         List.range minX (maxX - 1)
-                            |> List.map (\x -> ( x, Horizontal color_b color_a ))
+                            |> List.map (\x -> ( x, Horizontal ( color_b, color_a ) ))
                    )
                 ++ (List.range minX (maxX - 1)
-                        |> List.map (\x -> ( x, Horizontal color_a color_b ))
+                        |> List.map (\x -> ( x, Horizontal ( color_a, color_b ) ))
                    )
 
         peaks : List (Grid.Cell Contents)
@@ -143,17 +138,17 @@ placingPill bottle pill coords =
                     else
                         scoring.conflict
 
-        orientationBonus : Pill -> Int
+        orientationBonus : Orientation -> Int
         orientationBonus o =
-            if o == pill then
+            if o == orientation then
                 2
 
             else
-                case pill of
-                    Horizontal _ _ ->
+                case orientation of
+                    Horizontal _ ->
                         0
 
-                    Vertical a b ->
+                    Vertical ( a, b ) ->
                         if a == b then
                             1
 
@@ -163,13 +158,13 @@ placingPill bottle pill coords =
         scores : List Int
         scores =
             List.map
-                (\( x, orientation ) ->
-                    orientationBonus orientation
-                        + (case orientation of
-                            Horizontal a b ->
+                (\( x, orientation_ ) ->
+                    orientationBonus orientation_
+                        + (case orientation_ of
+                            Horizontal ( a, b ) ->
                                 colorIndexScore a x + colorIndexScore b (x + 1)
 
-                            Vertical a b ->
+                            Vertical ( a, b ) ->
                                 if a == b then
                                     colorIndexScore a x + colorIndexScore b x
 
@@ -179,20 +174,20 @@ placingPill bottle pill coords =
                 )
                 options
 
-        choice : Maybe ( Int, Pill )
+        choice : Maybe ( Int, Orientation )
         choice =
             Grid.zip scores options
                 |> List.sortBy (Tuple.first >> (\a -> -a))
                 |> List.map Tuple.second
                 |> List.head
 
-        withGoal : Maybe Direction -> ( Maybe Direction, Maybe ( Int, Pill ) )
+        withGoal : Maybe Direction -> ( Maybe Direction, Maybe ( Int, Orientation ) )
         withGoal dir =
             ( dir, choice )
     in
     case ( choice, coords ) of
         ( Just ( aimX, pill_ ), ( x, _ ) ) ->
-            if pill_ /= pill then
+            if pill_ /= orientation then
                 withGoal <| Just Up
 
             else if aimX > x then
