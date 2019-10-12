@@ -8,9 +8,9 @@ module TwoPlayer.Game exposing
     , view
     )
 
-import Bottle
 import Component
 import Element exposing (Element, none, styled)
+import Env
 import Html exposing (Html, div, h3, p, span, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
@@ -20,7 +20,7 @@ import MatchupCreator
         , Opponent(..)
         , Player
         , Position(..)
-        , mapBottle
+        , mapEnv
         , mapPlayer
         )
 import Pill exposing (Color(..))
@@ -38,7 +38,7 @@ type Model
 
 
 type Msg
-    = BottleMsg BottleMsg
+    = EnvMsg EnvMsg
     | CreatorMsg MatchupCreator.Msg
     | MatchupReady Matchup
     | Bomb Position (List Color)
@@ -47,9 +47,9 @@ type Msg
     | Reset
 
 
-type BottleMsg
-    = FirstBottleMsg Bottle.Msg
-    | SecondBottleMsg Bottle.Msg
+type EnvMsg
+    = FirstEnvMsg Env.Msg
+    | SecondEnvMsg Env.Msg
 
 
 type alias Options =
@@ -87,10 +87,10 @@ subscriptions model =
     case model of
         Playing { first, second } ->
             Sub.batch
-                [ Bottle.subscriptions first.speed first.bottle
-                    |> Sub.map (FirstBottleMsg >> BottleMsg)
-                , Bottle.subscriptions second.speed second.bottle
-                    |> Sub.map (SecondBottleMsg >> BottleMsg)
+                [ Env.subscriptions first.speed first.env
+                    |> Sub.map (FirstEnvMsg >> EnvMsg)
+                , Env.subscriptions second.speed second.env
+                    |> Sub.map (SecondEnvMsg >> EnvMsg)
                 ]
 
         _ ->
@@ -132,13 +132,13 @@ update { onLeave } action model =
         ( Playing state, Bomb receiver colors ) ->
             ( Playing <|
                 mapPlayer receiver
-                    (mapBottle (Bottle.withBombs colors))
+                    (mapEnv (Env.withBombs colors))
                     state
             , Cmd.none
             , Nothing
             )
 
-        ( Playing state, BottleMsg msg ) ->
+        ( Playing state, EnvMsg msg ) ->
             case getWinner state of
                 Just winner ->
                     withNothing <|
@@ -162,36 +162,36 @@ update { onLeave } action model =
 
 getWinner : Matchup -> Maybe Position
 getWinner { first, second } =
-    if Bottle.totalViruses first.bottle.contents == 0 || Bottle.hasConflict second.bottle then
+    if Env.totalViruses first.env == 0 || Env.hasConflict second.env then
         Just First
 
-    else if Bottle.totalViruses second.bottle.contents == 0 || Bottle.hasConflict first.bottle then
+    else if Env.totalViruses second.env == 0 || Env.hasConflict first.env then
         Just Second
 
     else
         Nothing
 
 
-updatePlayState : msg -> BottleMsg -> Matchup -> ( Model, Cmd Msg, Maybe msg )
+updatePlayState : msg -> EnvMsg -> Matchup -> ( Model, Cmd Msg, Maybe msg )
 updatePlayState onLeave action ({ first, second } as model) =
     case action of
-        FirstBottleMsg msg ->
-            Bottle.update { onBomb = Bomb Second >> Just } msg first.bottle
+        FirstEnvMsg msg ->
+            Env.update { onBomb = Bomb Second >> Just } msg first.env
                 |> Component.raiseOutMsg (update { onLeave = onLeave })
-                    (\bottle ->
+                    (\env ->
                         Playing
-                            { model | first = mapBottle (\_ -> bottle) first }
+                            { model | first = mapEnv (\_ -> env) first }
                     )
-                    (FirstBottleMsg >> BottleMsg)
+                    (FirstEnvMsg >> EnvMsg)
 
-        SecondBottleMsg msg ->
-            Bottle.update { onBomb = Bomb First >> Just } msg second.bottle
+        SecondEnvMsg msg ->
+            Env.update { onBomb = Bomb First >> Just } msg second.env
                 |> Component.raiseOutMsg (update { onLeave = onLeave })
-                    (\bottle ->
+                    (\env ->
                         Playing
-                            { model | second = mapBottle (\_ -> bottle) second }
+                            { model | second = mapEnv (\_ -> env) second }
                     )
-                    (SecondBottleMsg >> BottleMsg)
+                    (SecondEnvMsg >> EnvMsg)
 
 
 
@@ -259,19 +259,19 @@ view model =
 
 displayViruses : Player -> String
 displayViruses player =
-    String.fromInt (Bottle.totalViruses player.bottle.contents)
+    String.fromInt (Env.totalViruses player.env)
 
 
 viewPlayer : Player -> Html msg
-viewPlayer { bottle } =
+viewPlayer { env } =
     div
         [ style "display" "flex"
         , style "flex-direction" "column"
         , style "align-items" "center"
         ]
         [ div [ style "display" "flex", style "margin-bottom" "18px" ]
-            (Bottle.viewPill bottle.next)
-        , Bottle.view bottle
+            (Env.viewPill env.next)
+        , Env.view env
         ]
 
 

@@ -1,20 +1,20 @@
 module Bot exposing (trashBot)
 
 import Array
-import Bottle
-    exposing
-        ( Bottle
-        , Contents
-        , Direction(..)
-        , Mode(..)
-        )
-import Grid exposing (Cell, Coords)
+import Bottle exposing (Bottle, Contents)
+import Direction exposing (Direction(..))
+import Env exposing (Mode(..))
+import Grid exposing (Cell)
 import List.Extra
 import Pill exposing (Color(..), Orientation(..), Pill)
 
 
 type alias Decision =
     ( Maybe Direction, Maybe ( Int, Orientation ) )
+
+
+
+-- TODO: Env -> Decision
 
 
 trashBot : Bottle -> Mode -> Decision

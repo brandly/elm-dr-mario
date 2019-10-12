@@ -1,4 +1,4 @@
-module Speed exposing (..)
+module Speed exposing (Speed(..), tick, toString)
 
 
 type Speed

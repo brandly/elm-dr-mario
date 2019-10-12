@@ -7,11 +7,11 @@ module OnePlayer.Game exposing
     , view
     )
 
-import Bottle
-import BottleCreator
 import Component
 import Controls
 import Element exposing (Element, none, styled)
+import Env
+import EnvCreator
 import Html exposing (Html, div, h3, p, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
@@ -19,7 +19,7 @@ import Speed exposing (Speed(..))
 
 
 type alias State =
-    { bottle : Bottle.Model
+    { env : Env.Model
     , level : Int
     , score : Int
     , speed : Speed
@@ -30,7 +30,7 @@ type Model
     = PrepareGame
         { score : Int
         , speed : Speed
-        , creator : BottleCreator.Model
+        , creator : EnvCreator.Model
         }
     | Playing State
     | Paused State
@@ -41,8 +41,8 @@ type Model
 
 
 type Msg
-    = BottleMsg Bottle.Msg
-    | CreatorMsg BottleCreator.Msg
+    = EnvMsg Env.Msg
+    | CreatorMsg EnvCreator.Msg
     | LevelReady State
     | Advance
         { level : Int
@@ -63,7 +63,7 @@ initWithScore : Int -> Speed -> Int -> ( Model, Cmd Msg )
 initWithScore level speed score =
     let
         ( creator, cmd ) =
-            BottleCreator.init level
+            EnvCreator.init level
     in
     ( PrepareGame
         { creator = creator
@@ -77,10 +77,10 @@ initWithScore level speed score =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     case model of
-        Playing { speed, bottle } ->
+        Playing { speed, env } ->
             Sub.batch
-                [ Bottle.subscriptions speed bottle
-                    |> Sub.map BottleMsg
+                [ Env.subscriptions speed env
+                    |> Sub.map EnvMsg
                 ]
 
         _ ->
@@ -122,11 +122,11 @@ update { onLeave } action model =
         ( PrepareGame ({ score, creator, speed } as state), CreatorMsg msg ) ->
             let
                 ( creator_, cmd, maybeMsg ) =
-                    BottleCreator.update
+                    EnvCreator.update
                         { onCreated =
-                            \{ level, bottle } ->
+                            \{ level, env } ->
                                 LevelReady
-                                    { bottle = bottle
+                                    { env = env
                                     , level = level
                                     , score = score
                                     , speed = speed
@@ -149,7 +149,7 @@ update { onLeave } action model =
 
         ( PrepareGame _, LevelReady state ) ->
             ( Playing
-                { state | bottle = Bottle.withControls Controls.arrows state.bottle }
+                { state | env = Env.withControls Controls.arrows state.env }
             , Cmd.none
             , Nothing
             )
@@ -166,8 +166,8 @@ update { onLeave } action model =
         ( Paused _, _ ) ->
             ( model, Cmd.none, Nothing )
 
-        ( Playing state, BottleMsg msg ) ->
-            if Bottle.totalViruses state.bottle.contents == 0 then
+        ( Playing state, EnvMsg msg ) ->
+            if Env.totalViruses state.env == 0 then
                 ( Over
                     { won = True
                     , game = state
@@ -176,7 +176,7 @@ update { onLeave } action model =
                 , Nothing
                 )
 
-            else if Bottle.hasConflict state.bottle then
+            else if Env.hasConflict state.env then
                 ( Over
                     { won = False
                     , game = state
@@ -205,28 +205,28 @@ update { onLeave } action model =
             ( model, Cmd.none, Nothing )
 
 
-updatePlayState : msg -> Bottle.Msg -> State -> ( Model, Cmd Msg, Maybe msg )
-updatePlayState onLeave action ({ bottle, speed, score } as model) =
+updatePlayState : msg -> Env.Msg -> State -> ( Model, Cmd Msg, Maybe msg )
+updatePlayState onLeave action ({ env, speed, score } as model) =
     let
-        withBottle : Bottle.Model -> Model
-        withBottle newBottle =
+        withBottle : Env.Model -> Model
+        withBottle newEnv =
             let
                 sweptViruses =
-                    Bottle.totalViruses bottle.contents - Bottle.totalViruses newBottle.contents
+                    Env.totalViruses env - Env.totalViruses newEnv
 
                 additionalPoints =
                     pointsForClearedViruses speed sweptViruses
             in
             Playing
                 { model
-                    | bottle = newBottle
+                    | env = newEnv
                     , score = score + additionalPoints
                 }
     in
-    Bottle.update { onBomb = \_ -> Nothing } action model.bottle
+    Env.update { onBomb = \_ -> Nothing } action env
         |> Component.raiseOutMsg (update { onLeave = onLeave })
             withBottle
-            BottleMsg
+            EnvMsg
 
 
 
@@ -283,7 +283,7 @@ view model =
 
 
 viewPlaying : Maybe msg -> State -> Html msg
-viewPlaying pauseMsg { score, bottle, level, speed } =
+viewPlaying pauseMsg { score, env, level, speed } =
     div [ style "display" "flex" ]
         [ columnEl []
             [ h3 [] [ text "score" ]
@@ -293,18 +293,18 @@ viewPlaying pauseMsg { score, bottle, level, speed } =
                 |> Maybe.map (\msg -> Html.button [ onClick msg ] [ text "pause" ])
                 |> Maybe.withDefault none
             ]
-        , Bottle.view bottle
+        , Env.view env
         , columnEl []
             [ h3 [] [ text "next" ]
             , div [ style "display" "flex" ]
-                (Bottle.viewPill bottle.next)
+                (Env.viewPill env.next)
             , div [ style "margin" "72px 0" ]
                 [ h3 [] [ text "level" ]
                 , p [] [ (String.fromInt >> text) level ]
                 , h3 [] [ text "speed" ]
                 , p [] [ (Speed.toString >> text) speed ]
                 , h3 [] [ text "virus" ]
-                , p [] [ text <| String.fromInt (Bottle.totalViruses bottle.contents) ]
+                , p [] [ text <| String.fromInt (Env.totalViruses env) ]
                 ]
             ]
         ]

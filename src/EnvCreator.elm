@@ -1,4 +1,4 @@
-module BottleCreator exposing
+module EnvCreator exposing
     ( Model
     , Msg(..)
     , init
@@ -6,6 +6,7 @@ module BottleCreator exposing
     )
 
 import Bottle exposing (Bottle)
+import Env
 import Grid
 import Pill exposing (Color(..))
 import Random exposing (Generator(..))
@@ -13,7 +14,7 @@ import Random exposing (Generator(..))
 
 type alias Model =
     { level : Int
-    , bottle : Bottle.Model
+    , env : Env.Model
     }
 
 
@@ -25,13 +26,13 @@ type Msg
 init : Int -> ( Model, Cmd Msg )
 init level =
     let
-        bottle =
-            Bottle.init
+        env =
+            Env.init
     in
     ( { level = level
-      , bottle = bottle
+      , env = env
       }
-    , randomNewVirus bottle.contents
+    , randomNewVirus env.bottle
     )
 
 
@@ -41,30 +42,30 @@ virusesForLevel level =
 
 
 update : { onCreated : Model -> msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
-update { onCreated } action ({ level, bottle } as model) =
+update { onCreated } action ({ level, env } as model) =
     case action of
         NewVirus coords ->
             let
-                newBottle =
-                    Bottle.withVirus color coords bottle
+                newEnv =
+                    Env.withVirus color coords env
 
                 color =
-                    Bottle.getColor (Bottle.totalViruses bottle.contents)
+                    Bottle.getColor (Bottle.totalViruses env.bottle)
             in
-            if Bottle.isCleared coords newBottle.contents then
+            if Bottle.isCleared coords newEnv.bottle then
                 -- would create a 4-in-a-row, so let's try a new virus
-                ( model, randomNewVirus bottle.contents, Nothing )
+                ( model, randomNewVirus env.bottle, Nothing )
 
-            else if Bottle.totalViruses newBottle.contents >= virusesForLevel level then
-                ( { model | bottle = newBottle }
+            else if Bottle.totalViruses newEnv.bottle >= virusesForLevel level then
+                ( { model | env = newEnv }
                 , Random.generate NewPill <|
                     Bottle.generatePill
                 , Nothing
                 )
 
             else
-                ( { model | bottle = newBottle }
-                , randomNewVirus newBottle.contents
+                ( { model | env = newEnv }
+                , randomNewVirus newEnv.bottle
                 , Nothing
                 )
 
@@ -72,8 +73,8 @@ update { onCreated } action ({ level, bottle } as model) =
             let
                 model_ =
                     { level = level
-                    , bottle =
-                        bottle |> Bottle.withNext colors
+                    , env =
+                        env |> Env.withNext colors
                     }
             in
             ( model_
@@ -83,6 +84,6 @@ update { onCreated } action ({ level, bottle } as model) =
 
 
 randomNewVirus : Bottle -> Cmd Msg
-randomNewVirus bottle =
+randomNewVirus env =
     Random.generate NewVirus <|
-        Bottle.generateEmptyCoords bottle
+        Bottle.generateEmptyCoords env
