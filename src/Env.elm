@@ -218,20 +218,20 @@ advance model =
                 afterPill : Pill -> Model
                 afterPill pill_ =
                     let
-                        newContents =
+                        newBottle =
                             Bottle.addPill pill_ model.bottle
 
                         modify =
-                            if Bottle.canSweep newContents then
+                            if Bottle.canSweep newBottle then
                                 sweep
 
                             else
-                                \m -> { m | bottle = Bottle.fall newContents }
+                                \m -> { m | bottle = Bottle.fall newBottle }
                     in
                     modify
                         { model
                             | mode = Falling []
-                            , bottle = newContents
+                            , bottle = newBottle
                         }
             in
             withNothing
