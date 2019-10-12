@@ -43,7 +43,7 @@ type Controls
 
 
 type alias BotInterface =
-    Bottle -> Mode -> ( Maybe Direction, Maybe ( Int, Orientation ) )
+    Model -> ( Maybe Direction, Maybe ( Int, Orientation ) )
 
 
 type Mode
@@ -120,11 +120,7 @@ subscriptions speed model =
                 onKeyDown (Decode.map (controls >> KeyDown) keyCode)
 
             Bot bot ->
-                let
-                    direction =
-                        bot model.bottle model.mode
-                in
-                Time.every (Speed.tick speed / 4) (\_ -> SetGoal direction)
+                Time.every (Speed.tick speed / 4) (\_ -> SetGoal (bot model))
         ]
 
 

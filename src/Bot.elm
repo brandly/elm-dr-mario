@@ -13,12 +13,8 @@ type alias Decision =
     ( Maybe Direction, Maybe ( Int, Orientation ) )
 
 
-
--- TODO: Env -> Decision
-
-
-trashBot : Bottle -> Mode -> Decision
-trashBot bottle mode =
+trashBot : Env.Model -> Decision
+trashBot { bottle, mode } =
     case mode of
         Falling _ ->
             ( Nothing, Nothing )
