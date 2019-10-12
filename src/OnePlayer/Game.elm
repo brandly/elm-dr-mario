@@ -208,8 +208,8 @@ update { onLeave } action model =
 updatePlayState : msg -> Env.Msg -> State -> ( Model, Cmd Msg, Maybe msg )
 updatePlayState onLeave action ({ env, speed, score } as model) =
     let
-        withBottle : Env.Model -> Model
-        withBottle newEnv =
+        withEnv : Env.Model -> Model
+        withEnv newEnv =
             let
                 sweptViruses =
                     Env.totalViruses env - Env.totalViruses newEnv
@@ -225,7 +225,7 @@ updatePlayState onLeave action ({ env, speed, score } as model) =
     in
     Env.update { onBomb = \_ -> Nothing } action env
         |> Component.raiseOutMsg (update { onLeave = onLeave })
-            withBottle
+            withEnv
             EnvMsg
 
 
