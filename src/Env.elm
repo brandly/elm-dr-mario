@@ -38,7 +38,7 @@ type Controls
 
 
 type alias BotInterface =
-    Model -> ( Maybe Direction, Maybe ( Int, Orientation ) )
+    Model -> ( Maybe Direction, Maybe Pill )
 
 
 type Mode
@@ -53,7 +53,7 @@ type alias Model =
     , next : ( Color, Color )
     , controls : Controls
     , bombs : List Color
-    , goal : Maybe ( Int, Orientation )
+    , goal : Maybe Pill
     }
 
 
@@ -103,7 +103,7 @@ type Msg
     | KeyDown (Maybe Direction)
     | TickTock Posix
     | Bomb Color Int
-    | SetGoal ( Maybe Direction, Maybe ( Int, Orientation ) )
+    | SetGoal ( Maybe Direction, Maybe Pill )
 
 
 subscriptions : Speed -> Model -> Sub Msg

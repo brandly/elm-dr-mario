@@ -10,7 +10,7 @@ import Pill exposing (Color(..), Orientation(..), Pill)
 
 
 type alias Decision =
-    ( Maybe Direction, Maybe ( Int, Orientation ) )
+    ( Maybe Direction, Maybe Pill )
 
 
 trashBot : Env.Model -> Decision
@@ -43,25 +43,20 @@ placingPill bottle { orientation, coords } =
                 heads : List (Cell Contents)
                 heads =
                     bottle
-                        |> List.map (\column -> List.drop (Tuple.second coords - 1) column)
                         |> List.map
-                            (\column ->
-                                List.head column
-                                    |> Maybe.withDefault
-                                        { state = Nothing, coords = ( -1, -1 ) }
-                            )
-
-                getOpenings : List (Cell Contents) -> List (Cell Contents)
-                getOpenings =
-                    List.Extra.takeWhile (\cell -> cell.state == Nothing)
-
-                ( before, after ) =
-                    ( getOpenings (List.reverse (List.take (Tuple.first coords) heads))
-                    , getOpenings (List.drop (Tuple.first coords) heads)
-                    )
+                            -- drop everything above the pill
+                            (\column -> List.drop (Tuple.second coords - 1) column)
+                        |> List.filterMap List.head
 
                 openCells : List (Cell Contents)
                 openCells =
+                    let
+                        -- look outward from the pill
+                        ( before, after ) =
+                            ( takeWhileEmpty (List.reverse (List.take (Tuple.first coords) heads))
+                            , takeWhileEmpty (List.drop (Tuple.first coords) heads)
+                            )
+                    in
                     before ++ after
 
                 ( minX, maxX ) =
@@ -95,7 +90,7 @@ placingPill bottle { orientation, coords } =
         peaks : List (Grid.Cell Contents)
         peaks =
             bottle
-                |> List.map
+                |> List.filterMap
                     (\column ->
                         column
                             |> List.filter
@@ -109,7 +104,6 @@ placingPill bottle { orientation, coords } =
                                 )
                             |> List.head
                     )
-                |> List.filterMap identity
 
         colorIndexScore : Color -> Int -> Int
         colorIndexScore color index =
@@ -181,9 +175,17 @@ placingPill bottle { orientation, coords } =
                 |> List.map Tuple.second
                 |> List.head
 
-        withGoal : Maybe Direction -> ( Maybe Direction, Maybe ( Int, Orientation ) )
+        withGoal : Maybe Direction -> ( Maybe Direction, Maybe Pill )
         withGoal dir =
-            ( dir, choice )
+            ( dir
+            , Maybe.map
+                (\( x, orientation_ ) ->
+                    { coords = ( x, 0 )
+                    , orientation = orientation_
+                    }
+                )
+                choice
+            )
     in
     case ( choice, coords ) of
         ( Just ( aimX, pill_ ), ( x, _ ) ) ->
@@ -201,3 +203,8 @@ placingPill bottle { orientation, coords } =
 
         ( Nothing, _ ) ->
             withGoal <| Nothing
+
+
+takeWhileEmpty : List (Cell Contents) -> List (Cell Contents)
+takeWhileEmpty =
+    List.Extra.takeWhile (\cell -> cell.state == Nothing)
