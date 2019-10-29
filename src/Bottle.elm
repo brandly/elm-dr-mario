@@ -36,7 +36,8 @@ import RandomExtra exposing (selectWithDefault)
 import Set
 import Time exposing (Posix)
 import Json.Decode as Decode
-import List.Extra
+import List.Extra exposing (unique)
+import Maybe.Extra exposing (isJust)
 
 
 type Speed
@@ -151,6 +152,41 @@ floodHorizontal ( x, y ) bottle =
         before ++ after
 
 
+landings : List Grid.Coords -> Bottle -> List Grid.Coords
+landings coords bottle =
+    -- flood horizontal
+    -- for each of those, flood horizontal
+    -- Set for uniqueness
+    let
+        _ =
+            Debug.log "landings" (List.length space)
+
+        flooded =
+            -- really, more coords
+            List.concatMap (\c -> floodHorizontal c bottle) coords
+                |> List.map .coords
+                |> unique
+
+        --floodHorizontal coords bottle
+        ( land, space ) =
+            List.partition
+                (\c ->
+                    case List.head (Grid.below c bottle) of
+                        Nothing ->
+                            -- rock bottom
+                            True
+
+                        Just cell ->
+                            isJust cell.state
+                )
+                flooded
+
+        below =
+            landings space bottle
+    in
+        land ++ below
+
+
 trashBot : Bottle -> Mode -> ( Maybe Direction, Maybe ( Int, Pill ) )
 trashBot bottle mode =
     case mode of
@@ -175,7 +211,11 @@ trashBot bottle mode =
                     let
                         openCoords : List Int
                         openCoords =
-                            List.map (.coords >> Tuple.first) (floodHorizontal coords bottle)
+                            --List.map (.coords >> Tuple.first) (floodHorizontal coords bottle)
+                            List.map (Tuple.first) (landings [ coords ] bottle)
+
+                        _ =
+                            Debug.log "ayo" (List.length openCoords)
 
                         possibilites =
                             List.map (\x -> ( x, Vertical color_a color_b )) openCoords
