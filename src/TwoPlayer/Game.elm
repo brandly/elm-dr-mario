@@ -205,33 +205,7 @@ view model =
             div [] [ text "💊💊💊" ]
 
         Playing { first, second } ->
-            div []
-                [ div
-                    [ style "display" "flex"
-                    , style "flex-direction" "row"
-                    ]
-                    [ viewPlayer first
-                    , div [ style "margin" "0 12px" ]
-                        -- TODO: displays win count
-                        [ h3 [] [ text "level" ]
-                        , spaceBetween []
-                            [ span [] [ (String.fromInt >> text) first.level ]
-                            , span [] [ (String.fromInt >> text) second.level ]
-                            ]
-                        , h3 [] [ text "speed" ]
-                        , spaceBetween []
-                            [ span [] [ (Speed.toString >> text) first.speed ]
-                            , span [] [ (Speed.toString >> text) second.speed ]
-                            ]
-                        , h3 [] [ text "virus" ]
-                        , spaceBetween []
-                            [ span [] [ text <| displayViruses first ]
-                            , span [] [ text <| displayViruses second ]
-                            ]
-                        ]
-                    , viewPlayer second
-                    ]
-                ]
+            viewArena first second Nothing
 
         Paused _ ->
             div []
@@ -243,7 +217,6 @@ view model =
 
         Over state ->
             div []
-                -- TODO: make it obvious which bottle won
                 [ viewMessage
                     (case state.winner of
                         First ->
@@ -253,8 +226,43 @@ view model =
                             "2p wins"
                     )
                     (div [] [ Html.button [ onClick Reset ] [ text "Main Menu" ] ])
-                , view (Playing state.game)
+                , viewArena state.game.first state.game.second (Just state.winner)
                 ]
+
+
+viewArena : Player -> Player -> Maybe Position -> Html Msg
+viewArena first second winner =
+    let
+        isWinner pos_ =
+            winner
+                |> Maybe.map (\pos -> pos == pos_)
+                |> Maybe.withDefault False
+    in
+    div
+        [ style "display" "flex"
+        , style "flex-direction" "row"
+        ]
+        [ viewPlayer first (isWinner First)
+        , div [ style "margin" "0 12px" ]
+            -- TODO: displays win count
+            [ h3 [] [ text "level" ]
+            , spaceBetween []
+                [ span [] [ (String.fromInt >> text) first.level ]
+                , span [] [ (String.fromInt >> text) second.level ]
+                ]
+            , h3 [] [ text "speed" ]
+            , spaceBetween []
+                [ span [] [ (Speed.toString >> text) first.speed ]
+                , span [] [ (Speed.toString >> text) second.speed ]
+                ]
+            , h3 [] [ text "virus" ]
+            , spaceBetween []
+                [ span [] [ text <| displayViruses first ]
+                , span [] [ text <| displayViruses second ]
+                ]
+            ]
+        , viewPlayer second (isWinner Second)
+        ]
 
 
 displayViruses : Player -> String
@@ -262,16 +270,28 @@ displayViruses player =
     String.fromInt (Env.totalViruses player.env)
 
 
-viewPlayer : Player -> Html msg
-viewPlayer { env } =
+viewPlayer : Player -> Bool -> Html msg
+viewPlayer { env } isWinner =
     div
         [ style "display" "flex"
         , style "flex-direction" "column"
         , style "align-items" "center"
+        , style "position" "relative"
         ]
         [ div [ style "display" "flex", style "margin-bottom" "18px" ]
             (Env.viewPill env.next)
         , Env.view env
+        , if isWinner then
+            div
+                [ style "position" "absolute"
+                , style "top" "50%"
+                , style "transform" "translateY(-50%)"
+                , style "font-size" "6rem"
+                ]
+                [ h3 [] [ text "🏆" ] ]
+
+          else
+            none
         ]
 
 
