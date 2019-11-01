@@ -175,7 +175,7 @@ update props msg model =
             let
                 bottle =
                     Grid.setState
-                        ( color, PillType Nothing )
+                        ( color, Bottle.Pill Nothing )
                         ( x, 1 )
                         model.bottle
 
@@ -283,7 +283,7 @@ sweep ({ bottle } as model) =
                 |> Grid.filterMap
                     (\{ coords, state } ->
                         case state of
-                            Just ( _, PillType (Just dependent) ) ->
+                            Just ( _, Bottle.Pill (Just dependent) ) ->
                                 if Bottle.isCleared coords bottle then
                                     Just <|
                                         Bottle.coordsWithDirection dependent coords
@@ -305,7 +305,7 @@ sweep ({ bottle } as model) =
                     else if Set.member coords coordsLosingDependent then
                         case state of
                             Just ( color, _ ) ->
-                                { cell | state = Just ( color, PillType Nothing ) }
+                                { cell | state = Just ( color, Bottle.Pill Nothing ) }
 
                             Nothing ->
                                 cell
@@ -408,7 +408,7 @@ view { bottle, mode, goal } =
                                     Nothing ->
                                         div cellStyle []
 
-                                    Just ( color, PillType dependent ) ->
+                                    Just ( color, Bottle.Pill dependent ) ->
                                         viewPillCell dependent color
 
                                     Just ( color, Virus ) ->

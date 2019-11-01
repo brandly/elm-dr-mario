@@ -18,8 +18,7 @@ type alias Contents =
 
 type CellType
     = Virus
-      -- TODO: rename to `Pill` once files are broken up?
-    | PillType (Maybe Dependent)
+    | Pill (Maybe Dependent)
 
 
 type alias Dependent =
@@ -88,26 +87,26 @@ canFall coords bottle =
                         Nothing ->
                             True
 
-                        Just ( _, PillType Nothing ) ->
+                        Just ( _, Pill Nothing ) ->
                             hasRoom tail
 
-                        Just ( _, PillType _ ) ->
+                        Just ( _, Pill _ ) ->
                             canFall head.coords bottle
 
                         Just ( _, Virus ) ->
                             False
     in
     case cell.state of
-        Just ( _, PillType Nothing ) ->
+        Just ( _, Pill Nothing ) ->
             Grid.below coords bottle |> hasRoom
 
-        Just ( _, PillType (Just Up) ) ->
+        Just ( _, Pill (Just Up) ) ->
             Grid.below coords bottle |> hasRoom
 
-        Just ( _, PillType (Just Down) ) ->
+        Just ( _, Pill (Just Down) ) ->
             canFall (coordsWithDirection Down coords) bottle
 
-        Just ( _, PillType (Just dependent) ) ->
+        Just ( _, Pill (Just dependent) ) ->
             -- Left or Right
             (Grid.below coords bottle |> hasRoom)
                 && (bottle
@@ -176,7 +175,7 @@ addPill pill bottle =
     colorCoords pill
         |> List.foldl
             (\( coords_, color, dependent ) grid ->
-                Grid.setState ( color, PillType (Just dependent) ) coords_ grid
+                Grid.setState ( color, Pill (Just dependent) ) coords_ grid
             )
             bottle
 
