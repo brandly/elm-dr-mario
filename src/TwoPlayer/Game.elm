@@ -260,6 +260,7 @@ viewArena first second winner =
                 [ span [] [ text <| displayViruses first ]
                 , span [] [ text <| displayViruses second ]
                 ]
+            , Html.button [ onClick Pause ] [ text "Pause" ]
             ]
         , viewPlayer second (isWinner Second)
         ]
