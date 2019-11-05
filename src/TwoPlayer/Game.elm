@@ -231,15 +231,13 @@ view model =
             viewArena first second Nothing
 
         Paused _ ->
-            div []
-                [ viewMessage "Paused" <|
-                    Html.button
-                        [ onClick Resume ]
-                        [ text "resume" ]
-                ]
+            viewMessage "Paused" <|
+                Html.button
+                    [ onClick Resume ]
+                    [ text "resume" ]
 
         Over state ->
-            div []
+            div [ style "position" "relative" ]
                 [ viewMessage
                     (case state.winner of
                         First ->
@@ -326,7 +324,18 @@ spaceBetween =
 
 viewMessage : String -> Html msg -> Html msg
 viewMessage message below =
-    div [ style "text-align" "center", style "margin" "16px 0" ]
+    div
+        [ style "text-align" "center"
+        , style "margin" "16px 0"
+        , style "position" "absolute"
+        , style "z-index" "100"
+        , style "background" "#ffffffe8"
+        , style "padding" "18px"
+        , style "left" "50%"
+        , style "top" "50%"
+        , style "transform" "translate(-50%, -50%)"
+        , style "border-radius" "4px"
+        ]
         [ h3 [] [ text message ]
         , below
         ]
