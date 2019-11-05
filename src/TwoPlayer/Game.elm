@@ -25,10 +25,12 @@ import MatchupCreator
         )
 import Pill exposing (Color(..))
 import Speed exposing (Speed(..))
+import Time
 
 
 type Model
     = Prepare MatchupCreator.Model
+    | Countdown Int Matchup
     | Playing Matchup
     | Paused Matchup
     | Over
@@ -41,6 +43,7 @@ type Msg
     = EnvMsg EnvMsg
     | CreatorMsg MatchupCreator.Msg
     | MatchupReady Matchup
+    | Tick
     | Bomb Position (List Color)
     | Pause
     | Resume
@@ -85,6 +88,9 @@ init type_ first second =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     case model of
+        Countdown _ _ ->
+            Time.every 1000 (\_ -> Tick)
+
         Playing { first, second } ->
             Sub.batch
                 [ Env.subscriptions first.speed first.env
@@ -115,9 +121,23 @@ update { onLeave } action model =
                     CreatorMsg
 
         ( Prepare _, MatchupReady matchup ) ->
-            Playing matchup |> withNothing
+            Countdown 3 matchup |> withNothing
 
         ( Prepare _, _ ) ->
+            model |> withNothing
+
+        ( Countdown seconds matchup, Tick ) ->
+            let
+                remaining =
+                    seconds - 1
+            in
+            if remaining > 0 then
+                Countdown remaining matchup |> withNothing
+
+            else
+                Playing matchup |> withNothing
+
+        ( Countdown seconds matchup, _ ) ->
             model |> withNothing
 
         ( Playing state, Pause ) ->
@@ -203,6 +223,9 @@ view model =
     case model of
         Prepare _ ->
             div [] [ text "💊💊💊" ]
+
+        Countdown seconds { first, second } ->
+            viewArena first second Nothing
 
         Playing { first, second } ->
             viewArena first second Nothing
