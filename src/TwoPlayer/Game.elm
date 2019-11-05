@@ -225,10 +225,13 @@ view model =
             div [] [ text "💊💊💊" ]
 
         Countdown seconds { first, second } ->
-            viewArena first second Nothing
+            viewArena first second Nothing <|
+                h3 [ style "text-align" "center", style "font-size" "64px" ]
+                    [ text (String.fromInt seconds) ]
 
         Playing { first, second } ->
-            viewArena first second Nothing
+            viewArena first second Nothing <|
+                Html.button [ onClick Pause ] [ text "Pause" ]
 
         Paused _ ->
             viewMessage "Paused" <|
@@ -247,12 +250,12 @@ view model =
                             "2p wins"
                     )
                     (div [] [ Html.button [ onClick Reset ] [ text "Main Menu" ] ])
-                , viewArena state.game.first state.game.second (Just state.winner)
+                , viewArena state.game.first state.game.second (Just state.winner) none
                 ]
 
 
-viewArena : Player -> Player -> Maybe Position -> Html Msg
-viewArena first second winner =
+viewArena : Player -> Player -> Maybe Position -> Html Msg -> Html Msg
+viewArena first second winner extra =
     let
         isWinner pos_ =
             winner
@@ -281,7 +284,7 @@ viewArena first second winner =
                 [ span [] [ text <| displayViruses first ]
                 , span [] [ text <| displayViruses second ]
                 ]
-            , Html.button [ onClick Pause ] [ text "Pause" ]
+            , extra
             ]
         , viewPlayer second (isWinner Second)
         ]
