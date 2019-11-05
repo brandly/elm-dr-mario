@@ -3,6 +3,7 @@ module Grid exposing
     , Column
     , Coords
     , Grid
+    , any
     , below
     , difference
     , filter
@@ -90,6 +91,11 @@ difference diff a b =
                 else
                     Nothing
             )
+
+
+any : (Cell a -> Bool) -> Grid a -> Bool
+any predicate =
+    toList >> List.any predicate
 
 
 {-| The zip function takes in two lists and returns a combined

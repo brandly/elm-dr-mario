@@ -241,10 +241,9 @@ advance model =
             let
                 timeToFall : Bool
                 timeToFall =
-                    model.bottle
-                        |> Grid.filter
-                            (\{ coords } -> Bottle.canFall coords model.bottle)
-                        |> (List.isEmpty >> not)
+                    Grid.any
+                        (\{ coords } -> Bottle.canFall coords model.bottle)
+                        model.bottle
             in
             if timeToFall then
                 withNothing { model | bottle = Bottle.fall model.bottle }
