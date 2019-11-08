@@ -1,4 +1,20 @@
-module Bottle exposing (..)
+module Bottle exposing
+    ( Bottle
+    , CellType(..)
+    , Contents
+    , addPill
+    , canFall
+    , canSweep
+    , coordsWithDirection
+    , fall
+    , generateBomb
+    , generateEmptyCoords
+    , generatePill
+    , getColor
+    , isAvailable
+    , isCleared
+    , totalViruses
+    )
 
 import Direction exposing (Direction(..))
 import Grid exposing (Cell, Grid)

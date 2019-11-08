@@ -389,7 +389,7 @@ totalViruses { bottle } =
 
 
 view : Model -> Html msg
-view { bottle, mode, goal } =
+view { bottle, mode } =
     div []
         [ div
             [ style "display" "inline-block"

@@ -137,7 +137,7 @@ update { onLeave } action model =
             else
                 Playing matchup |> withNothing
 
-        ( Countdown seconds matchup, _ ) ->
+        ( Countdown _ _, _ ) ->
             model |> withNothing
 
         ( Playing state, Pause ) ->
