@@ -2,7 +2,7 @@
   "scripts": {
     "start": "npm run build && npm run html",
     "build": "elm make src/Main.elm --output dist/the.js",
-    "test": "elm-analyse",
+    "test": "elm-analyse && npm run build -- --optimize",
     "html": "cp src/index.html dist",
     "deploy": "npm run build -- --optimize && npm run compress && npm run html && gh-pages --dist dist/",
     "compress": "uglifyjs dist/the.js -o dist/the.js --compress --mangle"
