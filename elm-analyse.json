@@ -1,0 +1,6 @@
+{
+    "checks" : {
+        "SingleFieldRecord": false,
+        "TriggerWords": false
+    }
+}
