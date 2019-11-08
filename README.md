@@ -1,4 +1,4 @@
-# elm dr. mario
+# elm dr. mario [![Build Status](https://travis-ci.org/brandly/elm-dr-mario.svg?branch=master)](https://travis-ci.org/brandly/elm-dr-mario)
 
 take a look at [the nintendo instruction booklet](https://www.nintendo.co.jp/clv/manuals/en/pdf/CLV-P-NAAXE.pdf)
 
