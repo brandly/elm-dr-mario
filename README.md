@@ -8,6 +8,9 @@ take a look at [the nintendo instruction booklet](https://www.nintendo.co.jp/clv
 $ npm install
 $ npm start
 $ open dist/index.html
+
+# with dev tools
+$ npm run build -- --debug
 ```
 
 ## structure
