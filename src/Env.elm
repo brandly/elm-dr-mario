@@ -123,7 +123,11 @@ subscriptions speed model =
 -- UPDATE
 
 
-update : { onBomb : List Color -> Maybe msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
+type alias Props msg =
+    { onBomb : List Color -> Maybe msg }
+
+
+update : Props msg -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
 update props msg model =
     case ( model.mode, msg ) of
         ( Falling cleared, NewPill next ) ->
@@ -169,7 +173,7 @@ update props msg model =
             update props (KeyDown key) { model | goal = goal }
 
         ( _, TickTock _ ) ->
-            advance model
+            advance props model
 
         ( Bombing, Bomb color x ) ->
             let
@@ -202,8 +206,8 @@ withNothing model =
     ( model, Cmd.none, Nothing )
 
 
-advance : Model -> ( Model, Cmd Msg, Maybe msg )
-advance model =
+advance : Props msg -> Model -> ( Model, Cmd Msg, Maybe msg )
+advance props model =
     case model.mode of
         PlacingPill pill ->
             let
@@ -237,7 +241,7 @@ advance model =
                     afterPill pill
                 )
 
-        Falling _ ->
+        Falling cleared ->
             let
                 timeToFall : Bool
                 timeToFall =
@@ -259,7 +263,18 @@ advance model =
                 )
 
             else
-                advance { model | mode = Bombing }
+                let
+                    ( model_, cmd_, _ ) =
+                        advance props { model | mode = Bombing }
+                in
+                ( model_
+                , cmd_
+                , if List.length cleared > 1 then
+                    props.onBomb cleared
+
+                  else
+                    Nothing
+                )
 
         Bombing ->
             case model.bombs of
