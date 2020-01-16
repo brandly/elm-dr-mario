@@ -27,6 +27,7 @@ type Selection
     = OnePlayer
     | TwoPlayer
     | VsBot
+    | Tutorial
 
 
 type alias Model =
@@ -73,7 +74,7 @@ update events msg ({ selection } as state) =
     in
     case ( selection, msg ) of
         ( OnePlayer, Up ) ->
-            withNothing { state | selection = VsBot }
+            withNothing { state | selection = Tutorial }
 
         ( OnePlayer, Down ) ->
             withNothing { state | selection = TwoPlayer }
@@ -88,6 +89,12 @@ update events msg ({ selection } as state) =
             withNothing { state | selection = TwoPlayer }
 
         ( VsBot, Down ) ->
+            withNothing { state | selection = Tutorial }
+
+        ( Tutorial, Up ) ->
+            withNothing { state | selection = VsBot }
+
+        ( Tutorial, Down ) ->
             withNothing { state | selection = OnePlayer }
 
         ( _, Enter ) ->
@@ -110,6 +117,7 @@ view { selection } =
         [ heading (selection == OnePlayer) "1Player Game"
         , heading (selection == TwoPlayer) "2Player Game"
         , heading (selection == VsBot) "vs. Com"
+        , heading (selection == Tutorial) "Tutorial"
         , btw [] [ text "use arrows, hit enter" ]
         ]
 

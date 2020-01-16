@@ -6,6 +6,7 @@ import Html exposing (Html, div, h1, text)
 import Html.Attributes exposing (style)
 import Menu
 import OnePlayer
+import Tutorial
 import TwoPlayer
 import TwoPlayer.Game
 
@@ -22,6 +23,7 @@ main =
 
 type Model
     = Selecting Menu.Model
+    | Tutorial Tutorial.Model
     | One OnePlayer.Model
     | Two TwoPlayer.Model
 
@@ -30,9 +32,12 @@ type Msg
     = MenuMsg Menu.Msg
     | OneMsg OnePlayer.Msg
     | TwoMsg TwoPlayer.Msg
+    | TutorialMsg Tutorial.Msg
     | PlayOne
     | PlayTwo
     | PlayBot
+    | ViewTutorial
+    | FinishTutorial
 
 
 subscriptions : Model -> Sub Msg
@@ -49,6 +54,10 @@ subscriptions model =
         Selecting state ->
             Menu.subscriptions state
                 |> Sub.map MenuMsg
+
+        Tutorial state ->
+            Tutorial.subscriptions state
+                |> Sub.map TutorialMsg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -67,6 +76,9 @@ update msg model =
 
                             Menu.VsBot ->
                                 PlayBot
+
+                            Menu.Tutorial ->
+                                ViewTutorial
                 }
                 msg_
                 state
@@ -87,6 +99,11 @@ update msg model =
                 |> Tuple.mapFirst Two
                 |> Tuple.mapSecond (Cmd.map TwoMsg)
 
+        ( Selecting _, ViewTutorial ) ->
+            Tutorial.init
+                |> Tuple.mapFirst Tutorial
+                |> Tuple.mapSecond (Cmd.map TutorialMsg)
+
         ( One state, OneMsg msg_ ) ->
             OnePlayer.update msg_ state
                 |> Component.mapSimple One OneMsg
@@ -94,6 +111,13 @@ update msg model =
         ( Two state, TwoMsg msg_ ) ->
             TwoPlayer.update msg_ state
                 |> Component.mapSimple Two TwoMsg
+
+        ( Tutorial state, TutorialMsg msg_ ) ->
+            Tutorial.update { onCompletion = FinishTutorial } msg_ state
+                |> Component.mapOutMsg update Tutorial TutorialMsg
+
+        ( Tutorial state, FinishTutorial ) ->
+            ( Selecting Menu.init, Cmd.none )
 
         ( _, _ ) ->
             ( model, Cmd.none )
@@ -118,4 +142,8 @@ view model =
             Two state ->
                 TwoPlayer.view state
                     |> Html.map TwoMsg
+
+            Tutorial state ->
+                Tutorial.view state
+                    |> Html.map TutorialMsg
         ]
