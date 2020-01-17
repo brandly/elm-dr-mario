@@ -2,10 +2,11 @@ module Tutorial exposing (Model(..), Msg(..), init, subscriptions, update, view)
 
 import Html exposing (Html, button, div, h1, text)
 import Html.Events exposing (onClick)
+import SelectList exposing (SelectList)
 
 
 type Model
-    = Tutorial (List Lesson)
+    = Tutorial (SelectList Lesson)
 
 
 type Lesson
@@ -15,7 +16,9 @@ type Lesson
 
 init : ( Model, Cmd Msg )
 init =
-    ( Tutorial [ Lesson "You gotta place the pills" ], Cmd.none )
+    ( Tutorial (SelectList.singleton (Lesson "You gotta place the pills"))
+    , Cmd.none
+    )
 
 
 type Msg
@@ -35,10 +38,14 @@ update props msg model =
 
 view : Model -> Html Msg
 view (Tutorial lessons) =
+    let
+        (Lesson msg) =
+            SelectList.selected lessons
+    in
     div []
-        (button [ onClick OnCompletion ] [ text "back" ]
-            :: List.map (\(Lesson msg) -> h1 [] [ text msg ]) lessons
-        )
+        [ button [ onClick OnCompletion ] [ text "back" ]
+        , h1 [] [ text msg ]
+        ]
 
 
 subscriptions : Model -> Sub Msg
