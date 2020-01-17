@@ -5,17 +5,21 @@ import Html.Events exposing (onClick)
 
 
 type Model
-    = Tutorial
+    = Tutorial (List Lesson)
+
+
+type Lesson
+    = -- TODO: hold onto the necessary Env or whatever too
+      Lesson String
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Tutorial, Cmd.none )
+    ( Tutorial [ Lesson "You gotta place the pills" ], Cmd.none )
 
 
 type Msg
-    = Advance
-    | OnCompletion
+    = OnCompletion
 
 
 type alias Props msg =
@@ -28,17 +32,15 @@ update props msg model =
         ( _, OnCompletion ) ->
             ( model, Cmd.none, Just props.onCompletion )
 
-        ( _, _ ) ->
-            ( model, Cmd.none, Nothing )
-
 
 view : Model -> Html Msg
-view model =
+view (Tutorial lessons) =
     div []
-        [ h1 [] [ text "hi" ]
-        , button [ onClick OnCompletion ] [ text "back" ]
-        ]
+        (button [ onClick OnCompletion ] [ text "back" ]
+            :: List.map (\(Lesson msg) -> h1 [] [ text msg ]) lessons
+        )
 
 
+subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.none
