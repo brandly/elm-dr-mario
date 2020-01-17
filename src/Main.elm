@@ -116,7 +116,7 @@ update msg model =
             Tutorial.update { onCompletion = FinishTutorial } msg_ state
                 |> Component.mapOutMsg update Tutorial TutorialMsg
 
-        ( Tutorial state, FinishTutorial ) ->
+        ( Tutorial _, FinishTutorial ) ->
             ( Selecting Menu.init, Cmd.none )
 
         ( _, _ ) ->
