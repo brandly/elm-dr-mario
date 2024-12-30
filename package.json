@@ -10,8 +10,8 @@
   "devDependencies": {
     "elm": "0.19.1-6",
     "elm-analyse": "0.16.5",
-    "gh-pages": "1.2.0",
-    "uglify-js": "3.4.9"
+    "gh-pages": "6.2.0",
+    "uglify-js": "3.19.3"
   },
   "dependencies": {}
 }
