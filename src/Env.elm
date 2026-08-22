@@ -343,29 +343,6 @@ sweep ({ bottle } as model) =
                 bottle
                 swept
 
-        clearedLines : List (Cell Bottle.Contents) -> List Color
-        clearedLines cells =
-            case cells of
-                [] ->
-                    []
-
-                x :: xs ->
-                    case x.state of
-                        Just ( color, _ ) ->
-                            color
-                                :: (xs
-                                        |> List.filter
-                                            (\c ->
-                                                case ( x.coords, c.coords ) of
-                                                    ( ( xx, xy ), ( cx, cy ) ) ->
-                                                        cx /= xx && cy /= xy
-                                            )
-                                        |> clearedLines
-                                   )
-
-                        Nothing ->
-                            []
-
         alreadyCleared =
             case model.mode of
                 Falling cleared ->
@@ -376,6 +353,89 @@ sweep ({ bottle } as model) =
                     []
     in
     { model | bottle = swept, mode = Falling (alreadyCleared ++ clearedLines diff) }
+
+
+{-| A swept cell boiled down to what run detection needs: the coordinate its
+run shares (the row of a horizontal run, the column of a vertical one), the
+coordinate that has to be contiguous along the run, and its color.
+-}
+type alias RunCell =
+    ( ( Int, Int ), Color )
+
+
+{-| How many cells in a row it takes to clear a line.
+-}
+lineLength : Int
+lineLength =
+    4
+
+
+{-| The colors of the lines a sweep cleared, one entry per line.
+
+A cleared cell can belong to a horizontal run, to a vertical run, or, when it
+sits on the corner where two runs meet, to both. No single cell can stand in
+for a whole line, so group the swept cells into the runs themselves: cells
+sharing a row at contiguous columns, or sharing a column at contiguous rows.
+Every same-colored group at least `lineLength` long is one cleared line.
+
+-}
+clearedLines : List (Cell Bottle.Contents) -> List Color
+clearedLines cells =
+    runsAlong (\( x, y ) -> ( y, x )) cells ++ runsAlong (\( x, y ) -> ( x, y )) cells
+
+
+{-| The runs lying along one axis, picked out by a function that puts the
+shared coordinate first and the contiguous one second.
+-}
+runsAlong : (Grid.Coords -> ( Int, Int )) -> List (Cell Bottle.Contents) -> List Color
+runsAlong toRunCoords cells =
+    cells
+        |> List.filterMap
+            (\cell ->
+                cell.state
+                    |> Maybe.map
+                        (\( color, _ ) -> ( toRunCoords cell.coords, color ))
+            )
+        |> List.sortBy Tuple.first
+        |> runColors
+
+
+{-| Peel maximal runs off a list already sorted by shared coordinate and then
+by position, keeping the color of each run long enough to have cleared.
+-}
+runColors : List RunCell -> List Color
+runColors cells =
+    case cells of
+        ( place, color ) :: rest ->
+            let
+                ( length, remaining ) =
+                    extendRun place color 1 rest
+            in
+            if length >= lineLength then
+                color :: runColors remaining
+
+            else
+                runColors remaining
+
+        [] ->
+            []
+
+
+{-| Grow a run for as long as the next cell continues it: same shared
+coordinate, the next position along, same color.
+-}
+extendRun : ( Int, Int ) -> Color -> Int -> List RunCell -> ( Int, List RunCell )
+extendRun ( shared, position ) color length cells =
+    case cells of
+        ( ( nextShared, nextPosition ), nextColor ) :: rest ->
+            if nextShared == shared && nextPosition == position + 1 && nextColor == color then
+                extendRun ( nextShared, nextPosition ) nextColor (length + 1) rest
+
+            else
+                ( length, cells )
+
+        [] ->
+            ( length, [] )
 
 
 
