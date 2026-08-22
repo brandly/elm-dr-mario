@@ -1,4 +1,4 @@
-# elm dr. mario [![Build Status](https://travis-ci.org/brandly/elm-dr-mario.svg?branch=master)](https://travis-ci.org/brandly/elm-dr-mario)
+# elm dr. mario [![CI](https://github.com/brandly/elm-dr-mario/actions/workflows/ci.yml/badge.svg)](https://github.com/brandly/elm-dr-mario/actions/workflows/ci.yml)
 
 [play the game](https://brandly.github.io/elm-dr-mario/) or take a look at [the nintendo instruction booklet](https://www.nintendo.co.jp/clv/manuals/en/pdf/CLV-P-NAAXE.pdf)
 
