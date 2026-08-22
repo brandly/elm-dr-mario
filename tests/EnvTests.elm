@@ -113,7 +113,7 @@ singleLine =
 
 {-| An L: a vertical run up column 1 meeting a horizontal run along the
 floor. The shared corner (1,16) is the *last* of the two runs' cells in
-scan order, which is the arrangement `clearedLines` counts correctly.
+scan order.
 -}
 lShape : Bottle
 lShape =
@@ -123,7 +123,7 @@ lShape =
 
 
 {-| The same L flipped so the shared corner (1,13) comes *first* in scan
-order. See issue #20.
+order.
 -}
 lShapeCornerFirst : Bottle
 lShapeCornerFirst =
@@ -264,21 +264,14 @@ clearedLineCountTests =
             \_ ->
                 cleared disjointLines
                     |> Expect.equal (Env.Falling [ Red, Yellow ])
-        , test "an L whose corner comes first is undercounted (issue #20)" <|
+        , test "an L whose corner comes first counts as two" <|
             \_ ->
-                -- Both runs really are swept, but `clearedLines` drops every
-                -- cell sharing a row *or* a column with the first swept cell,
-                -- and the corner shares one with both runs. This should be
-                -- `Env.Falling [ Red, Red ]`; asserting today's behavior so
-                -- the suite stays green until #20 is fixed.
                 cleared lShapeCornerFirst
-                    |> Expect.equal (Env.Falling [ Red ])
-        , test "two runs in the same row are undercounted (issue #20)" <|
+                    |> Expect.equal (Env.Falling [ Red, Red ])
+        , test "two runs in the same row count as two" <|
             \_ ->
-                -- Should be `Env.Falling [ Red, Yellow ]`: every cell of the
-                -- second run shares row 16 with the first swept cell.
                 cleared twoRunsInARow
-                    |> Expect.equal (Env.Falling [ Red ])
+                    |> Expect.equal (Env.Falling [ Red, Yellow ])
         ]
 
 
