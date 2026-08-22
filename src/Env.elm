@@ -392,12 +392,9 @@ runsAlong toRunCoords cells =
     cells
         |> List.filterMap
             (\cell ->
-                case cell.state of
-                    Just ( color, _ ) ->
-                        Just ( toRunCoords cell.coords, color )
-
-                    Nothing ->
-                        Nothing
+                cell.state
+                    |> Maybe.map
+                        (\( color, _ ) -> ( toRunCoords cell.coords, color ))
             )
         |> List.sortBy Tuple.first
         |> runColors
