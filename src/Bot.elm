@@ -87,10 +87,10 @@ placingPill bottle { orientation, coords } =
                         |> List.map (\x -> ( x, Horizontal ( color_a, color_b ) ))
                    )
 
-        peaks : List (Grid.Cell Contents)
+        peaks : List (Maybe (Grid.Cell Contents))
         peaks =
             bottle
-                |> List.filterMap
+                |> List.map
                     (\column ->
                         column
                             |> List.filter
@@ -118,6 +118,7 @@ placingPill bottle { orientation, coords } =
                 colorAtIndex =
                     Array.fromList peaks
                         |> Array.get (index - 1)
+                        |> Maybe.andThen identity
                         |> Maybe.andThen (\cell -> cell.state)
                         |> Maybe.map (\state -> Tuple.first state)
             in
