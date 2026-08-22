@@ -172,12 +172,23 @@ update props msg model =
         ( _, SetGoal ( key, goal ) ) ->
             update props (KeyDown key) { model | goal = goal }
 
+        ( Bombing, TickTock _ ) ->
+            -- the bomb loop is driven by `Bomb` messages alone. popping
+            -- `bombs` on a tick too would pop it a second time while a
+            -- `Random.generate (Bomb _)` is still in flight, and that extra
+            -- message would arrive after the loop already left `Bombing`,
+            -- silently dropping a bomb. see #22
+            withNothing model
+
         ( _, TickTock _ ) ->
             advance props model
 
         ( Bombing, Bomb color x ) ->
             let
                 bottle =
+                    -- when the top row is full, `generateBomb` has no column
+                    -- to pick and yields -1, which matches no cell, so this
+                    -- bomb is lost. the loop moves along either way
                     Grid.setState
                         ( color, Bottle.Pill Nothing )
                         ( x, 1 )
@@ -277,6 +288,9 @@ advance props model =
                 )
 
         Bombing ->
+            -- only reached through the recursive call above, which kicks off
+            -- the loop with a non-empty `bombs`. every following step runs in
+            -- the `Bomb` handler
             case model.bombs of
                 head :: tail ->
                     ( { model | bombs = tail }
