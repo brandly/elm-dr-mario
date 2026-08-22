@@ -206,7 +206,7 @@ viewLevelSlider level =
 btw : Element msg
 btw =
     styled p
-        [ ( "font-color", "#666" )
+        [ ( "color", "#666" )
         , ( "text-align", "center" )
         ]
 
