@@ -12,6 +12,7 @@ module MatchupCreator exposing
     )
 
 import Bot
+import Component
 import Controls
 import Env
 import EnvCreator
@@ -108,28 +109,17 @@ update { onCreated } action model =
     in
     case ( model, action ) of
         ( PrepareFirst opponent ({ first } as state) creator, CreatorMsg msg ) ->
-            let
-                ( creator_, cmd, maybeMsg ) =
-                    EnvCreator.update
-                        { onCreated =
-                            \{ env } ->
-                                Ready
-                                    { state | first = { first | env = env } }
-                        }
-                        msg
-                        creator
-            in
-            case maybeMsg of
-                Nothing ->
-                    ( PrepareFirst opponent state creator_
-                    , Cmd.map CreatorMsg cmd
-                    , Nothing
-                    )
-
-                Just msg2 ->
-                    update { onCreated = onCreated }
-                        msg2
-                        (PrepareFirst opponent state creator_)
+            EnvCreator.update
+                { onCreated =
+                    \{ env } ->
+                        Ready
+                            { state | first = { first | env = env } }
+                }
+                msg
+                creator
+                |> Component.raiseOutMsg (update { onCreated = onCreated })
+                    (PrepareFirst opponent state)
+                    CreatorMsg
 
         ( PrepareFirst opponent _ _, Ready state ) ->
             let
@@ -160,28 +150,17 @@ update { onCreated } action model =
                     (PrepareSecond opponent state creator)
 
             else
-                let
-                    ( creator_, cmd, maybeMsg ) =
-                        EnvCreator.update
-                            { onCreated =
-                                \{ env } ->
-                                    Ready
-                                        { state | second = { second | env = env } }
-                            }
-                            msg
-                            creator
-                in
-                case maybeMsg of
-                    Nothing ->
-                        ( PrepareSecond opponent state creator_
-                        , Cmd.map CreatorMsg cmd
-                        , Nothing
-                        )
-
-                    Just msg2 ->
-                        update { onCreated = onCreated }
-                            msg2
-                            (PrepareSecond opponent state creator_)
+                EnvCreator.update
+                    { onCreated =
+                        \{ env } ->
+                            Ready
+                                { state | second = { second | env = env } }
+                    }
+                    msg
+                    creator
+                    |> Component.raiseOutMsg (update { onCreated = onCreated })
+                        (PrepareSecond opponent state)
+                        CreatorMsg
 
         ( PrepareSecond opponent _ _, Ready state ) ->
             let

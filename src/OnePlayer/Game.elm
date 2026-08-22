@@ -120,32 +120,21 @@ update : { onLeave : msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
 update { onLeave } action model =
     case ( model, action ) of
         ( PrepareGame ({ score, creator, speed } as state), CreatorMsg msg ) ->
-            let
-                ( creator_, cmd, maybeMsg ) =
-                    EnvCreator.update
-                        { onCreated =
-                            \{ level, env } ->
-                                LevelReady
-                                    { env = env
-                                    , level = level
-                                    , score = score
-                                    , speed = speed
-                                    }
-                        }
-                        msg
-                        creator
-            in
-            case maybeMsg of
-                Nothing ->
-                    ( PrepareGame { state | creator = creator_ }
-                    , Cmd.map CreatorMsg cmd
-                    , Nothing
-                    )
-
-                Just msg2 ->
-                    update { onLeave = onLeave }
-                        msg2
-                        (PrepareGame { state | creator = creator_ })
+            EnvCreator.update
+                { onCreated =
+                    \{ level, env } ->
+                        LevelReady
+                            { env = env
+                            , level = level
+                            , score = score
+                            , speed = speed
+                            }
+                }
+                msg
+                creator
+                |> Component.raiseOutMsg (update { onLeave = onLeave })
+                    (\creator_ -> PrepareGame { state | creator = creator_ })
+                    CreatorMsg
 
         ( PrepareGame _, LevelReady state ) ->
             ( Playing
