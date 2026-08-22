@@ -9,10 +9,10 @@ module Menu exposing
     )
 
 import Browser.Events exposing (onKeyDown)
+import Controls
 import Element exposing (Element, styled)
 import Html exposing (Html, div, h3, p, text)
 import Html.Attributes exposing (style)
-import Html.Events exposing (keyCode)
 import Json.Decode as Decode
 
 
@@ -41,24 +41,22 @@ init =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    onKeyDown
-        (Decode.map
-            (\key ->
-                case key of
-                    13 ->
-                        Enter
+    onKeyDown (Decode.map toMsg Controls.key)
 
-                    38 ->
-                        Up
 
-                    40 ->
-                        Down
+toMsg : String -> Msg
+toMsg pressed =
+    if pressed == Controls.enter then
+        Enter
 
-                    _ ->
-                        Noop
-            )
-            keyCode
-        )
+    else if pressed == Controls.arrowUp then
+        Up
+
+    else if pressed == Controls.arrowDown then
+        Down
+
+    else
+        Noop
 
 
 update :
