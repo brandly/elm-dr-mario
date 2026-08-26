@@ -18,12 +18,12 @@ module Env exposing
 
 import Bottle exposing (Bottle, CellType(..))
 import Browser.Events exposing (onKeyDown)
+import Controls
 import Direction exposing (Direction(..))
 import Element exposing (none, px)
 import Grid exposing (Cell)
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (style)
-import Html.Events exposing (keyCode)
 import Json.Decode as Decode
 import Pill exposing (Color(..), Orientation(..), Pill)
 import Random exposing (Generator(..))
@@ -33,7 +33,7 @@ import Time exposing (Posix)
 
 
 type Controls
-    = Keyboard (Int -> Maybe Direction)
+    = Keyboard (String -> Maybe Direction)
     | Bot BotInterface
 
 
@@ -83,7 +83,7 @@ withVirus color coords model =
     }
 
 
-withControls : (Int -> Maybe Direction) -> Model -> Model
+withControls : (String -> Maybe Direction) -> Model -> Model
 withControls controls model =
     { model | controls = Keyboard controls }
 
@@ -112,7 +112,7 @@ subscriptions speed model =
         [ Time.every (Speed.tick speed) TickTock
         , case model.controls of
             Keyboard controls ->
-                onKeyDown (Decode.map (controls >> KeyDown) keyCode)
+                onKeyDown (Decode.map (controls >> KeyDown) Controls.key)
 
             Bot bot ->
                 Time.every (Speed.tick speed / 4) (\_ -> SetGoal (bot model))

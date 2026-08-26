@@ -29,6 +29,21 @@
       Elm.Main.init({
         node: document.getElementById('elm')
       });
+
+      // The arrow keys steer the pill and move through the menus, but they also
+      // scroll the page. Elm registers its `Browser.Events.onKeyDown` listener
+      // as passive, so it can't cancel that itself. This listener can: calling
+      // preventDefault here drops the scroll while Elm still hears the keydown.
+      var GAME_KEYS = ['ArrowUp', 'ArrowLeft', 'ArrowRight', 'ArrowDown'];
+      document.addEventListener('keydown', function (event) {
+        var tagName = event.target && event.target.tagName;
+        if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT') {
+          return;
+        }
+        if (GAME_KEYS.indexOf(event.key) !== -1) {
+          event.preventDefault();
+        }
+      });
     </script>
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-48129598-9"></script>

@@ -8,10 +8,10 @@ module OnePlayer.Menu exposing
     )
 
 import Browser.Events exposing (onKeyDown)
+import Controls
 import Element exposing (Element, px, styled)
 import Html exposing (Html, div, h3, h4, p, text)
 import Html.Attributes exposing (style)
-import Html.Events exposing (keyCode)
 import Json.Decode as Decode
 import Speed exposing (Speed(..))
 
@@ -44,30 +44,28 @@ init =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    onKeyDown
-        (Decode.map
-            (\key ->
-                case key of
-                    13 ->
-                        Enter
+    onKeyDown (Decode.map toMsg Controls.key)
 
-                    38 ->
-                        Up
 
-                    37 ->
-                        Left
+toMsg : String -> Msg
+toMsg pressed =
+    if pressed == Controls.enter then
+        Enter
 
-                    39 ->
-                        Right
+    else if pressed == Controls.arrowUp then
+        Up
 
-                    40 ->
-                        Down
+    else if pressed == Controls.arrowLeft then
+        Left
 
-                    _ ->
-                        Noop
-            )
-            keyCode
-        )
+    else if pressed == Controls.arrowRight then
+        Right
+
+    else if pressed == Controls.arrowDown then
+        Down
+
+    else
+        Noop
 
 
 update :
