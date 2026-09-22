@@ -3,6 +3,7 @@ module MatchupCreator exposing
     , Model(..)
     , Msg(..)
     , Opponent(..)
+    , Options
     , Player
     , Position(..)
     , init

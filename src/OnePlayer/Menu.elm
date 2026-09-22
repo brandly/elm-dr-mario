@@ -9,6 +9,7 @@ module OnePlayer.Menu exposing
 
 import Browser.Events exposing (onKeyDown)
 import Controls
+import Direction
 import Element exposing (Element, px, styled)
 import Html exposing (Html, div, h3, h4, p, text)
 import Html.Attributes exposing (style)
@@ -52,20 +53,22 @@ toMsg pressed =
     if pressed == Controls.enter then
         Enter
 
-    else if pressed == Controls.arrowUp then
-        Up
-
-    else if pressed == Controls.arrowLeft then
-        Left
-
-    else if pressed == Controls.arrowRight then
-        Right
-
-    else if pressed == Controls.arrowDown then
-        Down
-
     else
-        Noop
+        case Controls.arrows pressed of
+            Just Direction.Up ->
+                Up
+
+            Just Direction.Left ->
+                Left
+
+            Just Direction.Right ->
+                Right
+
+            Just Direction.Down ->
+                Down
+
+            Nothing ->
+                Noop
 
 
 update :
@@ -228,12 +231,14 @@ row =
 
 viewSpeed : Speed -> Speed -> Html msg
 viewSpeed ideal real =
-    h4
-        [ style "padding" "4px 8px"
-        , if real == ideal then
-            style "border" "3px solid #fb7c54"
+    let
+        selectionStyle =
+            if real == ideal then
+                [ style "border" "3px solid #fb7c54" ]
 
-          else
-            style "" ""
-        ]
+            else
+                []
+    in
+    h4
+        (style "padding" "4px 8px" :: selectionStyle)
         [ (Speed.toString >> text) real ]

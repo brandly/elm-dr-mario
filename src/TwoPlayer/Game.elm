@@ -18,13 +18,14 @@ import MatchupCreator
     exposing
         ( Matchup
         , Opponent(..)
+        , Options
         , Player
         , Position(..)
         , mapEnv
         , mapPlayer
         )
 import Pill exposing (Color(..))
-import Speed exposing (Speed(..))
+import Speed
 import Time
 
 
@@ -53,12 +54,6 @@ type Msg
 type EnvMsg
     = FirstEnvMsg Env.Msg
     | SecondEnvMsg Env.Msg
-
-
-type alias Options =
-    { level : Int
-    , speed : Speed
-    }
 
 
 type GameType
