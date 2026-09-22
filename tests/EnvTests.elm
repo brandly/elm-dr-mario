@@ -5,7 +5,7 @@ import Direction exposing (Direction(..))
 import Env
 import Expect
 import Grid
-import Pill exposing (Color(..))
+import Pill exposing (Color(..), Orientation(..))
 import Test exposing (Test, describe, test)
 import Time
 
@@ -169,6 +169,7 @@ suite =
         , sweepTests
         , clearedLineCountTests
         , bombTests
+        , rotationTests
         , hasConflictTests
         ]
 
@@ -304,6 +305,83 @@ bombTests =
                 in
                 sent
                     |> Expect.equal Nothing
+        ]
+
+
+rotationTests : Test
+rotationTests =
+    describe "rotating a pill"
+        [ test "kicks a pill left when it turns against the right wall" <|
+            \_ ->
+                let
+                    pill =
+                        { orientation = Vertical ( Red, Blue )
+                        , coords = ( 8, 5 )
+                        }
+
+                    model =
+                        modelWith emptyBottle
+
+                    ( updated, _, _ ) =
+                        Env.update { onBomb = Just }
+                            (Env.KeyDown (Just Up))
+                            { model | mode = Env.PlacingPill pill }
+                in
+                updated.mode
+                    |> Expect.equal
+                        (Env.PlacingPill
+                            { orientation = Horizontal ( Blue, Red )
+                            , coords = ( 7, 5 )
+                            }
+                        )
+        , test "does not shift a rotation that already fits" <|
+            \_ ->
+                let
+                    pill =
+                        { orientation = Vertical ( Red, Blue )
+                        , coords = ( 7, 5 )
+                        }
+
+                    model =
+                        modelWith emptyBottle
+
+                    ( updated, _, _ ) =
+                        Env.update { onBomb = Just }
+                            (Env.KeyDown (Just Up))
+                            { model | mode = Env.PlacingPill pill }
+                in
+                updated.mode
+                    |> Expect.equal
+                        (Env.PlacingPill
+                            { orientation = Horizontal ( Blue, Red )
+                            , coords = ( 7, 5 )
+                            }
+                        )
+        , test "keeps the original orientation when the kick is blocked" <|
+            \_ ->
+                let
+                    pill =
+                        { orientation = Vertical ( Red, Blue )
+                        , coords = ( 8, 5 )
+                        }
+
+                    bottle =
+                        emptyBottle
+                            |> withViruses
+                                [ ( ( 7, 5 ), Yellow )
+                                , ( ( 7, 6 ), Yellow )
+                                ]
+
+                    model =
+                        modelWith bottle
+
+                    ( updated, _, _ ) =
+                        Env.update { onBomb = Just }
+                            (Env.KeyDown (Just Up))
+                            { model | mode = Env.PlacingPill pill }
+                in
+                updated.mode
+                    |> Expect.equal (Env.PlacingPill pill)
         ]
 
 
