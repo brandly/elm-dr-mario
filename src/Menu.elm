@@ -10,6 +10,7 @@ module Menu exposing
 
 import Browser.Events exposing (onKeyDown)
 import Controls
+import Direction
 import Element exposing (Element, styled)
 import Html exposing (Html, div, h3, p, text)
 import Html.Attributes exposing (style)
@@ -49,14 +50,16 @@ toMsg pressed =
     if pressed == Controls.enter then
         Enter
 
-    else if pressed == Controls.arrowUp then
-        Up
-
-    else if pressed == Controls.arrowDown then
-        Down
-
     else
-        Noop
+        case Controls.arrows pressed of
+            Just Direction.Up ->
+                Up
+
+            Just Direction.Down ->
+                Down
+
+            _ ->
+                Noop
 
 
 update :
