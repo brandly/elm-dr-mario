@@ -157,7 +157,16 @@ update props msg model =
             in
             case key of
                 Just Up ->
-                    moveIfAvailable (Pill.turnRight pill)
+                    let
+                        turned =
+                            Pill.turnRight pill
+                    in
+                    if Bottle.isAvailable turned model.bottle then
+                        moveIfAvailable turned
+
+                    else
+                        moveIfAvailable
+                            (Pill.mapCoords (Bottle.coordsWithDirection Left) turned)
 
                 Just direction ->
                     moveIfAvailable

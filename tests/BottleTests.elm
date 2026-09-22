@@ -213,7 +213,7 @@ isAvailableTests =
                     |> Expect.equal True
         , test "rotating a vertical pill flat against the right wall is not available" <|
             \_ ->
-                -- there is no wall kick, so the pill has to stay vertical here
+                -- Env handles the wall kick after this in-place check fails
                 Bottle.isAvailable
                     (Pill.turnRight (pillAt (Vertical ( Red, Blue )) ( 8, 5 )))
                     emptyBottle
