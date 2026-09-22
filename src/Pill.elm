@@ -12,6 +12,8 @@ module Pill exposing
 import Grid exposing (Coords)
 
 
+{-| `coords` identifies the bottom-left occupied cell in either orientation.
+-}
 type alias Pill =
     { orientation : Orientation
     , coords : Coords
@@ -21,7 +23,7 @@ type alias Pill =
 fromColors : ( Color, Color ) -> Pill
 fromColors colors =
     { orientation = Horizontal colors
-    , coords = ( 4, 0 )
+    , coords = ( 4, 1 )
     }
 
 
@@ -68,7 +70,7 @@ coordsPair pill =
     in
     case pill.orientation of
         Horizontal _ ->
-            [ ( x, y + 1 ), ( x + 1, y + 1 ) ]
+            [ ( x, y ), ( x + 1, y ) ]
 
         Vertical _ ->
-            [ ( x, y ), ( x, y + 1 ) ]
+            [ ( x, y - 1 ), ( x, y ) ]

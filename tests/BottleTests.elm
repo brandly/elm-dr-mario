@@ -230,11 +230,19 @@ isAvailableTests =
                     |> Expect.equal False
         , test "a pill fits on the bottom row" <|
             \_ ->
-                Bottle.isAvailable (pillAt (Horizontal ( Red, Blue )) ( 4, 15 )) emptyBottle
+                Bottle.isAvailable (pillAt (Horizontal ( Red, Blue )) ( 4, 16 )) emptyBottle
                     |> Expect.equal True
         , test "a pill may not pass the floor" <|
             \_ ->
-                Bottle.isAvailable (pillAt (Horizontal ( Red, Blue )) ( 4, 16 )) emptyBottle
+                Bottle.isAvailable (pillAt (Horizontal ( Red, Blue )) ( 4, 17 )) emptyBottle
+                    |> Expect.equal False
+        , test "a vertical pill uses the same bottom-row anchor" <|
+            \_ ->
+                Bottle.isAvailable (pillAt (Vertical ( Red, Blue )) ( 4, 16 )) emptyBottle
+                    |> Expect.equal True
+        , test "a vertical pill may not pass the floor" <|
+            \_ ->
+                Bottle.isAvailable (pillAt (Vertical ( Red, Blue )) ( 4, 17 )) emptyBottle
                     |> Expect.equal False
         , test "a pill may not overlap an occupied cell" <|
             \_ ->
@@ -411,7 +419,7 @@ addPillTests =
         , test "a vertical pill lands in two stacked rows" <|
             \_ ->
                 statesAt
-                    [ ( 4, 5 ), ( 4, 6 ) ]
+                    [ ( 4, 4 ), ( 4, 5 ) ]
                     (Bottle.addPill (pillAt (Vertical ( Red, Blue )) ( 4, 5 )) emptyBottle)
                     |> Expect.equal
                         [ Just ( Red, Bottle.Pill (Just Down) )
