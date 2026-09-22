@@ -231,12 +231,14 @@ row =
 
 viewSpeed : Speed -> Speed -> Html msg
 viewSpeed ideal real =
-    h4
-        [ style "padding" "4px 8px"
-        , if real == ideal then
-            style "border" "3px solid #fb7c54"
+    let
+        selectionStyle =
+            if real == ideal then
+                [ style "border" "3px solid #fb7c54" ]
 
-          else
-            style "" ""
-        ]
+            else
+                []
+    in
+    h4
+        (style "padding" "4px 8px" :: selectionStyle)
         [ (Speed.toString >> text) real ]
