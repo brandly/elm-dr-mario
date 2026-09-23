@@ -63,7 +63,7 @@ isAvailable pill grid =
             pill.coords
 
         aboveBottom =
-            y < Grid.height grid
+            y <= Grid.height grid
 
         withinRight =
             case pill.orientation of
