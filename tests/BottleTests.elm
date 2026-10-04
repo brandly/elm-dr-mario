@@ -57,14 +57,9 @@ column x ys color =
     List.map (\y -> ( ( x, y ), color )) ys
 
 
-stateAt : Grid.Coords -> Bottle -> Maybe Bottle.Contents
-stateAt coords bottle =
-    Grid.get coords bottle
-
-
 statesAt : List Grid.Coords -> Bottle -> List (Maybe Bottle.Contents)
 statesAt coordsList bottle =
-    List.map (\coords -> stateAt coords bottle) coordsList
+    List.map (\coords -> Grid.get coords bottle) coordsList
 
 
 pillAt : Orientation -> Grid.Coords -> Pill.Pill

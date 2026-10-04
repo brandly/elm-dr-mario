@@ -54,11 +54,6 @@ column x ys color =
     List.map (\y -> ( ( x, y ), color )) ys
 
 
-stateAt : Grid.Coords -> Bottle -> Maybe Bottle.Contents
-stateAt coords bottle =
-    Grid.get coords bottle
-
-
 modelWith : Bottle -> Env.Model
 modelWith bottle =
     let
@@ -236,7 +231,7 @@ sweepTests =
                     after =
                         swept bottle
                 in
-                ( stateAt ( 4, 16 ) after, stateAt ( 5, 16 ) after )
+                ( Grid.get ( 4, 16 ) after, Grid.get ( 5, 16 ) after )
                     |> Expect.equal
                         ( Nothing, Just ( Blue, Bottle.Pill Nothing ) )
         , test "nothing is swept when there is no run" <|
