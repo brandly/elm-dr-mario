@@ -59,7 +59,7 @@ column x ys color =
 
 stateAt : Grid.Coords -> Bottle -> Maybe Bottle.Contents
 stateAt coords bottle =
-    .state (Grid.findCellAtCoords coords bottle)
+    Grid.get coords bottle
 
 
 statesAt : List Grid.Coords -> Bottle -> List (Maybe Bottle.Contents)
@@ -244,6 +244,15 @@ isAvailableTests =
                         withPills [ ( ( 5, 1 ), Yellow ) ] emptyBottle
                 in
                 Bottle.isAvailable (Pill.fromColors ( Red, Blue )) bottle
+                    |> Expect.equal False
+        , test "a fresh pill may turn upright into the air above the bottle" <|
+            \_ ->
+                -- its top half pokes into row 0, which is outside the grid
+                Bottle.isAvailable (Pill.turnRight (Pill.fromColors ( Red, Blue ))) emptyBottle
+                    |> Expect.equal True
+        , test "the air above the bottle stops at the walls" <|
+            \_ ->
+                Bottle.isAvailable (pillAt (Vertical ( Red, Blue )) ( 9, 0 )) emptyBottle
                     |> Expect.equal False
         ]
 

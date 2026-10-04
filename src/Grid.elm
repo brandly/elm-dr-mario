@@ -5,11 +5,13 @@ module Grid exposing
     , Grid
     , any
     , below
+    , columns
     , difference
     , filter
     , filterMap
     , findCellAtCoords
     , fromDimensions
+    , get
     , height
     , isEmpty
     , map
@@ -18,6 +20,8 @@ module Grid exposing
     , width
     , zip
     )
+
+import Dict exposing (Dict)
 
 
 type alias Cell val =
@@ -30,8 +34,15 @@ type alias Column val =
     List (Cell val)
 
 
-type alias Grid val =
-    List (Column val)
+{-| A `width` by `height` grid, indexed from `( 1, 1 )` in the top left.
+Only occupied cells are stored, so a missing key means an empty cell.
+-}
+type Grid val
+    = Grid
+        { width : Int
+        , height : Int
+        , cells : Dict Coords val
+        }
 
 
 type alias Coords =
@@ -40,34 +51,42 @@ type alias Coords =
 
 fromDimensions : Int -> Int -> Grid val
 fromDimensions width_ height_ =
-    let
-        makeColumn : Int -> Column val
-        makeColumn x =
-            List.range 1 height_
-                |> List.map (\y -> Cell ( x, y ) Nothing)
-    in
-    List.range 1 width_
-        |> List.map makeColumn
+    Grid { width = width_, height = height_, cells = Dict.empty }
 
 
 width : Grid val -> Int
-width grid =
-    List.length grid
+width (Grid grid) =
+    grid.width
 
 
 height : Grid val -> Int
-height grid =
-    case grid of
-        [] ->
-            0
+height (Grid grid) =
+    grid.height
 
-        head :: _ ->
-            List.length head
+
+inBounds : Coords -> Grid val -> Bool
+inBounds ( x, y ) (Grid grid) =
+    x >= 1 && x <= grid.width && y >= 1 && y <= grid.height
+
+
+cellAt : Coords -> Grid val -> Cell val
+cellAt coords grid =
+    Cell coords (get coords grid)
+
+
+columns : Grid val -> List (Column val)
+columns grid =
+    List.range 1 (width grid)
+        |> List.map
+            (\x ->
+                List.range 1 (height grid)
+                    |> List.map (\y -> cellAt ( x, y ) grid)
+            )
 
 
 toList : Grid val -> List (Cell val)
 toList grid =
-    List.concat grid
+    List.concat (columns grid)
 
 
 filter : (Cell val -> Bool) -> Grid val -> List (Cell val)
@@ -112,73 +131,83 @@ zip =
     List.map2 Tuple.pair
 
 
-findCellAtCoords : Coords -> Grid val -> Cell val
+{-| The cell at these coords, or `Nothing` when they fall outside the grid.
+-}
+findCellAtCoords : Coords -> Grid val -> Maybe (Cell val)
 findCellAtCoords coords grid =
-    toList grid
-        |> find (\cell -> cell.coords == coords)
-        |> Maybe.withDefault (Cell ( -1, -1 ) Nothing)
+    if inBounds coords grid then
+        Just (cellAt coords grid)
+
+    else
+        Nothing
 
 
-find : (a -> Bool) -> List a -> Maybe a
-find test list =
-    list |> List.filter test |> List.head
+{-| What occupies these coords, or `Nothing` when the cell is empty or
+outside the grid. Use `findCellAtCoords` to tell those two apart.
+-}
+get : Coords -> Grid val -> Maybe val
+get coords (Grid grid) =
+    Dict.get coords grid.cells
 
 
+{-| Whether these coords hold an empty cell. Coords outside the grid hold no
+cell at all, so they are never empty.
+-}
 isEmpty : Coords -> Grid val -> Bool
 isEmpty coords grid =
-    findCellAtCoords coords grid |> (.state >> (==) Nothing)
+    inBounds coords grid && get coords grid == Nothing
 
 
+{-| Transform every cell's state. Each cell stays at its own coords.
+-}
 map : (Cell a -> Cell b) -> Grid a -> Grid b
-map f grid =
-    List.map (List.map f) grid
+map f ((Grid grid) as grid_) =
+    Grid
+        { width = grid.width
+        , height = grid.height
+        , cells =
+            toList grid_
+                |> List.foldl
+                    (\cell cells ->
+                        case (f cell).state of
+                            Just state ->
+                                Dict.insert cell.coords state cells
+
+                            Nothing ->
+                                cells
+                    )
+                    Dict.empty
+        }
 
 
+{-| Occupy the cell at these coords. Coords outside the grid are ignored.
+-}
 setState : val -> Coords -> Grid val -> Grid val
-setState state coords grid =
-    updateCellAtCoords
-        (\c -> { c | state = Just state })
-        coords
-        grid
+setState state coords ((Grid grid) as grid_) =
+    if inBounds coords grid_ then
+        Grid { grid | cells = Dict.insert coords state grid.cells }
+
+    else
+        grid_
 
 
-updateCellAtCoords : (Cell val -> Cell val) -> Coords -> Grid val -> Grid val
-updateCellAtCoords update coords grid =
-    map
-        (\cell ->
-            if cell.coords == coords then
-                update cell
-
-            else
-                cell
-        )
-        grid
-
-
+{-| The cells beneath these coords in the same column, nearest first.
+-}
 below : Coords -> Grid val -> List (Cell val)
 below ( x, y ) grid =
-    case List.head <| List.drop (x - 1) grid of
-        Nothing ->
-            []
+    if x >= 1 && x <= width grid then
+        List.range (max 1 (y + 1)) (height grid)
+            |> List.map (\y_ -> cellAt ( x, y_ ) grid)
 
-        Just column ->
-            List.drop y column
+    else
+        []
 
 
 topRow : Grid val -> List (Cell val)
 topRow grid =
-    let
-        go result grid_ =
-            case grid_ of
-                head :: tail ->
-                    case head of
-                        Just cell ->
-                            go (cell :: result) tail
+    if height grid >= 1 then
+        List.range 1 (width grid)
+            |> List.map (\x -> cellAt ( x, 1 ) grid)
 
-                        Nothing ->
-                            go result tail
-
-                _ ->
-                    result
-    in
-    go [] (List.map List.head grid)
+    else
+        []

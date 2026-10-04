@@ -56,7 +56,7 @@ column x ys color =
 
 stateAt : Grid.Coords -> Bottle -> Maybe Bottle.Contents
 stateAt coords bottle =
-    .state (Grid.findCellAtCoords coords bottle)
+    Grid.get coords bottle
 
 
 modelWith : Bottle -> Env.Model

@@ -42,7 +42,7 @@ placingPill bottle { orientation, coords } =
             let
                 heads : List (Cell Contents)
                 heads =
-                    bottle
+                    Grid.columns bottle
                         |> List.map
                             -- drop everything above the pill
                             (\column -> List.drop (Tuple.second coords - 1) column)
@@ -89,7 +89,7 @@ placingPill bottle { orientation, coords } =
 
         peaks : List (Maybe (Grid.Cell Contents))
         peaks =
-            bottle
+            Grid.columns bottle
                 |> List.map
                     (\column ->
                         column

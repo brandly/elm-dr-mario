@@ -58,40 +58,27 @@ totalViruses bottle =
 
 isAvailable : Pill -> Bottle -> Bool
 isAvailable pill grid =
-    let
-        ( x, y ) =
-            pill.coords
+    Pill.coordsPair pill
+        |> List.all (\coords -> isOpen coords grid)
 
-        aboveBottom =
-            y < Grid.height grid
 
-        withinRight =
-            case pill.orientation of
-                Vertical _ ->
-                    x <= Grid.width grid
+{-| Whether half a pill can occupy these coords: an empty cell, or the open
+air above the bottle that a pill pokes into when it turns on the top row.
+The walls and the floor are never open.
+-}
+isOpen : Grid.Coords -> Bottle -> Bool
+isOpen (( x, y ) as coords) grid =
+    case Grid.findCellAtCoords coords grid of
+        Just cell ->
+            cell.state == Nothing
 
-                Horizontal _ ->
-                    x < Grid.width grid
-
-        inBottle =
-            (x >= 1)
-                && withinRight
-                && aboveBottom
-
-        noOccupant =
-            Pill.coordsPair pill
-                |> List.map (\p -> Grid.isEmpty p grid)
-                |> List.all identity
-    in
-    inBottle && noOccupant
+        Nothing ->
+            y < 1 && x >= 1 && x <= Grid.width grid
 
 
 canFall : Grid.Coords -> Bottle -> Bool
 canFall coords bottle =
     let
-        cell =
-            Grid.findCellAtCoords coords bottle
-
         hasRoom : List (Cell Contents) -> Bool
         hasRoom cells =
             case cells of
@@ -112,7 +99,7 @@ canFall coords bottle =
                         Just ( _, Virus ) ->
                             False
     in
-    case cell.state of
+    case Grid.get coords bottle of
         Just ( _, Pill Nothing ) ->
             Grid.below coords bottle |> hasRoom
 
@@ -147,35 +134,32 @@ canSweep grid =
 isCleared : Grid.Coords -> Bottle -> Bool
 isCleared ( x, y ) grid =
     let
-        cell =
-            Grid.findCellAtCoords ( x, y ) grid
-
         len =
             4
 
-        horizontal : List (List (Cell Contents))
+        horizontal : List (List (Maybe Contents))
         horizontal =
             neighbors (\offset -> ( x + offset, y ))
 
-        vertical : List (List (Cell Contents))
+        vertical : List (List (Maybe Contents))
         vertical =
             neighbors (\offset -> ( x, y + offset ))
 
         neighbors f =
             List.range (len * -1 + 1) (len - 1)
                 |> List.map f
-                |> List.map (\coords -> Grid.findCellAtCoords coords grid)
+                |> List.map (\coords -> Grid.get coords grid)
                 |> subLists len
     in
-    case cell.state of
+    case Grid.get ( x, y ) grid of
         Nothing ->
             False
 
         Just ( color, _ ) ->
             List.any
                 (List.all
-                    (\cell_ ->
-                        case cell_.state of
+                    (\state ->
+                        case state of
                             Just ( c, _ ) ->
                                 c == color
 
@@ -207,13 +191,13 @@ fall bottle =
             if canFall coords bottle then
                 -- look above
                 if canFall above bottle then
-                    { cell | state = .state <| Grid.findCellAtCoords above bottle }
+                    { cell | state = Grid.get above bottle }
 
                 else
                     { cell | state = Nothing }
 
             else if state == Nothing && canFall above bottle then
-                { cell | state = .state <| Grid.findCellAtCoords above bottle }
+                { cell | state = Grid.get above bottle }
 
             else
                 cell

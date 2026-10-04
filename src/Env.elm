@@ -469,9 +469,7 @@ hasConflict : Model -> Bool
 hasConflict { mode, bottle } =
     case mode of
         PlacingPill pill ->
-            Pill.coordsPair pill
-                |> List.map (\coords -> Grid.isEmpty coords bottle)
-                |> List.any not
+            not (Bottle.isAvailable pill bottle)
 
         _ ->
             False
@@ -514,12 +512,14 @@ view { bottle, mode } =
                             column
                         )
                 )
-                (case mode of
-                    PlacingPill pill ->
-                        Bottle.addPill pill bottle
+                (Grid.columns
+                    (case mode of
+                        PlacingPill pill ->
+                            Bottle.addPill pill bottle
 
-                    _ ->
-                        bottle
+                        _ ->
+                            bottle
+                    )
                 )
             )
         ]
