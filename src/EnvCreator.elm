@@ -19,7 +19,7 @@ type alias Model =
 
 
 type Msg
-    = NewVirus Grid.Coords
+    = NewVirus (Maybe Grid.Coords)
     | NewPill ( Color, Color )
 
 
@@ -44,7 +44,12 @@ virusesForLevel level =
 update : { onCreated : Model -> msg } -> Msg -> Model -> ( Model, Cmd Msg, Maybe msg )
 update { onCreated } action ({ level, env } as model) =
     case action of
-        NewVirus coords ->
+        NewVirus Nothing ->
+            -- no empty cell is left for another virus, so play with the
+            -- viruses already placed
+            ( model, generateNextPill, Nothing )
+
+        NewVirus (Just coords) ->
             let
                 newEnv =
                     Env.withVirus color coords env
@@ -58,8 +63,7 @@ update { onCreated } action ({ level, env } as model) =
 
             else if Bottle.totalViruses newEnv.bottle >= virusesForLevel level then
                 ( { model | env = newEnv }
-                , Random.generate NewPill <|
-                    Bottle.generatePill
+                , generateNextPill
                 , Nothing
                 )
 
@@ -81,6 +85,11 @@ update { onCreated } action ({ level, env } as model) =
             , Cmd.none
             , Just (onCreated model_)
             )
+
+
+generateNextPill : Cmd Msg
+generateNextPill =
+    Random.generate NewPill Bottle.generatePill
 
 
 randomNewVirus : Bottle -> Cmd Msg

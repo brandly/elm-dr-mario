@@ -92,7 +92,7 @@ of dropping pills.
 -}
 isSettled : Bottle -> Bool
 isSettled bottle =
-    not (Grid.any (\{ coords } -> Bottle.canFall coords bottle) bottle)
+    not (List.any (\( coords, _ ) -> Bottle.canFall coords bottle) (Grid.occupied bottle))
 
 
 
@@ -164,6 +164,7 @@ suite =
         , sweepTests
         , clearedLineCountTests
         , bombTests
+        , droppingBombTests
         , rotationTests
         , hasConflictTests
         ]
@@ -303,6 +304,48 @@ bombTests =
         ]
 
 
+droppingBombTests : Test
+droppingBombTests =
+    let
+        dropBomb : Maybe Int -> Bottle -> Env.Model
+        dropBomb landing bottle =
+            let
+                model =
+                    modelWith bottle
+
+                ( updated, _, _ ) =
+                    Env.update { onBomb = Just }
+                        (Env.Bomb Red landing)
+                        { model | mode = Env.Bombing }
+            in
+            updated
+    in
+    describe "dropping a bomb"
+        [ test "a bomb lands on the top row of its column" <|
+            \_ ->
+                dropBomb (Just 3) emptyBottle
+                    |> .bottle
+                    |> Grid.get ( 3, 1 )
+                    |> Expect.equal (Just ( Red, Bottle.Pill Nothing ))
+        , test "the loop moves on once the last bomb lands" <|
+            \_ ->
+                dropBomb (Just 3) emptyBottle
+                    |> .mode
+                    |> Expect.equal (Env.Falling [])
+        , test "a bomb with no column to land in is lost" <|
+            \_ ->
+                let
+                    bottle =
+                        withPills (row 1 [ 1, 2, 3, 4, 5, 6, 7, 8 ] Yellow) emptyBottle
+
+                    updated =
+                        dropBomb Nothing bottle
+                in
+                ( updated.bottle, updated.mode )
+                    |> Expect.equal ( bottle, Env.Falling [] )
+        ]
+
+
 rotationTests : Test
 rotationTests =
     describe "rotating a pill"
@@ -377,6 +420,24 @@ rotationTests =
                 in
                 updated.mode
                     |> Expect.equal (Env.PlacingPill pill)
+        , test "a fresh pill turns upright into the air above the bottle" <|
+            \_ ->
+                let
+                    model =
+                        modelWith emptyBottle
+
+                    ( updated, _, _ ) =
+                        Env.update { onBomb = Just }
+                            (Env.KeyDown (Just Up))
+                            { model | mode = Env.PlacingPill (Pill.fromColors ( Red, Blue )) }
+                in
+                updated.mode
+                    |> Expect.equal
+                        (Env.PlacingPill
+                            { orientation = Vertical ( Red, Blue )
+                            , coords = ( 4, 0 )
+                            }
+                        )
         ]
 
 
@@ -391,6 +452,18 @@ hasConflictTests =
                 in
                 Env.hasConflict
                     { model | mode = Env.PlacingPill (Pill.fromColors ( Red, Blue )) }
+                    |> Expect.equal False
+        , test "a fresh pill turned upright into the air above the bottle has room" <|
+            \_ ->
+                let
+                    model =
+                        modelWith emptyBottle
+                in
+                Env.hasConflict
+                    { model
+                        | mode =
+                            Env.PlacingPill (Pill.turnRight (Pill.fromColors ( Red, Blue )))
+                    }
                     |> Expect.equal False
         , test "a fresh pill lands on an occupied cell" <|
             \_ ->

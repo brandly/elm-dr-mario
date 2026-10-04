@@ -1,27 +1,15 @@
-module RandomExtra exposing (selectWithDefault)
+module RandomExtra exposing (select)
 
 import Random exposing (Generator)
 
 
-selectWithDefault : a -> List a -> Generator a
-selectWithDefault defaultValue options =
-    let
-        get : Int -> List a -> Maybe a
-        get index list =
-            if index < 0 then
-                Nothing
+{-| Pick one of the options at random, or `Nothing` when there are none.
+-}
+select : List a -> Generator (Maybe a)
+select options =
+    case options of
+        first :: rest ->
+            Random.map Just (Random.uniform first rest)
 
-            else
-                case List.drop index list of
-                    [] ->
-                        Nothing
-
-                    x :: _ ->
-                        Just x
-
-        select : List a -> Generator (Maybe a)
-        select list =
-            Random.map (\index -> get index list)
-                (Random.int 0 (List.length list - 1))
-    in
-    Random.map (Maybe.withDefault defaultValue) (select options)
+        [] ->
+            Random.constant Nothing

@@ -5,6 +5,7 @@ import Direction exposing (Direction(..))
 import Expect
 import Grid
 import Pill exposing (Color(..), Orientation(..))
+import Random
 import Test exposing (Test, describe, test)
 
 
@@ -89,6 +90,7 @@ suite =
         , canFallTests
         , fallTests
         , addPillTests
+        , generatorTests
         , miscTests
         ]
 
@@ -245,9 +247,17 @@ isAvailableTests =
                 -- its top half pokes into row 0, which is outside the grid
                 Bottle.isAvailable (Pill.turnRight (Pill.fromColors ( Red, Blue ))) emptyBottle
                     |> Expect.equal True
-        , test "the air above the bottle stops at the walls" <|
+        , test "the air above the bottle stops at the right wall" <|
             \_ ->
                 Bottle.isAvailable (pillAt (Vertical ( Red, Blue )) ( 9, 0 )) emptyBottle
+                    |> Expect.equal False
+        , test "the air above the bottle stops at the left wall" <|
+            \_ ->
+                Bottle.isAvailable (pillAt (Vertical ( Red, Blue )) ( 0, 0 )) emptyBottle
+                    |> Expect.equal False
+        , test "a vertical pill may not pass the floor" <|
+            \_ ->
+                Bottle.isAvailable (pillAt (Vertical ( Red, Blue )) ( 4, 16 )) emptyBottle
                     |> Expect.equal False
         ]
 
@@ -421,6 +431,56 @@ addPillTests =
                         [ Just ( Red, Bottle.Pill (Just Down) )
                         , Just ( Blue, Bottle.Pill (Just Up) )
                         ]
+        ]
+
+
+generatorTests : Test
+generatorTests =
+    let
+        generate : Random.Generator a -> a
+        generate generator =
+            Tuple.first (Random.step generator (Random.initialSeed 0))
+
+        allColumns =
+            [ 1, 2, 3, 4, 5, 6, 7, 8 ]
+    in
+    describe "Bottle generators"
+        [ test "a bomb drops into the only column with room at the top" <|
+            \_ ->
+                emptyBottle
+                    |> withPills (row 1 [ 1, 2, 4, 5, 6, 7, 8 ] Yellow)
+                    |> Bottle.generateBomb
+                    |> generate
+                    |> Expect.equal (Just 3)
+        , test "a bomb has no column when the top row is full" <|
+            \_ ->
+                emptyBottle
+                    |> withPills (row 1 allColumns Yellow)
+                    |> Bottle.generateBomb
+                    |> generate
+                    |> Expect.equal Nothing
+        , test "a virus goes in the only empty cell below the top four rows" <|
+            \_ ->
+                List.range 5 16
+                    |> List.foldl (\y -> withViruses (row y allColumns Red)) emptyBottle
+                    |> Grid.map
+                        (\coords state ->
+                            if coords == ( 6, 9 ) then
+                                Nothing
+
+                            else
+                                state
+                        )
+                    |> Bottle.generateEmptyCoords
+                    |> generate
+                    |> Expect.equal (Just ( 6, 9 ))
+        , test "there is nowhere for a virus once the rows below the top four are full" <|
+            \_ ->
+                List.range 5 16
+                    |> List.foldl (\y -> withViruses (row y allColumns Red)) emptyBottle
+                    |> Bottle.generateEmptyCoords
+                    |> generate
+                    |> Expect.equal Nothing
         ]
 
 

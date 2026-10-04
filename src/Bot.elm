@@ -171,7 +171,7 @@ placingPill bottle { orientation, coords } =
 
         choice : Maybe ( Int, Orientation )
         choice =
-            Grid.zip scores options
+            List.map2 Tuple.pair scores options
                 |> List.sortBy (Tuple.first >> (\a -> -a))
                 |> List.map Tuple.second
                 |> List.head

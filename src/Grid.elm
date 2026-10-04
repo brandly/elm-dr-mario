@@ -3,22 +3,20 @@ module Grid exposing
     , Column
     , Coords
     , Grid
-    , any
     , below
     , columns
     , difference
     , filter
-    , filterMap
     , findCellAtCoords
     , fromDimensions
     , get
     , height
     , isEmpty
     , map
+    , occupied
     , setState
     , topRow
     , width
-    , zip
     )
 
 import Dict exposing (Dict)
@@ -94,41 +92,32 @@ filter predicate grid =
     toList grid |> List.filter predicate
 
 
-filterMap : (Cell a -> Maybe b) -> Grid a -> List b
-filterMap predicate grid =
-    toList grid |> List.filterMap predicate
+{-| The occupied cells and what occupies them, column by column from the
+top left. Empty cells are skipped, so this is cheaper than `filter` when
+only occupants matter.
+-}
+occupied : Grid val -> List ( Coords, val )
+occupied (Grid grid) =
+    -- `Dict` orders keys by x and then y, which is column by column
+    Dict.toList grid.cells
 
 
+{-| The cells of `a` whose state differs from the same cell in `b`, as
+judged by `diff`.
+-}
 difference : (Maybe val -> Maybe val -> Bool) -> Grid val -> Grid val -> List (Cell val)
 difference diff a b =
-    zip (toList a) (toList b)
-        |> List.filterMap
-            (\( y, z ) ->
-                if diff y.state z.state then
-                    Just y
+    List.map2
+        (\y z ->
+            if diff y.state z.state then
+                Just y
 
-                else
-                    Nothing
-            )
-
-
-any : (Cell a -> Bool) -> Grid a -> Bool
-any predicate =
-    toList >> List.any predicate
-
-
-{-| The zip function takes in two lists and returns a combined
-list. It combines the elements of each list pairwise until one
-of the lists runs out of elements.
-
-    zip [ 1, 2, 3 ] [ 'a', 'b', 'c' ] == [ ( 1, 'a' ), ( 2, 'b' ), ( 3, 'c' ) ]
-
-<http://elm-lang.org/examples/zip>
-
--}
-zip : List a -> List b -> List ( a, b )
-zip =
-    List.map2 Tuple.pair
+            else
+                Nothing
+        )
+        (toList a)
+        (toList b)
+        |> List.filterMap identity
 
 
 {-| The cell at these coords, or `Nothing` when they fall outside the grid.
@@ -158,25 +147,20 @@ isEmpty coords grid =
     inBounds coords grid && get coords grid == Nothing
 
 
-{-| Transform every cell's state. Each cell stays at its own coords.
+{-| Work out every cell's new state from its coords and its current state.
 -}
-map : (Cell a -> Cell b) -> Grid a -> Grid b
+map : (Coords -> Maybe a -> Maybe b) -> Grid a -> Grid b
 map f ((Grid grid) as grid_) =
     Grid
         { width = grid.width
         , height = grid.height
         , cells =
             toList grid_
-                |> List.foldl
-                    (\cell cells ->
-                        case (f cell).state of
-                            Just state ->
-                                Dict.insert cell.coords state cells
-
-                            Nothing ->
-                                cells
+                |> List.filterMap
+                    (\{ coords, state } ->
+                        f coords state |> Maybe.map (Tuple.pair coords)
                     )
-                    Dict.empty
+                |> Dict.fromList
         }
 
 
@@ -195,19 +179,13 @@ setState state coords ((Grid grid) as grid_) =
 -}
 below : Coords -> Grid val -> List (Cell val)
 below ( x, y ) grid =
-    if x >= 1 && x <= width grid then
-        List.range (max 1 (y + 1)) (height grid)
-            |> List.map (\y_ -> cellAt ( x, y_ ) grid)
-
-    else
-        []
+    List.range (y + 1) (height grid)
+        |> List.filterMap (\y_ -> findCellAtCoords ( x, y_ ) grid)
 
 
+{-| The cells along the top row, from left to right.
+-}
 topRow : Grid val -> List (Cell val)
 topRow grid =
-    if height grid >= 1 then
-        List.range 1 (width grid)
-            |> List.map (\x -> cellAt ( x, 1 ) grid)
-
-    else
-        []
+    List.range 1 (width grid)
+        |> List.filterMap (\x -> findCellAtCoords ( x, 1 ) grid)
