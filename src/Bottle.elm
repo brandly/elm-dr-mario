@@ -20,7 +20,7 @@ import Direction exposing (Direction(..))
 import Grid exposing (Cell, Grid)
 import Pill exposing (Color(..), Orientation(..), Pill)
 import Random exposing (Generator(..))
-import RandomExtra exposing (selectWithDefault)
+import RandomExtra exposing (select)
 import Speed exposing (Speed(..))
 
 
@@ -43,55 +43,29 @@ type alias Dependent =
 
 totalViruses : Bottle -> Int
 totalViruses bottle =
-    List.length <|
-        Grid.filter
-            (\c ->
-                case c.state of
-                    Just ( _, Virus ) ->
-                        True
-
-                    _ ->
-                        False
-            )
-            bottle
+    Grid.occupied bottle
+        |> List.filter (\( _, ( _, cellType ) ) -> cellType == Virus)
+        |> List.length
 
 
 isAvailable : Pill -> Bottle -> Bool
 isAvailable pill grid =
-    let
-        ( x, y ) =
-            pill.coords
+    Pill.coordsPair pill
+        |> List.all (\coords -> isOpen coords grid)
 
-        aboveBottom =
-            y < Grid.height grid
 
-        withinRight =
-            case pill.orientation of
-                Vertical _ ->
-                    x <= Grid.width grid
-
-                Horizontal _ ->
-                    x < Grid.width grid
-
-        inBottle =
-            (x >= 1)
-                && withinRight
-                && aboveBottom
-
-        noOccupant =
-            Pill.coordsPair pill
-                |> List.map (\p -> Grid.isEmpty p grid)
-                |> List.all identity
-    in
-    inBottle && noOccupant
+{-| Whether half a pill can occupy these coords: an empty cell, or the open
+air above the bottle that a pill pokes into when it turns on the top row.
+The walls and the floor are never open.
+-}
+isOpen : Grid.Coords -> Bottle -> Bool
+isOpen (( x, y ) as coords) grid =
+    Grid.isEmpty coords grid || (y < 1 && x >= 1 && x <= Grid.width grid)
 
 
 canFall : Grid.Coords -> Bottle -> Bool
 canFall coords bottle =
     let
-        cell =
-            Grid.findCellAtCoords coords bottle
-
         hasRoom : List (Cell Contents) -> Bool
         hasRoom cells =
             case cells of
@@ -112,7 +86,7 @@ canFall coords bottle =
                         Just ( _, Virus ) ->
                             False
     in
-    case cell.state of
+    case Grid.get coords bottle of
         Just ( _, Pill Nothing ) ->
             Grid.below coords bottle |> hasRoom
 
@@ -136,46 +110,39 @@ canFall coords bottle =
 
 canSweep : Bottle -> Bool
 canSweep grid =
-    grid
-        |> Grid.filter
-            (\cell ->
-                isCleared cell.coords grid
-            )
-        |> (List.length >> (/=) 0)
+    Grid.occupied grid
+        |> List.any (\( coords, _ ) -> isCleared coords grid)
 
 
 isCleared : Grid.Coords -> Bottle -> Bool
 isCleared ( x, y ) grid =
     let
-        cell =
-            Grid.findCellAtCoords ( x, y ) grid
-
         len =
             4
 
-        horizontal : List (List (Cell Contents))
+        horizontal : List (List (Maybe Contents))
         horizontal =
             neighbors (\offset -> ( x + offset, y ))
 
-        vertical : List (List (Cell Contents))
+        vertical : List (List (Maybe Contents))
         vertical =
             neighbors (\offset -> ( x, y + offset ))
 
         neighbors f =
             List.range (len * -1 + 1) (len - 1)
                 |> List.map f
-                |> List.map (\coords -> Grid.findCellAtCoords coords grid)
+                |> List.map (\coords -> Grid.get coords grid)
                 |> subLists len
     in
-    case cell.state of
+    case Grid.get ( x, y ) grid of
         Nothing ->
             False
 
         Just ( color, _ ) ->
             List.any
                 (List.all
-                    (\cell_ ->
-                        case cell_.state of
+                    (\state ->
+                        case state of
                             Just ( c, _ ) ->
                                 c == color
 
@@ -199,7 +166,7 @@ addPill pill bottle =
 fall : Bottle -> Bottle
 fall bottle =
     Grid.map
-        (\({ coords, state } as cell) ->
+        (\coords state ->
             let
                 above =
                     coordsWithDirection Up coords
@@ -207,16 +174,16 @@ fall bottle =
             if canFall coords bottle then
                 -- look above
                 if canFall above bottle then
-                    { cell | state = .state <| Grid.findCellAtCoords above bottle }
+                    Grid.get above bottle
 
                 else
-                    { cell | state = Nothing }
+                    Nothing
 
             else if state == Nothing && canFall above bottle then
-                { cell | state = .state <| Grid.findCellAtCoords above bottle }
+                Grid.get above bottle
 
             else
-                cell
+                state
         )
         bottle
 
@@ -244,19 +211,18 @@ colorCoords pill =
 -- GENERATORS
 
 
-generateEmptyCoords : Bottle -> Generator Grid.Coords
+{-| Somewhere a virus could go: an empty cell below the top four rows, or
+`Nothing` when there are none left.
+-}
+generateEmptyCoords : Bottle -> Generator (Maybe Grid.Coords)
 generateEmptyCoords grid =
-    let
-        emptyCoords : List ( Int, Int )
-        emptyCoords =
-            grid
-                |> Grid.filter
-                    (\{ coords } ->
-                        Tuple.second coords >= 5 && Grid.isEmpty coords grid
-                    )
-                |> List.map .coords
-    in
-    selectWithDefault ( -1, -1 ) emptyCoords
+    grid
+        |> Grid.filter
+            (\{ coords, state } ->
+                Tuple.second coords >= 5 && state == Nothing
+            )
+        |> List.map .coords
+        |> select
 
 
 generatePill : Generator ( Color, Color )
@@ -266,24 +232,18 @@ generatePill =
 
 generateColor : Generator Color
 generateColor =
-    selectWithDefault Blue [ Red, Yellow, Blue ]
+    Random.uniform Red [ Yellow, Blue ]
 
 
-generateBomb : Bottle -> Generator Int
+{-| A column with room at the top for a bomb to drop into, or `Nothing` when
+the top row is full.
+-}
+generateBomb : Bottle -> Generator (Maybe Int)
 generateBomb bottle =
-    selectWithDefault -1
-        (Grid.topRow bottle
-            |> List.filter
-                (\c ->
-                    case c.state of
-                        Just _ ->
-                            False
-
-                        Nothing ->
-                            True
-                )
-            |> List.map (.coords >> Tuple.first)
-        )
+    Grid.topRow bottle
+        |> List.filter (\cell -> cell.state == Nothing)
+        |> List.map (.coords >> Tuple.first)
+        |> select
 
 
 

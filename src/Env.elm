@@ -102,7 +102,7 @@ type Msg
     = NewPill ( Color, Color ) -- TODO: Pill?
     | KeyDown (Maybe Direction)
     | TickTock Posix
-    | Bomb Color Int
+    | Bomb Color (Maybe Int)
     | SetGoal ( Maybe Direction, Maybe Pill )
 
 
@@ -192,16 +192,20 @@ update props msg model =
         ( _, TickTock _ ) ->
             advance props model
 
-        ( Bombing, Bomb color x ) ->
+        ( Bombing, Bomb color column ) ->
             let
                 bottle =
-                    -- when the top row is full, `generateBomb` has no column
-                    -- to pick and yields -1, which matches no cell, so this
-                    -- bomb is lost. the loop moves along either way
-                    Grid.setState
-                        ( color, Bottle.Pill Nothing )
-                        ( x, 1 )
-                        model.bottle
+                    case column of
+                        Just x ->
+                            Grid.setState
+                                ( color, Bottle.Pill Nothing )
+                                ( x, 1 )
+                                model.bottle
+
+                        Nothing ->
+                            -- the top row is full, so this bomb has nowhere
+                            -- to land and is lost. the loop moves along
+                            model.bottle
 
                 model_ =
                     { model | bottle = bottle }
@@ -265,9 +269,8 @@ advance props model =
             let
                 timeToFall : Bool
                 timeToFall =
-                    Grid.any
-                        (\{ coords } -> Bottle.canFall coords model.bottle)
-                        model.bottle
+                    Grid.occupied model.bottle
+                        |> List.any (\( coords, _ ) -> Bottle.canFall coords model.bottle)
             in
             if timeToFall then
                 withNothing { model | bottle = Bottle.fall model.bottle }
@@ -316,11 +319,11 @@ sweep : Model -> Model
 sweep ({ bottle } as model) =
     let
         coordsLosingDependent =
-            bottle
-                |> Grid.filterMap
-                    (\{ coords, state } ->
-                        case state of
-                            Just ( _, Bottle.Pill (Just dependent) ) ->
+            Grid.occupied bottle
+                |> List.filterMap
+                    (\( coords, contents ) ->
+                        case contents of
+                            ( _, Bottle.Pill (Just dependent) ) ->
                                 if Bottle.isCleared coords bottle then
                                     Just <|
                                         Bottle.coordsWithDirection dependent coords
@@ -335,20 +338,15 @@ sweep ({ bottle } as model) =
 
         swept =
             Grid.map
-                (\({ coords, state } as cell) ->
+                (\coords state ->
                     if Bottle.isCleared coords bottle then
-                        { cell | state = Nothing }
+                        Nothing
 
                     else if Set.member coords coordsLosingDependent then
-                        case state of
-                            Just ( color, _ ) ->
-                                { cell | state = Just ( color, Bottle.Pill Nothing ) }
-
-                            Nothing ->
-                                cell
+                        Maybe.map (\( color, _ ) -> ( color, Bottle.Pill Nothing )) state
 
                     else
-                        cell
+                        state
                 )
                 bottle
 
@@ -469,9 +467,7 @@ hasConflict : Model -> Bool
 hasConflict { mode, bottle } =
     case mode of
         PlacingPill pill ->
-            Pill.coordsPair pill
-                |> List.map (\coords -> Grid.isEmpty coords bottle)
-                |> List.any not
+            not (Bottle.isAvailable pill bottle)
 
         _ ->
             False
@@ -514,12 +510,14 @@ view { bottle, mode } =
                             column
                         )
                 )
-                (case mode of
-                    PlacingPill pill ->
-                        Bottle.addPill pill bottle
+                (Grid.columns
+                    (case mode of
+                        PlacingPill pill ->
+                            Bottle.addPill pill bottle
 
-                    _ ->
-                        bottle
+                        _ ->
+                            bottle
+                    )
                 )
             )
         ]
