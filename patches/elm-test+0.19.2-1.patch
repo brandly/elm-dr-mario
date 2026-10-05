@@ -1,0 +1,26 @@
+diff --git a/node_modules/elm-test/lib/ElmHome.js b/node_modules/elm-test/lib/ElmHome.js
+index 653fbb9..3243f0c 100644
+--- a/node_modules/elm-test/lib/ElmHome.js
++++ b/node_modules/elm-test/lib/ElmHome.js
+@@ -43,7 +43,7 @@ function defaultWindowsElmHome() {
+  */
+ function packagePath(pkg) {
+   const parts = splitAuthorPkg(pkg);
+-  return path.join(elmHome(), '0.19.2', 'packages', parts.author, parts.pkg);
++  return path.join(elmHome(), '0.19.3', 'packages', parts.author, parts.pkg);
+ }
+ 
+ /**
+diff --git a/node_modules/elm-test/lib/Generate.js b/node_modules/elm-test/lib/Generate.js
+index 143043f..1a3da57 100644
+--- a/node_modules/elm-test/lib/Generate.js
++++ b/node_modules/elm-test/lib/Generate.js
+@@ -129,7 +129,7 @@ function generateElmJson(
+   const testElmJson = {
+     type: 'application',
+     'source-directories': sourceDirs,
+-    'elm-version': '0.19.2',
++    'elm-version': '0.19.3',
+     dependencies: Solve.getDependenciesCached(
+       dependencyProvider,
+       packageStrategy,
