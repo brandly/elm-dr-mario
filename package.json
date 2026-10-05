@@ -2,7 +2,6 @@
   "name": "elm-dr-mario",
   "scripts": {
     "start": "npm run build && npm run html",
-    "postinstall": "patch-package",
     "build": "elm make src/Main.elm --output dist/the.js",
     "test": "elm-analyse && elm-test && npm run build -- --optimize",
     "html": "cp src/index.html dist",
@@ -12,9 +11,8 @@
   "devDependencies": {
     "elm": "0.19.3-0",
     "elm-analyse": "0.16.5",
-    "elm-test": "0.19.2-1",
+    "elm-test": "0.19.3-0",
     "gh-pages": "6.2.0",
-    "patch-package": "8.0.1",
     "uglify-js": "3.19.3"
   },
   "dependencies": {}
