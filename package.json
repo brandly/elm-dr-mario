@@ -9,9 +9,9 @@
     "compress": "uglifyjs dist/the.js -o dist/the.js --compress --mangle"
   },
   "devDependencies": {
-    "elm": "0.19.2-0",
+    "elm": "0.19.3-0",
     "elm-analyse": "0.16.5",
-    "elm-test": "0.19.2-1",
+    "elm-test": "0.19.3-0",
     "gh-pages": "6.2.0",
     "uglify-js": "3.19.3"
   },
